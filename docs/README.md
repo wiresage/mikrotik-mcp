@@ -19,6 +19,7 @@ Complete documentation for MikroTik MCP.
 Complete tool documentation organized by category:
 
 - **[VLAN](reference/vlan/README.md)** - VLAN Interface Management
+- **[Bridge](reference/bridge/README.md)** - Bridge VLAN Management
 - **[IP Address](reference/ip-address/README.md)** - IP Address Management
 - **[DHCP](reference/dhcp/README.md)** - DHCP Server Management
 - **[NAT](reference/nat/README.md)** - NAT Rules Management
