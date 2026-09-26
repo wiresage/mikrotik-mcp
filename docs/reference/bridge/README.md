@@ -1,5 +1,13 @@
 # Bridge VLAN Management
 
+Every write is confirmed on the device before success is reported. A refusal
+(for example `not enough permissions (9)` from a read-only account) or an entry
+that does not exist comes back as a failure.
+
+`vlan_ids` is a VLAN ID, a range, or a comma list of either, and it has to match
+the stored value exactly: an entry holding `20,30` is found by `"20,30"`, not by
+`"20"`.
+
 ## `mikrotik_list_bridge_vlans`
 Lists bridge VLAN table entries (tagged/untagged port membership per VLAN).
 - Parameters:
