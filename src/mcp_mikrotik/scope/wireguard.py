@@ -38,7 +38,9 @@ async def mikrotik_create_wireguard_interface(
     if disabled:
         cmd += " disabled=yes"
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[private_key] if private_key else None
+    )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to create WireGuard interface: {result}"
@@ -130,7 +132,9 @@ async def mikrotik_update_wireguard_interface(
         return "No updates specified."
 
     cmd = f'/interface wireguard set [find name="{name}"] ' + " ".join(updates)
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[private_key] if private_key else None
+    )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update WireGuard interface: {result}"
@@ -236,7 +240,9 @@ async def mikrotik_add_wireguard_peer(
     if disabled:
         cmd += " disabled=yes"
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[preshared_key] if preshared_key else None
+    )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to add WireGuard peer: {result}"
@@ -348,7 +354,9 @@ async def mikrotik_update_wireguard_peer(
         return "No updates specified."
 
     cmd = f"/interface wireguard peers set {peer_id} " + " ".join(updates)
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[preshared_key] if preshared_key else None
+    )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update WireGuard peer: {result}"

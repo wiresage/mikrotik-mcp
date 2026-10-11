@@ -21,7 +21,7 @@ class FakeWifi:
         self.set_result = set_result
         self.commands = []
 
-    async def __call__(self, command, _ctx, device=None):
+    async def __call__(self, command, _ctx, device=None, redact=None):
         self.commands.append(command)
         if "print count-only" in command:
             return "1"

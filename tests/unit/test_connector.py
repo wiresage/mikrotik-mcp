@@ -183,7 +183,10 @@ def test_execute_mikrotik_command_logs_error(ctx, monkeypatch):
         return fn(*args, **kwargs)
 
     monkeypatch.setattr(asyncio, "to_thread", fake_to_thread)
-    monkeypatch.setattr(connector, "_execute_sync", lambda cmd, device=None: "Error: nope")
+    monkeypatch.setattr(
+        connector, "_execute_sync",
+        lambda cmd, device=None, redact=None: "Error: nope",
+    )
 
     result = asyncio.run(connector.execute_mikrotik_command("/bad", ctx))
     assert result == "Error: nope"

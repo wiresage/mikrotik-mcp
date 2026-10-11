@@ -38,7 +38,8 @@ class FakeExecutor:
         self.commands: list[str] = []
         self.devices: list[Any] = []
 
-    async def __call__(self, command: str, _ctx: Any, device: Any = None) -> str:
+    async def __call__(self, command: str, _ctx: Any, device: Any = None,
+                       redact: Any = None) -> str:
         self.commands.append(command)
         self.devices.append(device)
 

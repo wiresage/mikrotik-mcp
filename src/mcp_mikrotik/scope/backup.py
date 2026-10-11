@@ -267,7 +267,9 @@ async def mikrotik_restore_backup(
     if password:
         cmd += f' password="{password}"'
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[password] if password else None
+    )
 
     if "Restoring system configuration" in result or not result.strip():
         return f"Backup '{filename}' restored successfully. System will reboot."

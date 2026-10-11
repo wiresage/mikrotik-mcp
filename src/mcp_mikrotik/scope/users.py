@@ -19,6 +19,8 @@ async def mikrotik_add_user(
     await ctx.info(f"Adding user: name={name}, group={group}")
 
     cmd = f'/user add name="{name}" password="{password}" group={group}'
+    # The connector logs every command; keep the password out of both sinks.
+    redact = [password]
 
     if address:
         cmd += f" address={address}"
@@ -29,7 +31,7 @@ async def mikrotik_add_user(
     if disabled:
         cmd += " disabled=yes"
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(cmd, ctx, device=device, redact=redact)
 
     if result.strip():
         if "*" in result or result.strip().isdigit():
@@ -145,7 +147,9 @@ async def mikrotik_update_user(
 
     cmd += " " + " ".join(updates)
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[password] if password else None
+    )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update user: {result}"

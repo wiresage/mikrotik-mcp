@@ -606,7 +606,12 @@ async def mikrotik_set_wireless_passphrase(
     if authentication_types:
         cmd += f" security.authentication-types={authentication_types}"
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    # The command carries the passphrase and the connector logs every
+    # command, so redact both forms: the escaped one is what reaches the
+    # command line, the raw one is what a result might echo back.
+    result = await execute_mikrotik_command(
+        cmd, ctx, device=device, redact=[_ros_quoted(passphrase), passphrase]
+    )
 
     # A successful `set` prints nothing, so ANY output means the write did not
     # happen. Matching on "failure:"/"error" missed the two refusals that
