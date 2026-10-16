@@ -261,15 +261,18 @@ async def mikrotik_restore_backup(
     if count.strip() == "0":
         return f"Backup file '{filename}' not found."
 
-    # Build restore command
-    cmd = f"/system backup load name={filename}"
-
-    if password:
-        cmd += f' password="{password}"'
+    # RouterOS 7 refuses the command without the password argument ("Script Error: missing value(s)
+    # of argument(s) password"), also for a backup that is not encrypted: that one takes an empty
+    # password. The value is escaped for a double-quoted string (backslash first, then quote and $).
+    secret = (password or "").replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$")
+    cmd = f'/system backup load name={filename} password="{secret}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "Restoring system configuration" in result or not result.strip():
+    # RouterOS 7 answers "System configuration restored, rebooting now"; the reply may also be empty when
+    # the connection drops with the reboot. Older releases printed "Restoring system configuration".
+    reply = result.lower()
+    if not result.strip() or "restored" in reply or "restoring system configuration" in reply or "rebooting" in reply:
         return f"Backup '{filename}' restored successfully. System will reboot."
     else:
         return f"Failed to restore backup: {result}"
