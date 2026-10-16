@@ -288,4 +288,4 @@ async def mikrotik_expand_ip_pool(ctx: Context, name: str, additional_ranges: st
     new_ranges = f"{current_ranges},{additional_ranges}"
 
     # Update the pool
-    return await mikrotik_update_ip_pool(name, ranges=new_ranges, ctx=ctx, device=device)
+    return await mikrotik_update_ip_pool(ctx, name, ranges=new_ranges, device=device)

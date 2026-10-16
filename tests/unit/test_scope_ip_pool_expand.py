@@ -1,22 +1,28 @@
 import asyncio
 
-import pytest
 
-
-def test_expand_ip_pool_hits_wrapper_bug(ctx, monkeypatch):
+def test_expand_ip_pool_appends_the_new_ranges(ctx, monkeypatch):
     """
-    Current implementation calls mikrotik_update_ip_pool with `name` as the first positional argument
-    even though `ctx` is the first parameter, then also passes `ctx=...`, which raises TypeError.
+    expand_ip_pool delegates to update_ip_pool. It used to pass `name` positionally and `ctx=` by
+    keyword, although `ctx` is update_ip_pool's first parameter, which raised
+    "TypeError: got multiple values for argument 'ctx'" on every call. (This test used to assert
+    that TypeError.)
     """
     from mcp_mikrotik.scope import ip_pool as mod
 
+    commands = []
+
     async def fake_exec(command: str, _ctx, device=None):
+        commands.append(command)
         if "print detail" in command:
             return 'name="pool1" ranges=10.0.0.1-10.0.0.10'
         return ""
 
     monkeypatch.setattr(mod, "execute_mikrotik_command", fake_exec, raising=True)
 
-    with pytest.raises(TypeError):
-        asyncio.run(mod.mikrotik_expand_ip_pool(ctx=ctx, name="pool1", additional_ranges="10.0.0.11-10.0.0.12"))
+    result = asyncio.run(mod.mikrotik_expand_ip_pool(ctx=ctx, name="pool1", additional_ranges="10.0.0.11-10.0.0.12"))
 
+    assert not result.startswith("Error")
+    assert any(
+        'set [find name="pool1"] ranges=10.0.0.1-10.0.0.10,10.0.0.11-10.0.0.12' in command for command in commands
+    ), commands

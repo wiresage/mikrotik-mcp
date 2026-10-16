@@ -185,12 +185,12 @@ async def mikrotik_remove_user(ctx: Context, name: str, device: Optional[str] = 
 @mcp.tool(name="disable_user", annotations=annotate(WRITE_IDEMPOTENT, "Disable User"))
 async def mikrotik_disable_user(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Disables a user."""
-    return await mikrotik_update_user(name, disabled=True, ctx=ctx, device=device)
+    return await mikrotik_update_user(ctx, name, disabled=True, device=device)
 
 @mcp.tool(name="enable_user", annotations=annotate(WRITE_IDEMPOTENT, "Enable User"))
 async def mikrotik_enable_user(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Enables a user."""
-    return await mikrotik_update_user(name, disabled=False, ctx=ctx, device=device)
+    return await mikrotik_update_user(ctx, name, disabled=False, device=device)
 
 @mcp.tool(name="add_user_group", annotations=annotate(WRITE, "Add User Group"))
 async def mikrotik_add_user_group(

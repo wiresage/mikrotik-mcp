@@ -28,20 +28,6 @@ SCOPE_MODULES = [
     "wireguard",
 ]
 
-BROKEN_WRAPPER_FUNCS = {
-    # These wrappers call update_* with a positional argument where `ctx` is first.
-    # They currently raise TypeError ("multiple values for argument 'ctx'").
-    "mikrotik_disable_dns_static",
-    "mikrotik_enable_dns_static",
-    "mikrotik_disable_nat_rule",
-    "mikrotik_enable_nat_rule",
-    "mikrotik_disable_route",
-    "mikrotik_enable_route",
-    "mikrotik_disable_user",
-    "mikrotik_enable_user",
-}
-
-
 @pytest.mark.parametrize("module_name", SCOPE_MODULES)
 def test_scope_module_functions_return_string(module_name, ctx, monkeypatch):
     module = __import__(f"mcp_mikrotik.scope.{module_name}", fromlist=["*"])
@@ -64,11 +50,6 @@ def test_scope_module_functions_return_string(module_name, ctx, monkeypatch):
             if param.default is not inspect._empty:
                 continue
             kwargs[param.name] = make_dummy_value(param)
-
-        if name in BROKEN_WRAPPER_FUNCS:
-            with pytest.raises(TypeError):
-                asyncio.run(fn(**kwargs))
-            continue
 
         result = asyncio.run(fn(**kwargs))
         assert isinstance(result, str)

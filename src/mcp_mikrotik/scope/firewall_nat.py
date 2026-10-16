@@ -354,9 +354,9 @@ async def mikrotik_move_nat_rule(ctx: Context, rule_id: str, destination: int, d
 @mcp.tool(name="enable_nat_rule", annotations=annotate(WRITE_IDEMPOTENT, "Enable NAT Rule"))
 async def mikrotik_enable_nat_rule(ctx: Context, rule_id: str, device: Optional[str] = None) -> str:
     """Enables a NAT rule."""
-    return await mikrotik_update_nat_rule(rule_id, disabled=False, ctx=ctx, device=device)
+    return await mikrotik_update_nat_rule(ctx, rule_id, disabled=False, device=device)
 
 @mcp.tool(name="disable_nat_rule", annotations=annotate(WRITE_IDEMPOTENT, "Disable NAT Rule"))
 async def mikrotik_disable_nat_rule(ctx: Context, rule_id: str, device: Optional[str] = None) -> str:
     """Disables a NAT rule."""
-    return await mikrotik_update_nat_rule(rule_id, disabled=True, ctx=ctx, device=device)
+    return await mikrotik_update_nat_rule(ctx, rule_id, disabled=True, device=device)

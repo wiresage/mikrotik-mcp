@@ -251,7 +251,7 @@ async def mikrotik_enable_route(ctx: Context, route_id: str, device: Optional[st
     Notes:
         route_id: "*N" or "N" from list output e.g. "*3"
     """
-    return await mikrotik_update_route(route_id, disabled=False, ctx=ctx, device=device)
+    return await mikrotik_update_route(ctx, route_id, disabled=False, device=device)
 
 @mcp.tool(name="disable_route", annotations=annotate(WRITE_IDEMPOTENT, "Disable Route"))
 async def mikrotik_disable_route(ctx: Context, route_id: str, device: Optional[str] = None) -> str:
@@ -260,7 +260,7 @@ async def mikrotik_disable_route(ctx: Context, route_id: str, device: Optional[s
     Notes:
         route_id: "*N" or "N" from list output e.g. "*3"
     """
-    return await mikrotik_update_route(route_id, disabled=True, ctx=ctx, device=device)
+    return await mikrotik_update_route(ctx, route_id, disabled=True, device=device)
 
 @mcp.tool(name="get_routing_table", annotations=annotate(READ, "Routing Table"))
 async def mikrotik_get_routing_table(
