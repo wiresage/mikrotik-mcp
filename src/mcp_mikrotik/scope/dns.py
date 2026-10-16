@@ -348,13 +348,28 @@ async def mikrotik_get_dns_cache_statistics(ctx: Context, device: Optional[str] 
     """Gets DNS cache statistics."""
     await ctx.info("Getting DNS cache statistics")
 
-    cmd = "/ip dns cache print stats"
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    # "/ip dns cache print stats" does not exist on RouterOS 7 ("expected end of command").
+    # The cache size, usage and maximum TTL are settings of /ip dns; the number of cached
+    # records is the count of /ip dns cache.
+    settings = await execute_mikrotik_command("/ip dns print", ctx, device=device)
+    entries = (await execute_mikrotik_command("/ip dns cache print count-only", ctx, device=device)).strip()
 
-    if not result:
+    if not settings.strip() or settings.lstrip().lower().startswith(("error", "failed")):
         return "Unable to retrieve DNS cache statistics."
 
-    return f"DNS CACHE STATISTICS:\n\n{result}"
+    wanted = ("cache-size", "cache-used", "cache-max-ttl")
+    lines = []
+    for line in settings.splitlines():
+        key, _, value = line.partition(":")
+        if key.strip() in wanted:
+            lines.append(f"{key.strip()}: {value.strip()}")
+    if entries.isdigit():
+        lines.insert(0, f"cached-records: {entries}")
+
+    if not lines:
+        return "Unable to retrieve DNS cache statistics."
+
+    return "DNS CACHE STATISTICS:\n\n" + "\n".join(lines)
 
 @mcp.tool(name="add_dns_regexp", annotations=annotate(WRITE, "Add DNS Regexp Entry"))
 async def mikrotik_add_dns_regexp(

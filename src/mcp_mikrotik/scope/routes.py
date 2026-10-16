@@ -2,7 +2,7 @@ from typing import Optional, List
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
-from ._selectors import resolve_item_id, item_count
+from ._selectors import _ID_RE, resolve_item_id, item_count
 
 @mcp.tool(name="add_route", annotations=annotate(WRITE, "Add Route"))
 async def mikrotik_add_route(
@@ -314,6 +314,18 @@ async def mikrotik_check_route_path(
 
     return f"ROUTE PATH TO {destination}:\n\n{result}"
 
+# RouterOS 7 has no route cache (the /ip route cache menu went away with the new routing stack).
+_NO_ROUTE_CACHE = (
+    "This device has no route cache: the /ip route cache menu does not exist on RouterOS 7. "
+    "Use list_routes, get_routing_table or check_route_path to inspect routing instead."
+)
+
+
+def _no_route_cache(result: str) -> bool:
+    text = (result or "").lower()
+    return "bad command name" in text or "no such command" in text
+
+
 @mcp.tool(name="get_route_cache", annotations=annotate(READ, "Get Route Cache"))
 async def mikrotik_get_route_cache(ctx: Context, device: Optional[str] = None) -> str:
     """Gets the route cache."""
@@ -321,6 +333,9 @@ async def mikrotik_get_route_cache(ctx: Context, device: Optional[str] = None) -
 
     cmd = "/ip route cache print"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
+
+    if _no_route_cache(result):
+        return _NO_ROUTE_CACHE
 
     if not result or result.strip() == "":
         return "Route cache is empty."
@@ -334,6 +349,9 @@ async def mikrotik_flush_route_cache(ctx: Context, device: Optional[str] = None)
 
     cmd = "/ip route cache flush"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
+
+    if _no_route_cache(result):
+        return _NO_ROUTE_CACHE
 
     if not result.strip():
         return "Route cache flushed successfully."
@@ -376,20 +394,20 @@ async def mikrotik_add_blackhole_route(
     """
     await ctx.info(f"Adding blackhole route: dst={dst_address}")
 
-    cmd = f"/ip route add dst-address={dst_address} type=blackhole distance={distance}"
+    # RouterOS 7 spells it as a flag; "type=blackhole" is RouterOS 6 syntax and fails with
+    # "expected end of command". The `:put [...]` makes the router echo the new internal id,
+    # which doubles as proof that the route was added (a refused add prints an error, no id).
+    cmd = f"/ip route add dst-address={dst_address} blackhole distance={distance}"
 
     if comment:
         cmd += f' comment="{comment}"'
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    result = await execute_mikrotik_command(f":put [{cmd}]", ctx, device=device)
 
-    if result.strip():
-        if "*" in result or result.strip().isdigit():
-            return f"Blackhole route added successfully. ID: {result}"
-        else:
-            return f"Failed to add blackhole route: {result}"
-    else:
-        return "Blackhole route added successfully."
+    new_id = result.strip()
+    if not _ID_RE.fullmatch(new_id):
+        return f"Failed to add blackhole route: {new_id or 'no route ID returned'}"
+    return f"Blackhole route added successfully. ID: {new_id}"
 
 @mcp.tool(name="get_route_statistics", annotations=annotate(READ, "Route Statistics"))
 async def mikrotik_get_route_statistics(ctx: Context, device: Optional[str] = None) -> str:
