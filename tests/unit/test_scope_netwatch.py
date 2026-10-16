@@ -7,7 +7,11 @@ def _run(coro):
     return asyncio.run(coro)
 
 
-_META = "host,type,interval,timeout,status,since,comment,disabled,src-address"
+from mcp_mikrotik.scope.netwatch import _PROBE_METADATA as _META
+
+# The three properties of `/tool netwatch` that hold commands, and therefore
+# the credentials a probe uses to raise an alert.
+_SCRIPT_PROPS = ("up-script", "down-script", "test-script")
 
 
 class DetailFake(FakeExecutor):
@@ -17,13 +21,14 @@ class DetailFake(FakeExecutor):
 
 
 class ScriptFake(FakeExecutor):
-    """A probe whose down-script alerts through a webhook carrying a token."""
+    """A probe whose scripts alert through a webhook carrying a token."""
 
     async def __call__(self, command, _ctx, device=None):
         await super().__call__(command, _ctx, device)
         return (
             'host=192.0.2.1 status=up down-script="/tool fetch '
-            'url=https://hooks.example/notify password=hunter2"\n'
+            'url=https://hooks.example/notify password=hunter2" '
+            'test-script="/tool e-mail send to=a@b.c password=hunter2"\n'
         )
 
 
@@ -71,12 +76,34 @@ def test_scripts_are_withheld_unless_asked_for(ctx, monkeypatch):
 
     _run(netwatch.mikrotik_list_netwatch(ctx))
     assert f"proplist={_META}" in fake.commands[-1]
-    assert "script" not in _META
+    for prop in _SCRIPT_PROPS:
+        assert prop not in _META
 
     out = _run(netwatch.mikrotik_list_netwatch(ctx, include_source=True))
     assert "proplist" not in fake.commands[-1]
     assert out.startswith("NETWATCH PROBES (with scripts):")
     assert "hunter2" not in out
+
+
+def test_proplist_keeps_the_measurements(ctx):
+    """Hiding the scripts must not cost the numbers the probe exists to report.
+
+    A proplist is a whitelist, so every property not named in it is lost. An
+    export already says which probes exist; what only `print detail` adds is
+    the live state and the ICMP statistics, so dropping those in order to hide
+    the scripts would trade one gap for another.
+    """
+    fields = _META.split(",")
+
+    assert len(fields) == len(set(fields)), "duplicate property in the proplist"
+    for prop in _SCRIPT_PROPS:
+        assert prop not in fields
+
+    for prop in (
+        "status", "since", "rtt-avg", "loss-percent", "failed-tests",
+        "thr-avg", "thr-loss-count", "packet-count", "packet-interval",
+    ):
+        assert prop in fields, f"{prop} is not reachable through the default"
 
 
 def test_no_match_is_not_the_legend(ctx, monkeypatch):
