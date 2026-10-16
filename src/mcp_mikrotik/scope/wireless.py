@@ -3,6 +3,7 @@ from typing import List, Literal, Optional, Dict, Any
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
+from ._selectors import has_item_rows
 
 
 async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional[str] = None) -> Optional[str]:
@@ -227,7 +228,7 @@ async def mikrotik_get_wireless_interface(ctx: Context, name: str, device: Optio
     cmd = f'{interface_type} print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"Wireless interface '{name}' not found."
 
     return f"WIRELESS INTERFACE DETAILS:\n\n{result}"

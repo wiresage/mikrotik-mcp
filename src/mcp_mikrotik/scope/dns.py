@@ -4,7 +4,7 @@ from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
-from ._selectors import resolve_item_id, item_count
+from ._selectors import resolve_item_id, item_count, has_item_rows
 
 @mcp.tool(name="set_dns_servers", annotations=annotate(WRITE, "Set DNS Servers"))
 async def mikrotik_set_dns_servers(
@@ -188,7 +188,7 @@ async def mikrotik_get_dns_static(ctx: Context, entry_id: str, device: Optional[
     cmd = f"/ip dns static print detail where .id={entry_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"Static DNS entry with ID '{entry_id}' not found."
 
     return f"STATIC DNS ENTRY DETAILS:\n\n{result}"

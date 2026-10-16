@@ -3,7 +3,7 @@ from typing import Optional
 from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
-from ._selectors import resolve_item_id, item_count
+from ._selectors import resolve_item_id, item_count, has_item_rows
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
 
@@ -91,7 +91,7 @@ async def mikrotik_get_wireguard_interface(ctx: Context, name: str, device: Opti
     cmd = f'/interface wireguard print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"WireGuard interface '{name}' not found."
 
     return f"WIREGUARD INTERFACE DETAILS:\n\n{result}"
@@ -293,7 +293,7 @@ async def mikrotik_get_wireguard_peer(ctx: Context, peer_id: str, device: Option
     cmd = f"/interface wireguard peers print detail where .id={peer_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"WireGuard peer with ID '{peer_id}' not found."
 
     return f"WIREGUARD PEER DETAILS:\n\n{result}"

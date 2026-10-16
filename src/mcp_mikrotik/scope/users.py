@@ -3,6 +3,7 @@ from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 import re
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
+from ._selectors import has_item_rows
 
 @mcp.tool(name="add_user", annotations=annotate(WRITE, "Add User"))
 async def mikrotik_add_user(
@@ -98,7 +99,7 @@ async def mikrotik_get_user(ctx: Context, name: str, device: Optional[str] = Non
     cmd = f'/user print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"User '{name}' not found."
 
     # Remove password from output

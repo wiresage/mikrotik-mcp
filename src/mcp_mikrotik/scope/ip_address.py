@@ -3,6 +3,7 @@ from typing import Optional
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
+from ._selectors import has_item_rows
 
 @mcp.tool(name="add_ip_address", annotations=annotate(WRITE, "Add IP Address"))
 async def mikrotik_add_ip_address(
@@ -93,12 +94,12 @@ async def mikrotik_get_ip_address(ctx: Context, address_id: str, device: Optiona
     cmd = f'/ip address print detail where .id="{address_id}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         # Try finding by address value
         cmd = f'/ip address print detail where address="{address_id}"'
         result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"IP address '{address_id}' not found."
 
     return f"IP ADDRESS DETAILS:\n\n{result}"

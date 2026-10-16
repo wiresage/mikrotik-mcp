@@ -2,7 +2,7 @@ from typing import Literal, Optional
 from mcp.server.mcpserver import Context
 from ..connector import execute_mikrotik_command
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
-from ._selectors import resolve_item_id, item_count, item_at_position
+from ._selectors import resolve_item_id, item_count, item_at_position, has_item_rows
 
 @mcp.tool(name="create_nat_rule", annotations=annotate(WRITE, "Create NAT Rule"))
 async def mikrotik_create_nat_rule(
@@ -180,7 +180,7 @@ async def mikrotik_get_nat_rule(ctx: Context, rule_id: str, device: Optional[str
     cmd = f"/ip firewall nat print detail where .id={rule_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"NAT rule with ID '{rule_id}' not found."
 
     return f"NAT RULE DETAILS:\n\n{result}"
