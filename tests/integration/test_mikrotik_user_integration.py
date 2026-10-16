@@ -38,6 +38,12 @@ def _docker_available() -> bool:
         return False
 
 
+# One boot attempt is given BOOT_WAIT_ATTEMPTS polls of about ten seconds each; a healthy RouterOS under
+# QEMU emulation answers within one to two minutes.
+BOOT_ATTEMPTS = 3
+BOOT_WAIT_ATTEMPTS = 15
+
+
 @pytest.fixture(scope="class")
 def mikrotik_container():
     """Start a MikroTik RouterOS container."""
@@ -48,22 +54,52 @@ def mikrotik_container():
     # everything must go in a single call — a second call silently dropped
     # privileged/cap_add, and the entrypoint died in ~5s without them.
     # (The ROUTEROS_* env vars are gone: the image never reads them.)
-    kwargs = {"privileged": True, "cap_add": ["NET_ADMIN", "NET_RAW"]}
+    #
+    # The entrypoint of the image sacrifices one container interface to its QEMU bridge. On a
+    # container with a single network that is eth0, and it then enables NO port forwarding, so
+    # the published SSH port never reaches the router (issue #143, "breaks the test fixture
+    # always"). When eth1 exists it sacrifices eth1 instead, keeps the IP on eth0 and turns the
+    # forwarding on. testcontainers attaches only one network, so create a dummy eth1 first.
+    kwargs = {
+        "privileged": True,
+        "cap_add": ["NET_ADMIN", "NET_RAW"],
+        "entrypoint": [
+            "/bin/bash",
+            "-c",
+            "ip link add eth1 type dummy && ip addr add 10.99.0.2/24 dev eth1 && ip link set eth1 up; "
+            "exec /routeros_source/entrypoint.sh",
+        ],
+    }
     if os.name != "nt":
         kwargs["devices"] = ["/dev/net/tun:/dev/net/tun"]
 
-    container = (
-        DockerContainer("evilfreelancer/docker-routeros:latest")
-        .with_exposed_ports(22)
-        .with_kwargs(**kwargs)
-    )
+    # About one boot in five wedges after RouterOS prints its version banner and never answers on
+    # SSH (issue #143, "residual ~20%"). Waiting longer does not help, so give each container a
+    # fixed time to come up and start a fresh one if it does not.
+    container = None
+    for attempt in range(1, BOOT_ATTEMPTS + 1):
+        candidate = (
+            DockerContainer("evilfreelancer/docker-routeros:latest")
+            .with_exposed_ports(22)
+            .with_kwargs(**kwargs)
+        )
+        candidate.start()
+        try:
+            host = candidate.get_container_host_ip()
+            port = int(candidate.get_exposed_port(22))
+            _wait_for_mikrotik_ready(host, port, max_attempts=BOOT_WAIT_ATTEMPTS)
+            container = candidate
+            break
+        except Exception as boot_error:
+            print(f"RouterOS container did not boot (attempt {attempt} of {BOOT_ATTEMPTS}): {boot_error}")
+            try:
+                candidate.stop()
+            except Exception as cleanup_error:
+                print(f"Warning: Cleanup failed: {cleanup_error}")
+    if container is None:
+        pytest.fail(f"The RouterOS container did not boot in {BOOT_ATTEMPTS} attempts (see issue #143).")
 
     try:
-        container.start()
-        host = container.get_container_host_ip()
-        port = int(container.get_exposed_port(22))
-
-        _wait_for_mikrotik_ready(host, port)
         _ensure_mikrotik_password(host, port, "mikrotik123")
 
         yield {
@@ -184,6 +220,9 @@ def _ensure_mikrotik_password(host: str, port: int, password: str) -> None:
     raise Exception("Unable to authenticate to MikroTik container over SSH")
 
 
+# RouterOS boots under QEMU emulation (no KVM in most Docker setups), and the fixture may have to start
+# a second or third container (see BOOT_ATTEMPTS). The default 300 s in pytest.ini would cut that off.
+@pytest.mark.timeout(1200)
 @pytest.mark.integration
 class TestMikroTikUserIntegration:
     test_username = "integration_test_user"
