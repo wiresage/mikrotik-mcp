@@ -1,4 +1,5 @@
 import io
+import types
 
 import pytest
 
@@ -70,7 +71,7 @@ def test_execute_command_handles_cp1252_stdout(monkeypatch):
     class DummySSH:
         def set_missing_host_key_policy(self, _): pass
         def connect(self, **kwargs): pass
-        def exec_command(self, command):
+        def exec_command(self, command, timeout=None):
             return (None, io.BytesIO(cp1252_bytes), io.BytesIO(b""))
         def close(self): pass
 
@@ -93,7 +94,7 @@ def test_execute_command_handles_cp1252_stderr(monkeypatch):
     class DummySSH:
         def set_missing_host_key_policy(self, _): pass
         def connect(self, **kwargs): pass
-        def exec_command(self, command):
+        def exec_command(self, command, timeout=None):
             return (None, io.BytesIO(b""), io.BytesIO(cp1252_err))
         def close(self): pass
 
@@ -127,7 +128,7 @@ def test_ssh_client_connect_and_execute(monkeypatch):
         def connect(self, **kwargs):
             state["connect_kwargs"] = kwargs
 
-        def exec_command(self, command: str):
+        def exec_command(self, command: str, timeout=None):
             assert command == "/system identity print"
             return (None, io.BytesIO(b"out"), io.BytesIO(b""))
 
@@ -188,7 +189,7 @@ def test_ssh_client_returns_stderr_when_no_stdout(monkeypatch):
         def connect(self, **kwargs):
             pass
 
-        def exec_command(self, command: str):
+        def exec_command(self, command: str, timeout=None):
             return (None, io.BytesIO(b""), io.BytesIO(b"failure: nope"))
 
         def close(self):
@@ -235,6 +236,9 @@ def test_ssh_client_download_file_via_sftp(monkeypatch):
             self.closed = False
             self.requested = None
 
+        def get_channel(self):
+            return types.SimpleNamespace(settimeout=lambda seconds: None)
+
         def getfo(self, remotepath, fileobj):
             self.requested = remotepath
             fileobj.write(self.payload)
@@ -258,6 +262,9 @@ def test_ssh_client_upload_file_via_sftp(monkeypatch):
     class DummySFTP:
         def __init__(self):
             self.closed = False
+
+        def get_channel(self):
+            return types.SimpleNamespace(settimeout=lambda seconds: None)
 
         def putfo(self, fileobj, remotepath):
             captured["remotepath"] = remotepath

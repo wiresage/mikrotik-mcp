@@ -1,5 +1,6 @@
 import io
 import logging
+import socket
 from typing import Optional
 
 import paramiko
@@ -8,10 +9,29 @@ from .sensitive import redact_if_enabled
 
 logger = logging.getLogger(__name__)
 
+# Seconds allowed for the TCP connection, the SSH banner and the login. A device that does not
+# answer within this time is treated as unreachable.
+CONNECT_TIMEOUT = 10.0
+
+# Seconds a command (or file transfer) may wait for the device before the call gives up. This is
+# an idle timeout on the SSH channel: output that keeps arriving resets it, so a long export is
+# fine, but a device that logs in and then never answers can no longer block a call (and the
+# worker thread running it) for ever. Overridable with MIKROTIK_COMMAND_TIMEOUT.
+DEFAULT_COMMAND_TIMEOUT = 180.0
+
+
 class MikroTikSSHClient:
     """SSH client for MikroTik devices."""
 
-    def __init__(self, host: str, username: str, password: str, key_filename: Optional[str], port: int = 22):
+    def __init__(
+        self,
+        host: str,
+        username: str,
+        password: str,
+        key_filename: Optional[str],
+        port: int = 22,
+        command_timeout: float = DEFAULT_COMMAND_TIMEOUT,
+    ):
         self.host = host
         self.username = username
         self.password = password
@@ -19,6 +39,14 @@ class MikroTikSSHClient:
         self.client = None
         self.channel = None
         self.key_filename = key_filename
+        self.command_timeout = command_timeout
+
+    def _timeout_error(self) -> TimeoutError:
+        # The command is left out of the message: it may carry a password or key.
+        return TimeoutError(
+            f"The device accepted the connection but did not answer within "
+            f"{self.command_timeout:g} seconds."
+        )
 
     @staticmethod
     def _decode_output(data: bytes) -> str:
@@ -58,7 +86,9 @@ class MikroTikSSHClient:
                 key_filename=self.key_filename,
                 look_for_keys=False,
                 allow_agent=False,
-                timeout=10
+                timeout=CONNECT_TIMEOUT,
+                banner_timeout=CONNECT_TIMEOUT,
+                auth_timeout=CONNECT_TIMEOUT,
             )
             return True
         except Exception as e:
@@ -80,7 +110,7 @@ class MikroTikSSHClient:
             raise Exception("Not connected to MikroTik device")
 
         try:
-            stdin, stdout, stderr = self.client.exec_command(command)
+            stdin, stdout, stderr = self.client.exec_command(command, timeout=self.command_timeout)
 
             output = self._decode_output(stdout.read())
             error = self._decode_output(stderr.read())
@@ -89,6 +119,9 @@ class MikroTikSSHClient:
                 return error
 
             return output
+        except socket.timeout:
+            logger.error("The device did not answer within %g seconds", self.command_timeout)
+            raise self._timeout_error() from None
         except Exception as e:
             logger.error("Error executing command: %s", redact_if_enabled(str(e)))
             raise
@@ -129,9 +162,12 @@ class MikroTikSSHClient:
 
         sftp = self._open_sftp()
         try:
+            sftp.get_channel().settimeout(self.command_timeout)
             buffer = io.BytesIO()
             sftp.getfo(remote_filename, buffer)
             return buffer.getvalue()
+        except socket.timeout:
+            raise self._timeout_error() from None
         finally:
             sftp.close()
 
@@ -142,7 +178,10 @@ class MikroTikSSHClient:
 
         sftp = self._open_sftp()
         try:
+            sftp.get_channel().settimeout(self.command_timeout)
             sftp.putfo(io.BytesIO(data), remote_filename)
+        except socket.timeout:
+            raise self._timeout_error() from None
         finally:
             sftp.close()
 

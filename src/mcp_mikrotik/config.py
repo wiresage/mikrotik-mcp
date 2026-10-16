@@ -84,7 +84,17 @@ class MikrotikConfig(BaseSettings):
     key_filename: Optional[str] = None
     read_only: bool = False
     sensitive_hiding: bool = False
+    # Seconds a command may wait for the device before the call fails. Idle time on the SSH
+    # channel, not a total: output that keeps arriving resets it. See mikrotik_ssh_client.
+    command_timeout: float = 180.0
     mcp: McpServerSettings = McpServerSettings()
+
+    @field_validator("command_timeout")
+    @classmethod
+    def _positive_command_timeout(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("must be greater than 0 seconds")
+        return v
 
     # ── Multi-device inventory ─────────────────────────────────────────────
     # A list of devices, written in YAML. JSON is a subset of YAML, so a JSON

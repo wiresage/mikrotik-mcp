@@ -131,6 +131,7 @@ class Inventory:
             password=device.password,
             key_filename=device.key_filename,
             port=device.port,
+            command_timeout=config.mikrotik_config.command_timeout,
         )
         if not client.connect():
             raise ConnectionError(
