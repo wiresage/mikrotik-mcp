@@ -26,6 +26,8 @@ def test_write_selectors(module_name, function_name, id_name, menu, action, ctx,
     async def execute(command, _ctx, device=None):
         nonlocal present, moved
         commands.append(command)
+        if command == f":put [{menu} find]":
+            return "*2;*1;*3;*4"  # the list in print order; the item under test is at position 1
         if command.startswith(":put [:pick"):
             return "*1" if (present and ("find] 0]" in command or moved)) else "*2"
         if "count-only" in command:
@@ -100,6 +102,8 @@ def test_write_refusals(module_name, function_name, id_name, menu, action, respo
     module = __import__(f"mcp_mikrotik.scope.{module_name}", fromlist=["*"])
 
     async def execute(command, _ctx, device=None):
+        if command == f":put [{menu} find]":
+            return "*0;*1;*2;*3"
         if "count-only" in command:
             return "1"
         if f" {action} " in command:
@@ -122,6 +126,8 @@ def test_silent_noop_is_not_success(module_name, function_name, id_name, menu, a
     module = __import__(f"mcp_mikrotik.scope.{module_name}", fromlist=["*"])
 
     async def execute(command, _ctx, device=None):
+        if command == f":put [{menu} find]":
+            return "*0;*1;*2;*3"
         if "count-only" in command:
             return "1"
         if command.startswith(":put [:pick"):

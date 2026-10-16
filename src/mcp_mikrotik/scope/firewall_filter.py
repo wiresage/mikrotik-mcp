@@ -2,7 +2,7 @@ from typing import Literal, Optional, List
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, DANGEROUS, annotate
 from ..connector import execute_mikrotik_command
-from ._selectors import _ID_RE, resolve_item_id
+from ._selectors import _ID_RE, item_at_position, move_to_position, resolve_item_id
 
 async def _resolve_filter_rule_id(rule_id: str, ctx: Context, device: Optional[str]) -> Optional[str]:
     return await resolve_item_id("/ip firewall filter", rule_id, ctx, device, execute_mikrotik_command)
@@ -421,11 +421,15 @@ async def mikrotik_move_filter_rule(ctx: Context, rule_id: str, destination: int
         return f"Firewall filter rule with ID '{rule_id}' not found."
 
     # Move the rule
-    cmd = f"/ip firewall filter move {resolved} destination={destination}"
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    menu = "/ip firewall filter"
+    result = await move_to_position(menu, resolved, destination, ctx, device, execute_mikrotik_command)
 
-    if "failure:" in result.lower() or "error" in result.lower():
+    if "no such item" in result.lower():
+        return f"Firewall filter rule with ID '{rule_id}' not found."
+    if result.strip():
         return f"Failed to move firewall filter rule: {result}"
+    if await item_at_position(menu, destination, ctx, device, execute_mikrotik_command) != resolved:
+        return f"Failed to move firewall filter rule: rule '{rule_id}' is not at position {destination}."
 
     return f"Firewall filter rule with ID '{rule_id}' moved to position {destination}."
 

@@ -257,6 +257,8 @@ def test_move_rule(ctx, monkeypatch):
 
     async def execute(command, _ctx, device=None):
         commands.append(command)
+        if command == ":put [/ipv6 firewall filter find]":
+            return "*0;*1;*2;*3;*4"
         if "count-only" in command:
             return "1"
         if command.startswith(":put [:pick"):
@@ -266,7 +268,8 @@ def test_move_rule(ctx, monkeypatch):
     monkeypatch.setattr(m, "execute_mikrotik_command", execute, raising=True)
 
     out = _run(m.mikrotik_move_ipv6_filter_rule(ctx, rule_id="*1", destination=3))
-    assert "/ipv6 firewall filter move *1 destination=3" in commands
+    # *1 is at position 1; to end up at position 3 it goes in front of the item now at position 4
+    assert "/ipv6 firewall filter move *1 destination=*4" in commands
     assert "moved to position 3" in out
 
 
