@@ -60,3 +60,12 @@ from mcp_mikrotik.scope import (  # noqa: F401, E402
     backup, dhcp, dns, firewall_address_list, firewall_filter, firewall_nat,
     interfaces, inventory, ip_address, ipv6_address, ipv6_firewall_filter, ip_pool, logs, neighbors, poe, queue, safe_mode, routes, users, vlan, wireless, wireguard,
 )
+
+# ── Local additions, not upstream ───────────────────────────────────────────
+# Kept in their own import block on purpose: the list above is the line that
+# upstream edits every time it adds a module, so sharing it would guarantee a
+# conflict on each `git rebase origin/master`. The upgrade procedure lives in
+# glg-infra/07-acceso-mcp/Herramientas_MCP_Locales.md.
+from mcp_mikrotik.scope import (  # noqa: F401, E402
+    ipsec, netwatch, scheduler, services, system,
+)
