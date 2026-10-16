@@ -2,6 +2,7 @@ from typing import Literal, Optional
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ..connector import execute_mikrotik_command
+from ._selectors import has_item_rows
 
 
 # ───────────────────────────────────────────────
@@ -170,7 +171,7 @@ async def mikrotik_get_queue_type(ctx: Context, name: str, device: Optional[str]
 
     cmd = f'/queue type print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"Queue type '{name}' not found."
     return f"QUEUE TYPE DETAILS:\n\n{result}"
 
@@ -371,7 +372,7 @@ async def mikrotik_get_queue_tree(ctx: Context, name: str, device: Optional[str]
 
     cmd = f'/queue tree print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"Queue tree '{name}' not found."
     return f"QUEUE TREE DETAILS:\n\n{result}"
 
@@ -617,7 +618,7 @@ async def mikrotik_get_simple_queue(ctx: Context, name: str, device: Optional[st
 
     cmd = f'/queue simple print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"Simple queue '{name}' not found."
     return f"SIMPLE QUEUE DETAILS:\n\n{result}"
 

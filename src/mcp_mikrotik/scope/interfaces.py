@@ -2,6 +2,7 @@ from typing import Literal, Optional
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE_IDEMPOTENT, annotate
+from ._selectors import has_item_rows
 
 
 @mcp.tool(name="list_interfaces", annotations=annotate(READ, "List Interfaces"))
@@ -61,7 +62,7 @@ async def mikrotik_get_interface(ctx: Context, name: str, device: Optional[str] 
     cmd = f'/interface print detail where name="{name}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "":
+    if not has_item_rows(result):
         return f"Interface '{name}' not found."
 
     return f"INTERFACE DETAILS:\n\n{result}"

@@ -3,6 +3,15 @@ import re
 
 _ID_RE = re.compile(r"\*[0-9A-Fa-f]+")
 
+# `print detail` numbers every item it prints (" 0  R  name=..." or " 0    ;;; comment"). The Flags legend that
+# RouterOS prints even when nothing matches (it can run over several lines) never starts with a number.
+_ITEM_ROW_RE = re.compile(r"^\s*\d+\s", re.MULTILINE)
+
+
+def has_item_rows(output):
+    """True when ``print detail`` output contains at least one item, not just the Flags legend."""
+    return bool(output) and _ITEM_ROW_RE.search(output) is not None
+
 
 async def resolve_item_id(menu, item_id, ctx, device, execute):
     """Accept internal IDs or resolve a print position without RouterOS number maps."""
