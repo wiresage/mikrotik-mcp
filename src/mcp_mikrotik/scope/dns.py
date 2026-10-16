@@ -4,7 +4,8 @@ from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
-from ._selectors import resolve_item_id, item_count
+from ._quoting import ros_quoted
+from ._selectors import _ID_RE, resolve_item_id, item_count
 
 @mcp.tool(name="set_dns_servers", annotations=annotate(WRITE, "Set DNS Servers"))
 async def mikrotik_set_dns_servers(
@@ -87,10 +88,15 @@ async def mikrotik_add_dns_static(
     regexp: Optional[str] = None,
     device: Optional[str] = None
 ) -> str:
-    """Adds a static DNS entry."""
+    """Adds a static DNS entry.
+
+    Notes:
+        regexp: a regular expression the name must match. A regexp entry has no name, so ``name`` is
+            ignored when ``regexp`` is given (RouterOS refuses both: "only name or regexp allowed").
+    """
     await ctx.info(f"Adding static DNS entry: name={name}")
 
-    cmd = f'/ip dns static add name="{name}"'
+    cmd = "/ip dns static add" if regexp else f'/ip dns static add name="{name}"'
 
     if address:
         cmd += f" address={address}"
@@ -118,30 +124,21 @@ async def mikrotik_add_dns_static(
         cmd += " disabled=yes"
 
     if regexp:
-        cmd += f' regexp="{regexp}"'
+        cmd += f' regexp="{ros_quoted(regexp)}"'
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    # `:put [...]` makes the router echo the new internal id (RouterOS 7 prints nothing for a plain
+    # add). The id is proof that the entry exists, and the only way to find a regexp entry, which has
+    # no name to look it up by.
+    result = await execute_mikrotik_command(f":put [{cmd}]", ctx, device=device)
 
-    if result.strip():
-        if "*" in result or result.strip().isdigit():
-            entry_id = result.strip()
-            details_cmd = f"/ip dns static print detail where .id={entry_id}"
-            details = await execute_mikrotik_command(details_cmd, ctx, device=device)
+    entry_id = result.strip()
+    if not _ID_RE.fullmatch(entry_id):
+        return f"Failed to add static DNS entry: {entry_id or 'no entry ID returned'}"
 
-            if details.strip():
-                return f"Static DNS entry added successfully:\n\n{details}"
-            else:
-                return f"Static DNS entry added with ID: {result}"
-        else:
-            return f"Failed to add static DNS entry: {result}"
-    else:
-        details_cmd = f'/ip dns static print detail where name="{name}"'
-        details = await execute_mikrotik_command(details_cmd, ctx, device=device)
-
-        if details.strip():
-            return f"Static DNS entry added successfully:\n\n{details}"
-        else:
-            return "Static DNS entry addition completed but unable to verify."
+    details = await execute_mikrotik_command(f"/ip dns static print detail where .id={entry_id}", ctx, device=device)
+    if details.strip():
+        return f"Static DNS entry added successfully:\n\n{details}"
+    return f"Static DNS entry added with ID: {entry_id}"
 
 @mcp.tool(name="list_dns_static", annotations=annotate(READ, "List DNS Static Entries"))
 async def mikrotik_list_dns_static(
@@ -267,7 +264,7 @@ async def mikrotik_update_dns_static(
         if regexp == "":
             updates.append("!regexp")
         else:
-            updates.append(f'regexp="{regexp}"')
+            updates.append(f'regexp="{ros_quoted(regexp)}"')
 
     if not updates:
         return "No updates specified."
@@ -369,8 +366,9 @@ async def mikrotik_add_dns_regexp(
     """Adds a DNS regexp entry."""
     await ctx.info(f"Adding DNS regexp entry: regexp={regexp}")
 
+    # A regexp entry is nameless: passing a name makes RouterOS refuse it ("only name or regexp allowed").
     return await mikrotik_add_dns_static(
-        name="dummy",
+        name="",
         address=address,
         regexp=regexp,
         ttl=ttl,
