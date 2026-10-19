@@ -108,6 +108,8 @@ A push to `master` runs the release workflows only when it changes a shipped fil
 
 Releases are queued, one at a time. When several merges land within a few minutes, a release that is still waiting is cancelled in favour of the newest one, which publishes everything merged so far under one version; seeing cancelled runs in Actions is expected. Wait for the last run to finish before checking PyPI or GHCR.
 
+The MCP registry step retries transient registry errors (5xx, timeouts) up to four times and treats "duplicate version" as done. If it still ends red, only that job needs another go: `gh run rerun <run-id> --failed` is safe, and the registry is the one channel to check afterwards (`GET /v0/servers/io.github.wiresage%2Fmikrotik-mcp/versions/<version>`).
+
 ## Documentation
 
 `docs/` is the source of the documentation; the website at mikrotik-mcp.com is built from the separate `wiresage/mikrotik-mcp-website` repository. When a tool's parameters change, update its page under `docs/reference/`.

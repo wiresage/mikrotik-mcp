@@ -231,19 +231,37 @@ jobs:
 
       - name: Publish to MCP Registry
         run: |
-          # The registry refuses a version it already has. That happens when a
-          # run is re-run, or when PyPI skipped the upload because the version
-          # was already there. It does not mean this release failed.
-          if OUT=$(./mcp-publisher publish 2>&1); then
-            echo "$OUT"
-          else
+          # Two failures here are not the release's fault:
+          #  - the registry refuses a version it already has ("duplicate version").
+          #    That happens on a re-run, when PyPI skipped the upload because the
+          #    version existed, or when an earlier attempt timed out after the
+          #    registry had in fact recorded it;
+          #  - the registry or the network is briefly unavailable (a 504 once left a
+          #    release unlisted for hours). Those are retried; anything else fails
+          #    straight away.
+          attempts=4
+          for attempt in $(seq 1 "$attempts"); do
+            if [ "$attempt" -gt 1 ]; then
+              # a fresh token for each retry; the first one may be close to expiry
+              ./mcp-publisher login github-oidc
+            fi
+            if OUT=$(./mcp-publisher publish 2>&1); then
+              echo "$OUT"
+              exit 0
+            fi
             echo "$OUT"
             if echo "$OUT" | grep -q "cannot publish duplicate version"; then
               echo "Version already in the MCP registry, skipping."
-            else
-              exit 1
+              exit 0
             fi
-          fi
+            if [ "$attempt" -lt "$attempts" ] && echo "$OUT" | grep -qE "status 5[0-9][0-9]|i/o timeout|deadline exceeded|connection (reset|refused)|unexpected EOF"; then
+              wait=$((attempt * 30))
+              echo "Transient registry error on attempt $attempt of $attempts, retrying in ${wait}s."
+              sleep "$wait"
+              continue
+            fi
+            exit 1
+          done
 
   create-release:
     runs-on: ubuntu-latest
