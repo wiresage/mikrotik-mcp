@@ -48,3 +48,52 @@ def test_config_rejects_invalid_allowed_ip():
 
     with pytest.raises(ValidationError, match="invalid IP address or network"):
         MikrotikConfig(mcp={"allowed_ips": "10.0.0.1/8"})
+
+
+def test_agent_key_requires_allow_agent():
+    import pytest
+    from pydantic import ValidationError
+
+    from mcp_mikrotik.config import DeviceConfig
+
+    with pytest.raises(ValidationError, match="agent_key requires allow_agent"):
+        DeviceConfig(title="Router", host="10.0.0.1", agent_key="SHA256:abc")
+
+
+def test_agent_key_with_allow_agent():
+    from mcp_mikrotik.config import DeviceConfig
+
+    cfg = DeviceConfig(
+        title="Router", host="10.0.0.1", allow_agent=True, agent_key="SHA256:abc"
+    )
+    assert cfg.agent_key == "SHA256:abc"
+
+
+def test_agent_key_rejects_blank():
+    import pytest
+    from pydantic import ValidationError
+
+    from mcp_mikrotik.config import DeviceConfig
+
+    for blank in ("", "   ", "\t\n"):
+        with pytest.raises(ValidationError, match="agent_key must not be blank"):
+            DeviceConfig(title="Router", host="10.0.0.1", allow_agent=True, agent_key=blank)
+
+
+def test_agent_key_is_stripped():
+    from mcp_mikrotik.config import DeviceConfig
+
+    cfg = DeviceConfig(
+        title="Router", host="10.0.0.1", allow_agent=True, agent_key="  SHA256:abc  "
+    )
+    assert cfg.agent_key == "SHA256:abc"
+
+
+def test_flat_agent_key_rejects_blank():
+    import pytest
+    from pydantic import ValidationError
+
+    from mcp_mikrotik.config import MikrotikConfig
+
+    with pytest.raises(ValidationError, match="agent_key must not be blank"):
+        MikrotikConfig(allow_agent=True, agent_key="   ")

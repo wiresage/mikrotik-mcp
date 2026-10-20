@@ -103,6 +103,8 @@ here too — existing configs keep working unchanged.
 | `username` | no | default `admin` |
 | `password` | no | omit when using `key_filename` |
 | `key_filename` | no | path to an SSH private key (preferred over a password) |
+| `allow_agent` | no | authenticate with keys offered by the SSH agent at `SSH_AUTH_SOCK`; default `false` |
+| `agent_key` | no | use only a matching agent key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint; requires `allow_agent: true` |
 | `tags` | no | free-form labels, e.g. `[branch, eu]` |
 | `region` | no | free-form label, e.g. `NL` |
 

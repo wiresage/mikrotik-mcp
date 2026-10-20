@@ -132,6 +132,8 @@ class Inventory:
             key_filename=device.key_filename,
             port=device.port,
             command_timeout=config.mikrotik_config.command_timeout,
+            allow_agent=device.allow_agent,
+            agent_key=device.agent_key,
         )
         if not client.connect():
             raise ConnectionError(
@@ -252,6 +254,8 @@ def _load_devices() -> List[DeviceConfig]:
             username=cfg.username,
             password=cfg.password,
             key_filename=cfg.key_filename,
+            allow_agent=cfg.allow_agent,
+            agent_key=cfg.agent_key,
         )
     ]
 

@@ -1,6 +1,9 @@
+import base64
+import hashlib
 import io
 import types
 
+import paramiko
 import pytest
 
 
@@ -296,4 +299,126 @@ def test_ssh_client_upload_requires_connect():
     client = MikroTikSSHClient(host="h", username="u", password="p", key_filename=None, port=22)
     with pytest.raises(Exception, match="Not connected"):
         client.upload_file("x.rsc", b"data")
+
+
+# ---------------------------------------------------------------------------
+# SSH agent authentication
+# ---------------------------------------------------------------------------
+
+def _agent_client(monkeypatch, keys, password="p", **kwargs):
+    import mcp_mikrotik.mikrotik_ssh_client as mod
+
+    seen = {}
+    agents = []
+
+    class FakeAgent:
+        def __init__(self):
+            self.closed = False
+
+        def get_keys(self):
+            return tuple(keys)
+
+        def close(self):
+            self.closed = True
+
+    class FakeSSH:
+        def set_missing_host_key_policy(self, policy):
+            pass
+
+        def connect(self, **connect_kwargs):
+            seen.update(connect_kwargs)
+
+        def close(self):
+            pass
+
+    def make_agent():
+        agent = FakeAgent()
+        agents.append(agent)
+        return agent
+
+    monkeypatch.setattr(mod.paramiko, "SSHClient", FakeSSH)
+    monkeypatch.setattr(mod.paramiko, "Agent", make_agent)
+    return mod.MikroTikSSHClient("h", "u", password, None, **kwargs), seen, agents
+
+
+class TestAgentKeyMatches:
+    def test_full_ecdsa_public_key_line(self):
+        from mcp_mikrotik.mikrotik_ssh_client import MikroTikSSHClient
+
+        key = paramiko.ECDSAKey.generate()
+        selector = f"{key.get_name()} {key.get_base64()} user@host"
+        assert MikroTikSSHClient._agent_key_matches(key, selector)
+
+    def test_bare_base64_blob(self):
+        from mcp_mikrotik.mikrotik_ssh_client import MikroTikSSHClient
+
+        key = paramiko.ECDSAKey.generate()
+        assert MikroTikSSHClient._agent_key_matches(key, key.get_base64())
+
+    def test_sha256_fingerprint(self):
+        from mcp_mikrotik.mikrotik_ssh_client import MikroTikSSHClient
+
+        key = paramiko.ECDSAKey.generate()
+        digest = hashlib.sha256(key.asbytes()).digest()
+        fingerprint = "SHA256:" + base64.b64encode(digest).decode().rstrip("=")
+        assert MikroTikSSHClient._agent_key_matches(key, fingerprint)
+
+    def test_other_key_does_not_match(self):
+        from mcp_mikrotik.mikrotik_ssh_client import MikroTikSSHClient
+
+        key = paramiko.ECDSAKey.generate()
+        other = paramiko.ECDSAKey.generate()
+        assert not MikroTikSSHClient._agent_key_matches(key, other.get_base64())
+
+
+class TestAgentConnect:
+    def test_selects_only_matching_key(self, monkeypatch):
+        key = paramiko.ECDSAKey.generate()
+        other = paramiko.ECDSAKey.generate()
+        client, seen, agents = _agent_client(
+            monkeypatch, (other, key), allow_agent=True, agent_key=key.get_base64()
+        )
+
+        assert client.connect() is True
+        assert seen["pkey"] is key
+        assert seen["allow_agent"] is False
+        assert agents[0].closed is True
+
+    def test_strips_whitespace_from_selector(self, monkeypatch):
+        key = paramiko.ECDSAKey.generate()
+        client, seen, _ = _agent_client(
+            monkeypatch, (key,), allow_agent=True, agent_key=f"  {key.get_base64()}  "
+        )
+
+        assert client.connect() is True
+        assert seen["pkey"] is key
+
+    def test_without_selector_uses_paramiko_agent(self, monkeypatch):
+        client, seen, agents = _agent_client(monkeypatch, (), allow_agent=True)
+
+        assert client.connect() is True
+        assert seen["allow_agent"] is True
+        assert "pkey" not in seen
+        assert agents == []
+
+    def test_unknown_selector_fails(self, monkeypatch):
+        key = paramiko.ECDSAKey.generate()
+        other = paramiko.ECDSAKey.generate()
+        client, seen, agents = _agent_client(
+            monkeypatch, (other,), allow_agent=True, agent_key=key.get_base64()
+        )
+
+        assert client.connect() is False
+        assert client.client is None
+        assert seen == {}
+        assert agents[0].closed is True
+
+    def test_blank_password_is_forwarded(self, monkeypatch):
+        key = paramiko.ECDSAKey.generate()
+        client, seen, _ = _agent_client(
+            monkeypatch, (key,), password="", allow_agent=True, agent_key=key.get_base64()
+        )
+
+        assert client.connect() is True
+        assert seen["password"] == ""
 

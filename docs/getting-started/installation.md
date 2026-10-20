@@ -157,6 +157,8 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_HOST` | MikroTik device IP/hostname | `192.168.88.1` |
    | `MIKROTIK_USERNAME` | SSH username | `admin` |
    | `MIKROTIK_PASSWORD` | SSH password | _(empty)_ |
+   | `MIKROTIK_ALLOW_AGENT` | Set to `true` to authenticate with keys offered by the SSH agent at `SSH_AUTH_SOCK` | `false` |
+   | `MIKROTIK_AGENT_KEY` | Use only a matching agent key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint. Requires `MIKROTIK_ALLOW_AGENT=true` | _(empty)_ |
     | `MIKROTIK_PORT` | SSH port | `22` |
     | `MIKROTIK_READ_ONLY` | Set to `true` to expose only tools that do not modify RouterOS or its file store | `false` |
     | `MIKROTIK_SENSITIVE_HIDING` | Set to `true` to redact recognized credentials and private key material | `false` |

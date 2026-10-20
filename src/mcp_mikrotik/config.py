@@ -2,10 +2,29 @@ import json
 from typing import Annotated, List, Literal, Optional
 
 import yaml
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from .http_security import parse_allowed_ips
+
+
+def _validate_agent_key(value: Optional[str]) -> Optional[str]:
+    """Strip an SSH agent key selector, rejecting a blank value."""
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        raise ValueError("agent_key must not be blank")
+    return value
+
+
+AgentKeySelector = Annotated[Optional[str], AfterValidator(_validate_agent_key)]
 
 
 class McpServerSettings(BaseModel):
@@ -52,6 +71,9 @@ class DeviceConfig(BaseModel):
     username: str = "admin"
     password: str = ""
     key_filename: Optional[str] = None
+    # Authenticate via SSH_AUTH_SOCK; agent_key limits which agent key is offered.
+    allow_agent: bool = False
+    agent_key: AgentKeySelector = None
     tags: List[str] = []
     region: Optional[str] = None
 
@@ -61,6 +83,12 @@ class DeviceConfig(BaseModel):
         if not v or not v.strip():
             raise ValueError("device 'title' must be a non-empty string")
         return v.strip()
+
+    @model_validator(mode="after")
+    def _agent_key_requires_agent(self) -> "DeviceConfig":
+        if self.agent_key and not self.allow_agent:
+            raise ValueError("agent_key requires allow_agent: true")
+        return self
 
 
 class MikrotikConfig(BaseSettings):
@@ -82,6 +110,8 @@ class MikrotikConfig(BaseSettings):
     password: str = ""
     port: int = 22
     key_filename: Optional[str] = None
+    allow_agent: bool = False
+    agent_key: AgentKeySelector = None
     read_only: bool = False
     sensitive_hiding: bool = False
     # Seconds a command may wait for the device before the call fails. Idle time on the SSH
