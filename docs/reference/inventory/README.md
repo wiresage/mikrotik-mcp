@@ -103,8 +103,8 @@ here too — existing configs keep working unchanged.
 | `username` | no | default `admin` |
 | `password` | no | omit when using `key_filename` |
 | `key_filename` | no | path to an SSH private key (preferred over a password) |
-| `allow_agent` | no | authenticate with keys offered by the SSH agent at `SSH_AUTH_SOCK`; default `false` |
-| `agent_key` | no | use only a matching agent key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint; requires `allow_agent: true` |
+| `allow_ssh_agent` | no | authenticate with keys offered by the SSH agent through `SSH_AUTH_SOCK`; default `false` |
+| `ssh_agent_key` | no | restrict agent authentication to the matching key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint; requires `allow_ssh_agent: true` |
 | `tags` | no | free-form labels, e.g. `[branch, eu]` |
 | `region` | no | free-form label, e.g. `NL` |
 
@@ -173,8 +173,10 @@ entrypoint catches with an explicit error instead of starting a broken server:
   creates a **directory** at both ends of the mount. Create the YAML file
   before `docker run` / `docker compose up`.
 
-When an inventory is configured it wins, so `MIKROTIK_HOST` / `MIKROTIK_USERNAME`
-/ `MIKROTIK_PASSWORD` / `MIKROTIK_PORT` are ignored and can be dropped.
+When an inventory is configured it wins, so `MIKROTIK_HOST` /
+`MIKROTIK_USERNAME` / `MIKROTIK_PASSWORD` / `MIKROTIK_PORT` /
+`MIKROTIK_ALLOW_SSH_AGENT` / `MIKROTIK_SSH_AGENT_KEY` are ignored and can be
+dropped.
 
 See [Installation](../../getting-started/installation.md) for the full Docker
 setup.

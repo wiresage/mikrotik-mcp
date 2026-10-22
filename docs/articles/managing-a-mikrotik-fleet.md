@@ -43,6 +43,8 @@ Only two fields are required:
 | `username` | no | Defaults to `admin` |
 | `password` | no | Skip it when you use `key_filename` |
 | `key_filename` | no | Path to an SSH private key. Prefer this over a password. |
+| `allow_ssh_agent` | no | Authenticate with keys offered by the SSH agent through `SSH_AUTH_SOCK`. |
+| `ssh_agent_key` | no | Restrict agent authentication to the matching key; requires `allow_ssh_agent: true`. |
 | `tags` | no | Free-form labels, like `[branch, eu]` |
 | `region` | no | Free-form label, like `NL` |
 

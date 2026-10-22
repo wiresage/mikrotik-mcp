@@ -18,6 +18,10 @@
 # This file holds credentials — treat the whole file as a secret:
 # restrict its permissions (chmod 600), keep it out of version control,
 # and prefer `key_filename` over `password` where you can.
+#
+# To authenticate through an SSH agent, set `allow_ssh_agent: true` and
+# `ssh_agent_key` to the matching public key line, base64 blob,
+# or a `SHA256:` fingerprint.
 
 - title: TitleA                 # required, unique — used as the `device` argument
   host: 192.168.88.1            # required — IP or hostname

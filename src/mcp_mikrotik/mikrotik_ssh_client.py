@@ -33,8 +33,8 @@ class MikroTikSSHClient:
         key_filename: Optional[str],
         port: int = 22,
         command_timeout: float = DEFAULT_COMMAND_TIMEOUT,
-        allow_agent: bool = False,
-        agent_key: Optional[str] = None,
+        allow_ssh_agent: bool = False,
+        ssh_agent_key: Optional[str] = None,
     ):
         self.host = host
         self.username = username
@@ -44,8 +44,8 @@ class MikroTikSSHClient:
         self.channel = None
         self.key_filename = key_filename
         self.command_timeout = command_timeout
-        self.allow_agent = allow_agent
-        self.agent_key = agent_key
+        self.allow_ssh_agent = allow_ssh_agent
+        self.ssh_agent_key = ssh_agent_key
 
     def _timeout_error(self) -> TimeoutError:
         # The command is left out of the message: it may carry a password or key.
@@ -80,14 +80,14 @@ class MikroTikSSHClient:
         return data.decode("utf-8", errors="replace")
 
     @staticmethod
-    def _agent_key_matches(agent_key: paramiko.PKey, selector: str) -> bool:
+    def _ssh_agent_key_matches(key: paramiko.PKey, selector: str) -> bool:
         """Return whether an SSH agent key matches the configured selector."""
         if selector.startswith("SHA256:"):
-            digest = hashlib.sha256(agent_key.asbytes()).digest()
+            digest = hashlib.sha256(key.asbytes()).digest()
             fingerprint = "SHA256:" + base64.b64encode(digest).decode().rstrip("=")
             return fingerprint == selector
         parts = selector.split()
-        return agent_key.get_base64() == (parts[1] if len(parts) > 1 else parts[0])
+        return key.get_base64() == (parts[1] if len(parts) > 1 else parts[0])
 
     def _connect(self) -> None:
         """Connect using the configured credentials, optionally via the SSH agent."""
@@ -102,24 +102,25 @@ class MikroTikSSHClient:
             "banner_timeout": CONNECT_TIMEOUT,
             "auth_timeout": CONNECT_TIMEOUT,
         }
-        selector = (self.agent_key or "").strip()
-        if self.allow_agent and selector:
+        selector = (self.ssh_agent_key or "").strip()
+        if self.allow_ssh_agent and selector:
             agent = paramiko.Agent()
             try:
                 key = next(
                     (k for k in agent.get_keys()
-                     if self._agent_key_matches(k, selector)),
+                     if self._ssh_agent_key_matches(k, selector)),
                     None,
                 )
                 if key is None:
                     raise paramiko.SSHException(
-                        "agent_key did not match any key offered by the SSH agent"
+                        "ssh_agent_key did not match any key offered by the SSH agent "
+                        "(check SSH_AUTH_SOCK and that the key is loaded with `ssh-add -l`)"
                     )
                 self.client.connect(pkey=key, allow_agent=False, **kwargs)
             finally:
                 agent.close()
         else:
-            self.client.connect(allow_agent=self.allow_agent, **kwargs)
+            self.client.connect(allow_agent=self.allow_ssh_agent, **kwargs)
 
     def connect(self):
         """Establish SSH connection to MikroTik device."""

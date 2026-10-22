@@ -50,50 +50,98 @@ def test_config_rejects_invalid_allowed_ip():
         MikrotikConfig(mcp={"allowed_ips": "10.0.0.1/8"})
 
 
-def test_agent_key_requires_allow_agent():
+def test_ssh_agent_key_requires_allow_ssh_agent():
     import pytest
     from pydantic import ValidationError
 
     from mcp_mikrotik.config import DeviceConfig
 
-    with pytest.raises(ValidationError, match="agent_key requires allow_agent"):
-        DeviceConfig(title="Router", host="10.0.0.1", agent_key="SHA256:abc")
+    with pytest.raises(ValidationError, match="ssh_agent_key requires allow_ssh_agent"):
+        DeviceConfig(title="Router", host="10.0.0.1", ssh_agent_key="SHA256:abc")
 
 
-def test_agent_key_with_allow_agent():
+def test_ssh_agent_key_with_allow_ssh_agent():
     from mcp_mikrotik.config import DeviceConfig
 
     cfg = DeviceConfig(
-        title="Router", host="10.0.0.1", allow_agent=True, agent_key="SHA256:abc"
+        title="Router",
+        host="10.0.0.1",
+        allow_ssh_agent=True,
+        ssh_agent_key="SHA256:abc",
     )
-    assert cfg.agent_key == "SHA256:abc"
+    assert cfg.ssh_agent_key == "SHA256:abc"
 
 
-def test_agent_key_rejects_blank():
+def test_ssh_agent_key_rejects_blank():
     import pytest
     from pydantic import ValidationError
 
     from mcp_mikrotik.config import DeviceConfig
 
     for blank in ("", "   ", "\t\n"):
-        with pytest.raises(ValidationError, match="agent_key must not be blank"):
-            DeviceConfig(title="Router", host="10.0.0.1", allow_agent=True, agent_key=blank)
+        with pytest.raises(ValidationError, match="ssh_agent_key must not be blank"):
+            DeviceConfig(
+                title="Router",
+                host="10.0.0.1",
+                allow_ssh_agent=True,
+                ssh_agent_key=blank,
+            )
 
 
-def test_agent_key_is_stripped():
+def test_ssh_agent_key_is_stripped():
     from mcp_mikrotik.config import DeviceConfig
 
     cfg = DeviceConfig(
-        title="Router", host="10.0.0.1", allow_agent=True, agent_key="  SHA256:abc  "
+        title="Router",
+        host="10.0.0.1",
+        allow_ssh_agent=True,
+        ssh_agent_key="  SHA256:abc  ",
     )
-    assert cfg.agent_key == "SHA256:abc"
+    assert cfg.ssh_agent_key == "SHA256:abc"
 
 
-def test_flat_agent_key_rejects_blank():
+def test_flat_ssh_agent_key_rejects_blank():
     import pytest
     from pydantic import ValidationError
 
     from mcp_mikrotik.config import MikrotikConfig
 
-    with pytest.raises(ValidationError, match="agent_key must not be blank"):
-        MikrotikConfig(allow_agent=True, agent_key="   ")
+    with pytest.raises(ValidationError, match="ssh_agent_key must not be blank"):
+        MikrotikConfig(allow_ssh_agent=True, ssh_agent_key="   ")
+
+
+def test_flat_ssh_agent_key_requires_allow_ssh_agent():
+    import pytest
+    from pydantic import ValidationError
+
+    from mcp_mikrotik.config import MikrotikConfig
+
+    with pytest.raises(ValidationError, match="ssh_agent_key requires allow_ssh_agent"):
+        MikrotikConfig(ssh_agent_key="SHA256:abc")
+
+
+def test_flat_ssh_agent_key_with_allow_ssh_agent():
+    from mcp_mikrotik.config import MikrotikConfig
+
+    cfg = MikrotikConfig(allow_ssh_agent=True, ssh_agent_key="SHA256:abc")
+    assert cfg.ssh_agent_key == "SHA256:abc"
+
+
+def test_flat_ssh_agent_key_ignored_with_inventory():
+    from mcp_mikrotik.config import DeviceConfig, MikrotikConfig
+
+    cfg = MikrotikConfig(
+        ssh_agent_key="SHA256:abc",
+        inventory=[DeviceConfig(title="Router", host="10.0.0.1")],
+    )
+    assert cfg.ssh_agent_key == "SHA256:abc"
+
+
+def test_flat_ssh_agent_key_ignored_with_inventory_file():
+    from mcp_mikrotik.config import MikrotikConfig
+
+    cfg = MikrotikConfig(
+        ssh_agent_key="SHA256:abc",
+        inventory_file="inventory.yml",
+    )
+    assert cfg.ssh_agent_key == "SHA256:abc"

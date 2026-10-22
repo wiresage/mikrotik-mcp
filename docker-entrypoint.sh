@@ -8,6 +8,8 @@ usage() {
     echo "  --host HOST           MikroTik device IP/hostname"
     echo "  --username USERNAME   SSH username"
     echo "  --password PASSWORD   SSH password"
+    echo "  --allow-ssh-agent     Authenticate with keys offered by the SSH agent"
+    echo "  --ssh-agent-key KEY   Restrict agent authentication to the matching key"
     echo "  --port PORT           SSH port (default: 22)"
     echo ""
     echo "Multiple devices (inventory) — takes precedence over the options above:"
@@ -24,6 +26,8 @@ usage() {
     echo "  MIKROTIK_HOST            MikroTik device IP/hostname"
     echo "  MIKROTIK_USERNAME        SSH username"
     echo "  MIKROTIK_PASSWORD        SSH password"
+    echo "  MIKROTIK_ALLOW_SSH_AGENT Authenticate with keys offered by the SSH agent (default: false)"
+    echo "  MIKROTIK_SSH_AGENT_KEY   Restrict agent authentication to the matching key"
     echo "  MIKROTIK_PORT            SSH port (default: 22)"
     echo "  MIKROTIK_INVENTORY       Inventory as a YAML (or JSON) list of devices"
     echo "  MIKROTIK_INVENTORY_FILE  Path to a YAML file holding the inventory"
@@ -53,6 +57,14 @@ while [ $# -gt 0 ]; do
             ;;
         --password)
             MIKROTIK_PASSWORD="$2"
+            shift 2
+            ;;
+        --allow-ssh-agent)
+            MIKROTIK_ALLOW_SSH_AGENT=true
+            shift
+            ;;
+        --ssh-agent-key)
+            MIKROTIK_SSH_AGENT_KEY="$2"
             shift 2
             ;;
         --port)
@@ -89,6 +101,8 @@ while [ $# -gt 0 ]; do
 done
 
 export MIKROTIK_MCP__TRANSPORT
+[ -n "${MIKROTIK_ALLOW_SSH_AGENT:-}" ] && export MIKROTIK_ALLOW_SSH_AGENT
+[ -n "${MIKROTIK_SSH_AGENT_KEY:-}" ] && export MIKROTIK_SSH_AGENT_KEY
 [ -n "${MIKROTIK_READ_ONLY:-}" ] && export MIKROTIK_READ_ONLY
 [ -n "${MIKROTIK_SENSITIVE_HIDING:-}" ] && export MIKROTIK_SENSITIVE_HIDING
 

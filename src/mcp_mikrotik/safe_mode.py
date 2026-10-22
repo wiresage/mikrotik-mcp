@@ -99,8 +99,8 @@ class SafeModeManager:
                 password=target.password,
                 key_filename=target.key_filename,
                 port=target.port,
-                allow_agent=target.allow_agent,
-                agent_key=target.agent_key,
+                allow_ssh_agent=target.allow_ssh_agent,
+                ssh_agent_key=target.ssh_agent_key,
             )
             if not ssh.connect():
                 return (

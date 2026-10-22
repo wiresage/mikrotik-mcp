@@ -51,6 +51,8 @@ mcp-server-mikrotik --mcp.transport streamable-http
 | `--username` | SSH username | from config |
 | `--password` | SSH password | from config |
 | `--key-filename` | SSH key filename | from config |
+| `--allow-ssh-agent` | Authenticate with keys offered by the SSH agent through `SSH_AUTH_SOCK` | `false` |
+| `--ssh-agent-key` | Restrict agent authentication to the matching key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint; requires `--allow-ssh-agent` | _(empty)_ |
 | `--port` | SSH port | `22` |
 | `--read-only` | Expose only tools that do not modify RouterOS or its file store | `false` |
 | `--sensitive-hiding` | Redact credentials and private key material from client-visible output | `false` |
@@ -157,12 +159,12 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_HOST` | MikroTik device IP/hostname | `192.168.88.1` |
    | `MIKROTIK_USERNAME` | SSH username | `admin` |
    | `MIKROTIK_PASSWORD` | SSH password | _(empty)_ |
-   | `MIKROTIK_ALLOW_AGENT` | Set to `true` to authenticate with keys offered by the SSH agent at `SSH_AUTH_SOCK` | `false` |
-   | `MIKROTIK_AGENT_KEY` | Use only a matching agent key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint. Requires `MIKROTIK_ALLOW_AGENT=true` | _(empty)_ |
+   | `MIKROTIK_ALLOW_SSH_AGENT` | Set to `true` to authenticate with keys offered by the SSH agent through `SSH_AUTH_SOCK` | `false` |
+   | `MIKROTIK_SSH_AGENT_KEY` | Restrict agent authentication to the matching key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint. Requires `MIKROTIK_ALLOW_SSH_AGENT=true` | _(empty)_ |
     | `MIKROTIK_PORT` | SSH port | `22` |
     | `MIKROTIK_READ_ONLY` | Set to `true` to expose only tools that do not modify RouterOS or its file store | `false` |
     | `MIKROTIK_SENSITIVE_HIDING` | Set to `true` to redact recognized credentials and private key material | `false` |
-   | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the four variables above. See [Inventory](../reference/inventory/README.md). | _(empty)_ |
+   | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/inventory/README.md). | _(empty)_ |
    | `MIKROTIK_INVENTORY_FILE` | Path **inside the container** to a YAML file holding the inventory — mount it as a volume | _(empty)_ |
    | `MIKROTIK_MCP__TRANSPORT` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
    | `MIKROTIK_MCP__HOST` | HTTP server listen address | `0.0.0.0` |
@@ -208,8 +210,8 @@ docker compose up -d
 
 #### Managing several devices
 
-To manage a fleet, give the container an **inventory** instead of the four
-single-device variables. The inventory is a YAML file on your host, and it
+To manage a fleet, give the container an **inventory** instead of the flat
+single-device settings. The inventory is a YAML file on your host, and it
 **must be mounted into the container as a volume** — the image ships `/config`
 as the mount point. A mounted file is also the safer channel: unlike an
 environment variable, its contents do not show up in `docker inspect`.
@@ -276,10 +278,11 @@ works, since it is a YAML subset), or via the `--inventory` /
 >   before starting the container.
 
 When an inventory is set it takes precedence and `MIKROTIK_HOST` /
-`MIKROTIK_USERNAME` / `MIKROTIK_PASSWORD` / `MIKROTIK_PORT` are ignored, so you
-can drop them. The entrypoint also stops applying its `192.168.88.1` default in
-that case, rather than injecting a host nobody asked for. Tools then take a
-`device` argument naming the title to target; see
+`MIKROTIK_USERNAME` / `MIKROTIK_PASSWORD` / `MIKROTIK_PORT` /
+`MIKROTIK_ALLOW_SSH_AGENT` / `MIKROTIK_SSH_AGENT_KEY` are ignored, so you
+can drop them. The entrypoint also stops applying its `192.168.88.1` default
+in that case, rather than injecting a host nobody asked for. Tools then take
+a `device` argument naming the title to target; see
 [Inventory](../reference/inventory/README.md).
 
 The server is then reachable at `http://localhost:8000/mcp` (streamable HTTP)

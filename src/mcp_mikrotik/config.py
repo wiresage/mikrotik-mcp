@@ -6,6 +6,7 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -14,17 +15,23 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from .http_security import parse_allowed_ips
 
 
-def _validate_agent_key(value: Optional[str]) -> Optional[str]:
-    """Strip an SSH agent key selector, rejecting a blank value."""
+def _validate_ssh_agent_key(
+    value: Optional[str], info: ValidationInfo
+) -> Optional[str]:
+    """Strip an SSH agent key selector; blank is ignored unless agent auth is enabled."""
     if value is None:
         return None
     value = value.strip()
     if not value:
-        raise ValueError("agent_key must not be blank")
+        if info.data.get("allow_ssh_agent"):
+            raise ValueError("ssh_agent_key must not be blank")
+        return None
     return value
 
 
-AgentKeySelector = Annotated[Optional[str], AfterValidator(_validate_agent_key)]
+SSHAgentKeySelector = Annotated[
+    Optional[str], AfterValidator(_validate_ssh_agent_key)
+]
 
 
 class McpServerSettings(BaseModel):
@@ -71,9 +78,9 @@ class DeviceConfig(BaseModel):
     username: str = "admin"
     password: str = ""
     key_filename: Optional[str] = None
-    # Authenticate via SSH_AUTH_SOCK; agent_key limits which agent key is offered.
-    allow_agent: bool = False
-    agent_key: AgentKeySelector = None
+    # Authenticate via SSH_AUTH_SOCK; ssh_agent_key limits which agent key is offered.
+    allow_ssh_agent: bool = False
+    ssh_agent_key: SSHAgentKeySelector = None
     tags: List[str] = []
     region: Optional[str] = None
 
@@ -85,9 +92,9 @@ class DeviceConfig(BaseModel):
         return v.strip()
 
     @model_validator(mode="after")
-    def _agent_key_requires_agent(self) -> "DeviceConfig":
-        if self.agent_key and not self.allow_agent:
-            raise ValueError("agent_key requires allow_agent: true")
+    def _ssh_agent_key_requires_agent(self) -> "DeviceConfig":
+        if self.ssh_agent_key and not self.allow_ssh_agent:
+            raise ValueError("ssh_agent_key requires allow_ssh_agent: true")
         return self
 
 
@@ -110,8 +117,8 @@ class MikrotikConfig(BaseSettings):
     password: str = ""
     port: int = 22
     key_filename: Optional[str] = None
-    allow_agent: bool = False
-    agent_key: AgentKeySelector = None
+    allow_ssh_agent: bool = False
+    ssh_agent_key: SSHAgentKeySelector = None
     read_only: bool = False
     sensitive_hiding: bool = False
     # Seconds a command may wait for the device before the call fails. Idle time on the SSH
@@ -175,6 +182,16 @@ class MikrotikConfig(BaseSettings):
         if isinstance(v, dict):
             v = [v]
         return v
+
+    @model_validator(mode="after")
+    def _ssh_agent_key_requires_agent(self) -> "MikrotikConfig":
+        if (
+            self.ssh_agent_key
+            and not self.allow_ssh_agent
+            and not (self.inventory or self.inventory_file)
+        ):
+            raise ValueError("ssh_agent_key requires allow_ssh_agent: true")
+        return self
 
 
 mikrotik_config = MikrotikConfig()
