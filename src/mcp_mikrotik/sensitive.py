@@ -7,7 +7,7 @@ REDACTED = "***"
 _SENSITIVE_KEY = (
     r"(?:password|passphrase|private[-_. ]?key|pre[-_. ]?shared[-_. ]?key|"
     r"preshared[-_. ]?key|shared[-_. ]?secret|auth(?:entication)?[-_. ]?key|"
-    r"encryption[-_. ]?key|token|secret|community)"
+    r"enc(?:ryption)?[-_. ]?key|token|secret|community)"
 )
 _QUOTED_VALUE = re.compile(
     rf"(?i)(?P<prefix>(?<!\w)['\"]?{_SENSITIVE_KEY}['\"]?\s*(?:=|:)\s*)"
