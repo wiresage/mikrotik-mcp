@@ -112,7 +112,9 @@ class Inventory:
 
     # ── SSH clients ────────────────────────────────────────────────────────
 
-    def connect(self, title: Optional[str] = None) -> MikroTikSSHClient:
+    def connect(
+        self, title: Optional[str] = None, terminal_width: Optional[int] = None
+    ) -> MikroTikSSHClient:
         """Open and return a **new** SSH connection to the resolved device.
 
         Connections are deliberately not pooled.  Sharing one client between
@@ -120,14 +122,23 @@ class Inventory:
         timeout or dropped transport in one session would break a command
         another session was running — so every caller gets its own.
 
+        ``terminal_width`` appends RouterOS's console login option
+        ``+<n>w`` to the user name, so tables are laid out for ``n`` columns
+        instead of 80.
+
         The caller owns the returned client and must close it.  Prefer
         :meth:`session`, which closes it automatically.
         """
         device = self.resolve(title)
+        username = device.username
+        if terminal_width:
+            if not 40 <= int(terminal_width) <= 1000:
+                raise ValueError("terminal_width must be between 40 and 1000")
+            username = f"{username}+{int(terminal_width)}w"
 
         client = MikroTikSSHClient(
             host=device.host,
-            username=device.username,
+            username=username,
             password=device.password,
             key_filename=device.key_filename,
             port=device.port,
@@ -144,13 +155,15 @@ class Inventory:
         return client
 
     @contextmanager
-    def session(self, title: Optional[str] = None) -> Iterator[MikroTikSSHClient]:
+    def session(
+        self, title: Optional[str] = None, terminal_width: Optional[int] = None
+    ) -> Iterator[MikroTikSSHClient]:
         """Yield a fresh SSH connection to the device, closed on exit.
 
         The connection is closed even if the command raises, so a failing
         command cannot leak a session on the router.
         """
-        client = self.connect(title)
+        client = self.connect(title, terminal_width=terminal_width)
         try:
             yield client
         finally:

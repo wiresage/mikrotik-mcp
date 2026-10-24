@@ -10,6 +10,7 @@ SCOPE_MODULES = [
     "backup",
     "bridge",
     "dhcp",
+    "diagnostics",
     "dns",
     "firewall_address_list",
     "firewall_filter",
