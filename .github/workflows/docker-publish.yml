@@ -36,8 +36,9 @@ on:
     branches:
       - master
     # Deployment guard: a push releases only when it changes something that is
-    # shipped -- the package (src, pyproject.toml, requirements.txt), the Docker
-    # image (Dockerfile, .dockerignore, docker-entrypoint.sh) or the MCP
+    # shipped -- the package (src, pyproject.toml), the Docker image (Dockerfile,
+    # .dockerignore, docker-entrypoint.sh, and uv.lock, which pins what the image
+    # installs) or the MCP
     # registry listing (server.json). A push touching only docs, README, tests,
     # examples or CI config is skipped entirely, so no version, tag, PyPI
     # upload or image is produced for it.
@@ -47,7 +48,7 @@ on:
     paths:
       - 'src/**'
       - 'pyproject.toml'
-      - 'requirements.txt'
+      - 'uv.lock'
       - 'Dockerfile'
       - '.dockerignore'
       - 'docker-entrypoint.sh'

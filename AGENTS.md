@@ -7,22 +7,22 @@ Instructions for AI coding agents working in this repository. Humans should read
 MikroTik MCP is a Python [MCP](https://modelcontextprotocol.io) server that lets an AI assistant manage MikroTik RouterOS devices over SSH. It is written and tested against RouterOS 7. It ships as the PyPI package `mcp-server-mikrotik`, a Docker image (`ghcr.io/wiresage/mikrotik-mcp`) and an MCP registry entry (`io.github.wiresage/mikrotik-mcp`). The repository is `wiresage/mikrotik-mcp`.
 
 - Python 3.10 or newer, `mcp>=2,<3`, `paramiko`, `pydantic-settings`.
+- [uv](https://docs.astral.sh/uv/) is the toolchain. `pyproject.toml` declares dependency ranges (what `pip` and `uvx` users get), `uv.lock` pins the exact versions CI and the Docker image use, and test tooling sits in the `dev` dependency group. Commit `uv.lock` together with any `pyproject.toml` dependency change (`uv lock`); CI fails a PR whose lock is stale. Never edit `uv.lock` by hand.
 - One server can manage several devices. Every tool takes an optional `device` (the inventory title), see `inventory.example.yml`.
 
 ## Setup commands
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt && pip install -e .
-python -m pytest -m "not integration"               # what CI runs
-mcp-server-mikrotik --help                          # CLI options mirror the MIKROTIK_* env vars
+uv sync --frozen                                    # creates .venv from uv.lock, dev tooling included
+uv run pytest -m "not integration"                  # what CI runs
+uv run mcp-server-mikrotik --help                   # CLI options mirror the MIKROTIK_* env vars
 ```
 
 Live testing needs a RouterOS device. The repo ships two throwaway RouterOS containers (SSH on host ports 2222 and 2223, default `admin` with an empty password, about two minutes to boot):
 
 ```bash
 docker compose -f routeros-docker/docker-compose.yml up -d
-python tests/smoke_multi_device.py                  # drives the server over stdio against both
+uv run python tests/smoke_multi_device.py           # drives the server over stdio against both
 ```
 
 ## Project structure
@@ -79,7 +79,7 @@ Check these before trusting a new command, and verify on a real device (a 7.21 c
 
 ## Testing instructions
 
-- Run `python -m pytest -m "not integration"` before every commit. CI runs it on Python 3.10, 3.11 and 3.12.
+- Run `uv run pytest -m "not integration"` before every commit. CI runs it on Python 3.10, 3.11 and 3.12.
 - Scope tests replace `execute_mikrotik_command` with `FakeExecutor` from `tests/conftest.py` (`monkeypatch.setattr(module, "execute_mikrotik_command", fake)`) and assert the exact command string. Cover the refusal path and the "nothing matched" path too, not only success.
 - Put new unit tests in `tests/unit/test_scope_<area>.py`. Integration tests go in `tests/integration/`, use the `integration` marker and skip themselves without Docker.
 - `tests/unit/test_scopes_smoke.py` lists wrappers that are known to raise (`BROKEN_WRAPPER_FUNCS`). If you fix one, remove it from that list.
@@ -104,7 +104,7 @@ Check these before trusting a new command, and verify on a real device (a 7.21 c
 
 The version is computed by GitVersion from the commit messages: `feat:` raises the minor version, `fix:`, `chore:`, `refactor:`, `perf:`, `style:`, `test:`, `ci:`, `build:` and `revert:` raise the patch, `docs:` does not bump. Do not edit the version in `pyproject.toml` or `server.json`; CI writes it.
 
-A push to `master` runs the release workflows only when it changes a shipped file: `src/**`, `pyproject.toml`, `requirements.txt`, `Dockerfile`, `.dockerignore`, `docker-entrypoint.sh` or `server.json`. Then it publishes to PyPI, the MCP registry and GHCR and creates a GitHub release. Changes to docs, tests, workflows or other markdown do not release. `server.json` and the README `mcp-name` marker must name the same registry entry.
+A push to `master` runs the release workflows only when it changes a shipped file: `src/**`, `pyproject.toml`, `uv.lock`, `Dockerfile`, `.dockerignore`, `docker-entrypoint.sh` or `server.json`. Then it publishes to PyPI, the MCP registry and GHCR and creates a GitHub release. Changes to docs, tests, workflows or other markdown do not release. `server.json` and the README `mcp-name` marker must name the same registry entry.
 
 Releases are queued, one at a time. When several merges land within a few minutes, a release that is still waiting is cancelled in favour of the newest one, which publishes everything merged so far under one version; seeing cancelled runs in Actions is expected. Wait for the last run to finish before checking PyPI or GHCR.
 
