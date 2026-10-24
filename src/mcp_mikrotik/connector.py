@@ -40,6 +40,7 @@ def _execute_sync(
     command: str,
     device: Optional[str] = None,
     redact: Optional[Sequence[str]] = None,
+    terminal_width: Optional[int] = None,
 ) -> str:
     """Execute a MikroTik command over a fresh SSH connection (blocking).
 
@@ -50,7 +51,8 @@ def _execute_sync(
     target = inventory.resolve(device)
     logger.info("Executing MikroTik command on '%s': %s", target.title, _shown(command, redact))
 
-    with inventory.session(target.title) as client:
+    extra = {"terminal_width": terminal_width} if terminal_width else {}
+    with inventory.session(target.title, **extra) as client:
         result = client.execute_command(command)
 
     logger.info("Command result: %r", _shown(result, redact))
@@ -82,6 +84,7 @@ async def execute_mikrotik_command(
     ctx: Context,
     device: Optional[str] = None,
     redact: Optional[Sequence[str]] = None,
+    terminal_width: Optional[int] = None,
 ) -> str:
     """Execute a MikroTik command on the selected device and return the output.
 
@@ -92,6 +95,12 @@ async def execute_mikrotik_command(
     with ``***`` in the server log and in the notification sent to the
     client, in every server mode. The command itself is sent to the device
     unchanged, and the result is returned to the caller unchanged.
+
+    ``terminal_width`` asks RouterOS for a wider console on this connection
+    (login option ``<user>+<n>w``). Without a terminal RouterOS lays tables out
+    for 80 columns and drops the columns that do not fit, which empties
+    commands such as torch of their rates. It is ignored in Safe Mode, whose
+    shell is already open.
 
     When Safe Mode is active *for that device* the command is routed through
     that device's persistent interactive shell so it runs inside the safe-mode
@@ -118,7 +127,8 @@ async def execute_mikrotik_command(
     else:
         await ctx.info(_shown(f"Executing on '{target.title}': {command}", redact))
         try:
-            result = await asyncio.to_thread(_execute_sync, command, target.title, redact)
+            extra = {"terminal_width": terminal_width} if terminal_width else {}
+            result = await asyncio.to_thread(_execute_sync, command, target.title, redact, **extra)
         except ConnectionError as e:
             result = f"Error: {str(e)}"
         except Exception as e:
