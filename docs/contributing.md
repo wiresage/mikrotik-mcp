@@ -230,6 +230,31 @@ Configure via CLI (`--mcp.transport`) or environment variable (`MIKROTIK_MCP__TR
 - Use descriptive test names that explain what is being tested
 - Include edge cases and error conditions in your tests
 
+### API Coverage
+
+`docs/api-coverage.yml` is the source of truth for the RouterOS menus and commands the MCP intends to cover. `docs/api-coverage.md` is generated from it; never edit it by hand. The generated checklist is the checked/unchecked progress view for developers and users.
+
+When adding or changing a tool:
+
+1. Update `docs/api-coverage.yml`:
+   - `status`: `implemented`, `partial`, `planned`, `legacy` or `not_applicable`.
+   - `tools`: registered MCP tool names for `implemented`, `partial` and `legacy`. `not_applicable` may also list the tool that explains it; `planned` commands must not list tools.
+   - `params`: manual argument names (`vlan-id`, not `vlan_id`; `configuration.ssid` for nested arguments).
+   - `accepted_gaps`: intentional omissions of manual arguments. Read-only fields and flags are excluded from the unmapped-argument check automatically, so do not add them just to silence warnings.
+   - `notes`: explain `partial`, `legacy`, `not_applicable`, or a non-obvious caveat. Menu-level `notes` explain the scope; do not repeat the tool docstring.
+   - `manual_paths`: menus documented as separate command pages. Include the parent page when it has arguments.
+   - `allow_missing_manual`: only for commands with no standalone manual page.
+   - `server_tools`: tools that do not map to one menu command (`kind` + note).
+   - top-level `excluded`: out-of-scope menus, with a reason.
+2. Run `python scripts/api_coverage.py --write`.
+3. Run `python scripts/api_coverage.py --check`; CI runs the same check.
+4. Run `python -m pytest -m "not integration"`.
+5. Commit `docs/api-coverage.yml`, the regenerated `docs/api-coverage.md`, and the tool code/tests/docs.
+
+If the tool's parameters change, update its page under `docs/reference/<area>/`.
+
+The **Check API coverage** workflow does not update the lockfile (`docs/manual.lock.yml`) or manifest (`docs/api-coverage.yml`): review the `api-coverage-report` artifact, then update `docs/manual.lock.yml` and the manifest deliberately, run `--write`, and commit. Use `--strict` (or the workflow's `strict` input) when warnings should fail the run. The corpus is not committed; only the lockfile metadata is.
+
 ## Commit Message Format
 
 This project follows [Conventional Commits](https://www.conventionalcommits.org/) specification:
