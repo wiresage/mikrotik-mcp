@@ -38,6 +38,7 @@ Complete tool documentation organized by category:
 ## Contributing
 
 - **[Contributing Guide](contributing.md)** - Learn how to contribute
+- **[API Coverage](api-coverage.md)** - List of implemented and planned RouterOS features
 
 ## Learning Resources
 

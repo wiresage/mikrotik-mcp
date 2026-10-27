@@ -64,6 +64,27 @@ docs/reference/<area>/     one reference page per scope
 
 Never mark a tool `READ` if it writes anything, including a file: `/export file=...` and `/system backup save` create files on the router and are not reads.
 
+### Declare the tool in the API coverage manifest
+
+`docs/api-coverage.yml` is the source of truth; `docs/api-coverage.md` is generated — never edit it by hand. A new or changed tool is not finished until the manifest is updated.
+
+- Set `status` (`implemented`, `partial`, `planned`, `legacy` or `not_applicable`) and list the registered MCP tool name(s) in `tools` for `implemented`, `partial` and `legacy`. `not_applicable` may also list the tool that explains it; `planned` commands must not list tools.
+- `params` uses manual argument names (`vlan-id`, not `vlan_id`; `configuration.ssid` for nested arguments). `accepted_gaps` is for intentional omissions of manual arguments; read-only fields and flags are excluded from the unmapped-argument check automatically, so do not add them just to silence warnings.
+- Add `notes` for `partial`, `legacy` or `not_applicable`, or for a non-obvious caveat. Menu-level `notes` explain the scope. Do not repeat the tool docstring.
+- Use `manual_paths` for menus documented as separate command pages, and include the parent page when it has arguments. Use `allow_missing_manual` only for commands with no standalone manual page.
+- Tools that do not map to one menu command go in `server_tools` (`kind` + note); out-of-scope menus go in the top-level `excluded` list with a reason.
+- A new scope also needs the `app.py` import, the `SCOPE_MODULES` entry in `tests/unit/test_scopes_smoke.py`, and the reference page under `docs/reference/<area>/`.
+
+Then run:
+
+```bash
+python scripts/api_coverage.py --write
+python scripts/api_coverage.py --check
+python -m pytest -m "not integration"
+```
+
+CI fails if the generated checklist is stale, a registered tool is missing from the manifest, a manifest tool does not exist, or the manifest is structurally invalid. `docs/manual.lock.yml` is updated only after reviewing a drift report (from the manual-only **Check API coverage** workflow or a local `--manual` run); the manual corpus is never committed.
+
 ## RouterOS behaviour that has caused bugs here
 
 Check these before trusting a new command, and verify on a real device (a 7.21 container is enough).

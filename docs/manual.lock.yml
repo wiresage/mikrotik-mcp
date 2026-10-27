@@ -1,0 +1,15 @@
+# Pinned RouterOS manual snapshot used by scripts/api_coverage.py.
+#
+# scripts/api_coverage.py compares the SHA-256 of the downloaded
+# llms-full.txt with the pinned `sha256` below. A mismatch means the manual
+# changed since the last review and is reported as a warning.
+#
+# The corpus is downloaded only by the manually triggered "Check API coverage"
+# workflow, into the GitHub Actions runner; the MCP server never downloads it.
+# Update this file manually only after reviewing a new corpus.
+manual:
+  version: "7.26"
+  url: "https://manual.mikrotik.com/llms-full.txt"
+  etag: '"6ad9bd36-641a92"'
+  sha256: "8d4302c69ff669f18a7313a42a3091dd11c061b266aa95ac3846be47fadfeda8"
+  built_at: "2026-10-22"

@@ -1,0 +1,2753 @@
+# Declared RouterOS API coverage for the MCP server.
+#
+# This is the source of truth for docs/api-coverage.md and for the manual
+# drift check. A menu/command listed here is in scope; statuses are:
+#
+#   implemented    - a tool exists and maps to this command
+#   partial        - a tool exists, but some advertised behaviour is missing
+#   planned        - in scope, no tool yet
+#   legacy         - tool exists only for the legacy RouterOS v6 path
+#   not_applicable - the command does not exist on RouterOS 7
+#
+# `accepted_gaps` records manual arguments the mapped tools deliberately do not
+# expose: advanced matchers/settings, sensitive values, and features planned in
+# another menu. Read-only output fields and flags are excluded from the
+# unmapped-argument check automatically.
+#
+# Keep this file in sync with the tool catalogue and with docs/api-coverage.md.
+# Run `python scripts/api_coverage.py --write` after editing.
+
+sections:
+  - title: Interfaces
+    menus:
+      - /interface
+      - /interface/vlan
+      - /interface/wireguard
+      - /interface/wireguard/peers
+      - /interface/wifi
+      - /interface/wifi/scan
+      - /interface/wifi/registration-table
+      - /interface/wireless
+      - /interface/wireless/scan
+      - /interface/wireless/registration-table
+      - /interface/wireless/security-profiles
+      - /interface/wireless/access-list
+      - /interface/ethernet
+      - /interface/ethernet/poe
+      - /interface/ethernet/poe/settings
+      - /interface/list
+      - /interface/bridge
+      - /interface/bridge/vlan
+      - /interface/bridge/port
+      - /interface/macsec
+      - /interface/macvlan
+      - /interface/veth
+      - /interface/vrrp
+      - /interface/wifi/aaa
+      - /interface/wifi/access-list
+      - /interface/wifi/cap
+      - /interface/wifi/capsman
+      - /interface/wifi/channel
+      - /interface/wifi/configuration
+      - /interface/wifi/datapath
+      - /interface/wifi/interworking
+      - /interface/wifi/network
+      - /interface/wifi/provisioning
+      - /interface/wifi/radio
+      - /interface/wifi/roam
+      - /interface/wifi/security
+      - /interface/wifi/steering
+      - /interface/wifi/wps-client
+
+  - title: IP
+    menus:
+      - /ip/address
+      - /ip/pool
+      - /ip/pool/used
+      - /ip/dhcp-server
+      - /ip/dhcp-server/network
+      - /ip/dhcp-server/lease
+      - /ip/dhcp-server/option
+      - /ip/dhcp-client
+      - /ip/dhcp-relay
+      - /ip/dns
+      - /ip/dns/static
+      - /ip/dns/cache
+      - /ip/firewall/filter
+      - /ip/firewall/nat
+      - /ip/firewall/address-list
+      - /ip/firewall/mangle
+      - /ip/firewall/raw
+      - /ip/firewall/connection
+      - /ip/route
+      - /ip/route/cache
+      - /ip/arp
+      - /ip/service
+      - /ip/ipsec/installed-sa
+      - /ip/ipsec/active-peers
+      - /ip/ipsec/peer
+      - /ip/ipsec/policy
+      - /ip/ipsec/profile
+      - /ip/ipsec/proposal
+      - /ip/dhcp-server/config
+      - /ip/dhcp-server/matcher
+      - /ip/dns/adlist
+      - /ip/dns/cache/all
+      - /ip/dns/forwarders
+      - /ip/ipsec/policy/group
+      - /ip/service/webserver
+
+  - title: IPv6
+    menus:
+      - /ipv6/address
+      - /ipv6/dhcp-server/binding
+      - /ipv6/firewall/filter
+      - /ipv6/firewall/address-list
+      - /ipv6/neighbor
+
+  - title: Queues
+    menus:
+      - /queue/type
+      - /queue/tree
+      - /queue/simple
+
+  - title: Users
+    menus:
+      - /user
+      - /user/settings
+      - /user/group
+      - /user/active
+      - /user/ssh-keys
+
+  - title: System
+    menus:
+      - /system/resource
+      - /system/health
+      - /system/health/settings
+      - /system/clock
+      - /system/clock/manual
+      - /system/routerboard
+      - /system/package
+      - /system/package/update
+      - /system/scheduler
+      - /system/script
+      - /system/backup
+      - /certificate
+      - /system/identity
+      - /system/logging
+      - /system/ntp
+      - /system/note
+      - /system/resource/cpu
+      - /system/resource/hardware
+      - /system/resource/irq
+      - /system/script/job
+
+  - title: Tools and files
+    menus:
+      - /tool/netwatch
+      - /log
+      - /file
+      - /export
+      - /import
+      - /file/copy
+
+  - title: Routing
+    menus:
+      - /routing/table
+
+menus:
+  /interface:
+    title: Interfaces (generic)
+    section: Interfaces
+    notes: Generic listing and enable/disable. Type-specific creation lives in the dedicated menus.
+    commands:
+      print:
+        status: implemented
+        tools: [list_interfaces, get_interface]
+        params: [name, type, running, disabled]
+        accepted_gaps: [l2mtu, mtu]
+      enable:
+        status: implemented
+        tools: [enable_interface]
+        params: [name]
+      disable:
+        status: implemented
+        tools: [disable_interface]
+        params: [name]
+
+  /interface/ethernet:
+    title: Ethernet
+    section: Interfaces
+    notes: Not implemented. Link speed, duplex, MTU, flow control and SFP settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /interface/list:
+    title: Interface lists
+    section: Interfaces
+    notes: Not implemented. Interface lists are referenced by firewall and NAT rules.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/vlan:
+    title: VLAN
+    section: Interfaces
+    commands:
+      add:
+        status: implemented
+        tools: [create_vlan_interface]
+        params: [name, vlan-id, interface, comment, disabled, mtu, use-service-tag, arp, arp-timeout]
+        accepted_gaps: [arp-accept, forced-mac-address, l3-hw-offloading, loop-protect, loop-protect-disable-time, loop-protect-send-interval, mvrp]
+      print:
+        status: implemented
+        tools: [list_vlan_interfaces, get_vlan_interface]
+        params: [name, vlan-id, interface, disabled]
+      set:
+        status: implemented
+        tools: [update_vlan_interface]
+        params: [name, vlan-id, interface, comment, disabled, mtu, use-service-tag, arp, arp-timeout]
+        accepted_gaps: [arp-accept, forced-mac-address, l3-hw-offloading, loop-protect, loop-protect-disable-time, loop-protect-send-interval, mvrp]
+      remove:
+        status: implemented
+        tools: [remove_vlan_interface]
+        params: [name]
+
+  /interface/wireguard:
+    title: WireGuard interface
+    section: Interfaces
+    commands:
+      add:
+        status: implemented
+        tools: [create_wireguard_interface]
+        params: [name, listen-port, private-key, mtu, comment, disabled]
+        accepted_gaps: [vrf]
+      print:
+        status: implemented
+        tools: [list_wireguard_interfaces, get_wireguard_interface]
+        params: [name, disabled, running]
+      set:
+        status: implemented
+        tools: [update_wireguard_interface]
+        params: [name, listen-port, private-key, mtu, comment, disabled]
+        accepted_gaps: [vrf]
+      remove:
+        status: implemented
+        tools: [remove_wireguard_interface]
+        params: [name]
+      enable:
+        status: implemented
+        tools: [enable_wireguard_interface]
+        params: [name]
+      disable:
+        status: implemented
+        tools: [disable_wireguard_interface]
+        params: [name]
+
+  /interface/wireguard/peers:
+    title: WireGuard peers
+    section: Interfaces
+    commands:
+      add:
+        status: implemented
+        tools: [add_wireguard_peer]
+        params: [interface, public-key, allowed-address, endpoint-address, endpoint-port, preshared-key, persistent-keepalive, comment, disabled]
+        accepted_gaps:
+          - client-address
+          - client-allowed-address
+          - client-dns
+          - client-endpoint
+          - client-keepalive
+          - client-listen-port
+          - client-mtu
+          - name
+          - private-key
+          - responder
+      print:
+        status: implemented
+        tools: [list_wireguard_peers, get_wireguard_peer]
+        params: [interface, public-key, disabled]
+      set:
+        status: implemented
+        tools: [update_wireguard_peer]
+        params: [allowed-address, endpoint-address, endpoint-port, preshared-key, persistent-keepalive, comment, disabled]
+      remove:
+        status: implemented
+        tools: [remove_wireguard_peer]
+        params: [public-key]
+      enable:
+        status: implemented
+        tools: [enable_wireguard_peer]
+        params: [public-key]
+      disable:
+        status: implemented
+        tools: [disable_wireguard_peer]
+        params: [public-key]
+
+  /interface/wifi:
+    title: Wi-Fi 6/7
+    section: Interfaces
+    notes: >-
+      create_wireless_interface advertises mode, band, channel-width and
+      security-profile, but the v7 /interface/wifi branch only applies name,
+      ssid, disabled and comment. CAPsMAN, provisioning and the security
+      profile menus are planned but not exposed. The remaining v7 properties
+      (configuration.*, security.*, channel.*, aaa.*, datapath.*,
+      interworking.*, steering.*, test.*) are recorded as accepted_gaps on
+      add; the same omissions apply to set.
+    commands:
+      add:
+        status: partial
+        tools: [create_wireless_interface]
+        params: [name, configuration.ssid, disabled, comment]
+        accepted_gaps:
+          - aaa
+          - aaa.called-format
+          - aaa.calling-format
+          - aaa.interim-update
+          - aaa.mac-caching
+          - aaa.nas-identifier
+          - aaa.password-format
+          - aaa.username-format
+          - arp
+          - arp-timeout
+          - channel
+          - channel.afc
+          - channel.band
+          - channel.deprioritize-unii-3-4
+          - channel.frequency
+          - channel.preamble-puncturing
+          - channel.reselect-interval
+          - channel.reselect-time
+          - channel.secondary-frequency
+          - channel.skip-dfs-channels
+          - channel.width
+          - configuration
+          - configuration.antenna-gain
+          - configuration.beacon-interval
+          - configuration.chains
+          - configuration.country
+          - configuration.disconnect-timeout
+          - configuration.distance
+          - configuration.dtim-period
+          - configuration.frame-lifetime
+          - configuration.guard-interval
+          - configuration.hide-ssid
+          - configuration.hw-protection-mode
+          - configuration.hw-protection-threshold
+          - configuration.hw-retries
+          - configuration.installation
+          - configuration.keepalive-frames
+          - configuration.load-balancing-group
+          - configuration.max-clients
+          - configuration.max-sta-count
+          - configuration.mode
+          - configuration.multicast-enhance
+          - configuration.multicast-helper
+          - configuration.qos-classifier
+          - configuration.rx-chains
+          - configuration.station-roaming
+          - configuration.tx-chains
+          - configuration.tx-power
+          - datapath
+          - datapath.bridge
+          - datapath.bridge-cost
+          - datapath.bridge-horizon
+          - datapath.client-isolation
+          - datapath.interface-list
+          - datapath.openflow-switch
+          - datapath.traffic-processing
+          - datapath.vlan-id
+          - disable-running-check
+          - interworking
+          - interworking.3gpp-info
+          - interworking.3gpp-info-raw
+          - interworking.authentication-types
+          - interworking.connection-capabilities
+          - interworking.domain-names
+          - interworking.esr
+          - interworking.hessid
+          - interworking.hotspot20
+          - interworking.hotspot20-dgaf
+          - interworking.internet
+          - interworking.ipv4-availability
+          - interworking.ipv6-availability
+          - interworking.network-type
+          - interworking.operational-classes
+          - interworking.operator-names
+          - interworking.realms
+          - interworking.realms-raw
+          - interworking.roaming-ois
+          - interworking.uesa
+          - interworking.venue
+          - interworking.venue-names
+          - interworking.wan-at-capacity
+          - interworking.wan-downlink
+          - interworking.wan-downlink-load
+          - interworking.wan-measurement-duration
+          - interworking.wan-status
+          - interworking.wan-symmetric
+          - interworking.wan-uplink
+          - interworking.wan-uplink-load
+          - l2mtu
+          - mac-address
+          - master-interface
+          - mld-interface
+          - mld-name
+          - mtu
+          - radio-mac
+          - security
+          - security.beacon-protection
+          - security.connect-group
+          - security.connect-priority
+          - security.dh-groups
+          - security.disable-pmkid
+          - security.eap-accounting
+          - security.eap-anonymous-identity
+          - security.eap-certificate-mode
+          - security.eap-methods
+          - security.eap-password
+          - security.eap-tls-certificate
+          - security.eap-username
+          - security.encryption
+          - security.ft
+          - security.ft-mobility-domain
+          - security.ft-nas-identifier
+          - security.ft-over-ds
+          - security.ft-preserve-vlanid
+          - security.ft-r0-key-lifetime
+          - security.ft-reassociation-deadline
+          - security.group-encryption
+          - security.group-key-update
+          - security.management-encryption
+          - security.management-protection
+          - security.multi-passphrase-group
+          - security.owe-transition-interface
+          - security.sae-anti-clogging-threshold
+          - security.sae-max-failure-rate
+          - security.sae-pwe
+          - security.wps
+          - steering
+          - steering.2g-probe-delay
+          - steering.neighbor-group
+          - steering.rrm
+          - steering.transition-request-count
+          - steering.transition-request-period
+          - steering.transition-threshold
+          - steering.transition-threshold-time
+          - steering.transition-time
+          - steering.wnm
+          - test.dfs.duty-cycle
+          - test.dfs.ignore-cac
+          - test.dfs.ignore-radar
+          - test.sigmadut-extra-params
+          - test.sigmadut-params
+        notes: mode, band, channel-width and security-profile are ignored on /interface/wifi.
+      print:
+        status: implemented
+        tools: [list_wireless_interfaces, get_wireless_interface]
+        params: [name, disabled, running]
+      set:
+        status: partial
+        tools: [update_wireless_interface, set_wireless_passphrase]
+        params: [name, configuration.ssid, disabled, comment, security.passphrase, security.authentication-types]
+        notes: Only SSID, enabled state, comment and the passphrase are exposed.
+      remove:
+        status: implemented
+        tools: [remove_wireless_interface]
+        params: [name]
+      enable:
+        status: implemented
+        tools: [enable_wireless_interface]
+        params: [name]
+      disable:
+        status: implemented
+        tools: [disable_wireless_interface]
+        params: [name]
+
+  /interface/wifi/scan:
+    title: Wi-Fi scan
+    section: Interfaces
+    commands:
+      scan:
+        status: implemented
+        tools: [scan_wireless_networks]
+        params: [interface, duration]
+        accepted_gaps: [frequency, rounds, save-file]
+
+  /interface/wifi/registration-table:
+    title: Wi-Fi registration table
+    section: Interfaces
+    commands:
+      print:
+        status: implemented
+        tools: [get_wireless_registration_table]
+        params: [interface]
+
+  /interface/wireless:
+    title: Legacy wireless (v6)
+    section: Interfaces
+    notes: The tools auto-detect /interface/wifi first; this branch is the legacy RouterOS v6 path.
+    commands:
+      add:
+        status: legacy
+        tools: [create_wireless_interface]
+        params: [name, ssid, radio-name, mode, frequency, band, channel-width, security-profile, disabled, comment]
+      print:
+        status: legacy
+        tools: [list_wireless_interfaces, get_wireless_interface]
+        params: [name, disabled, running]
+      set:
+        status: legacy
+        tools: [update_wireless_interface]
+        params: [name, ssid, disabled, comment]
+      remove:
+        status: legacy
+        tools: [remove_wireless_interface]
+        params: [name]
+      enable:
+        status: legacy
+        tools: [enable_wireless_interface]
+        params: [name]
+      disable:
+        status: legacy
+        tools: [disable_wireless_interface]
+        params: [name]
+
+  /interface/wireless/scan:
+    title: Legacy wireless scan
+    section: Interfaces
+    notes: Legacy RouterOS v6 scan path; RouterOS 7 uses /interface wifi scan.
+    commands:
+      scan:
+        status: legacy
+        tools: [scan_wireless_networks]
+        params: [interface, duration]
+
+  /interface/wireless/registration-table:
+    title: Legacy wireless registration table
+    section: Interfaces
+    notes: Legacy RouterOS v6 registration table; RouterOS 7 uses /interface wifi registration-table.
+    commands:
+      print:
+        status: legacy
+        tools: [get_wireless_registration_table]
+        params: [interface]
+
+  /interface/wireless/security-profiles:
+    title: Legacy wireless security profiles
+    section: Interfaces
+    notes: These tools are stubs on RouterOS v7; they return "not supported" instead of configuring a profile.
+    commands:
+      add:
+        status: legacy
+        tools: [create_wireless_security_profile]
+        params: [name]
+      print:
+        status: legacy
+        tools: [list_wireless_security_profiles, get_wireless_security_profile]
+        params: [name]
+      set:
+        status: legacy
+        tools: [set_wireless_security_profile]
+        params: [name]
+      remove:
+        status: legacy
+        tools: [remove_wireless_security_profile]
+        params: [name]
+
+  /interface/wireless/access-list:
+    title: Legacy wireless access list
+    section: Interfaces
+    notes: These tools are stubs on RouterOS v7; they return "not supported" instead of changing the access list.
+    commands:
+      add:
+        status: legacy
+        tools: [create_wireless_access_list]
+        params: [interface, mac-address, action, comment]
+      print:
+        status: legacy
+        tools: [list_wireless_access_list]
+        params: [interface, action]
+      remove:
+        status: legacy
+        tools: [remove_wireless_access_list_entry]
+        params: [mac-address]
+
+  /interface/ethernet/poe:
+    title: PoE
+    section: Interfaces
+    notes: >-
+      Read-only monitoring is exposed; PoE-out settings and power-cycle are not
+      implemented.
+    manual_paths: [/interface/ethernet/poe, /interface/ethernet/poe/monitor, /interface/ethernet/poe/power-cycle]
+    commands:
+      monitor:
+        status: implemented
+        tools: [get_poe_monitor]
+        params: [interfaces]
+      print:
+        status: implemented
+        tools: [list_poe, get_poe_settings]
+        params: [name]
+        accepted_gaps: [poe-out, poe-priority, poe-voltage]
+      power-cycle:
+        status: planned
+        accepted_gaps: [duration, power-cycle-interval, power-cycle-ping-address, power-cycle-ping-enabled, power-cycle-ping-timeout]
+
+  /interface/ethernet/poe/settings:
+    title: PoE settings
+    section: Interfaces
+    notes: Not implemented. PoE power limits and settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /interface/bridge:
+    title: Bridge
+    section: Interfaces
+    notes: Not implemented. Bridge creation, ports and STP settings are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/bridge/vlan:
+    title: Bridge VLAN table
+    section: Interfaces
+    notes: Not implemented. This is required for VLAN filtering on a bridge.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/bridge/port:
+    title: Bridge ports
+    section: Interfaces
+    notes: Not implemented. PVID and tagged/untagged membership are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/address:
+    title: IPv4 address
+    section: IP
+    notes: Set/update is not exposed; add, print and remove are.
+    commands:
+      add:
+        status: implemented
+        tools: [add_ip_address]
+        params: [address, interface, network, broadcast, comment, disabled]
+        accepted_gaps: [netmask]
+      print:
+        status: implemented
+        tools: [list_ip_addresses, get_ip_address]
+        params: [address, interface, network, disabled, dynamic]
+      set:
+        status: planned
+      remove:
+        status: implemented
+        tools: [remove_ip_address]
+        params: [address]
+
+  /ip/pool:
+    title: IP pool
+    section: IP
+    commands:
+      add:
+        status: implemented
+        tools: [create_ip_pool, create_dhcp_pool]
+        params: [name, ranges, next-pool, comment]
+      print:
+        status: implemented
+        tools: [list_ip_pools, get_ip_pool]
+        params: [name, ranges]
+      set:
+        status: implemented
+        tools: [update_ip_pool, expand_ip_pool]
+        params: [name, ranges, next-pool, comment]
+      remove:
+        status: implemented
+        tools: [remove_ip_pool]
+        params: [name]
+
+  /ip/pool/used:
+    title: Used IP pool addresses
+    section: IP
+    commands:
+      print:
+        status: implemented
+        tools: [list_ip_pool_used]
+        params: [pool, address, mac-address, info]
+        accepted_gaps: [owner]
+
+  /ip/dhcp-server:
+    title: DHCP server
+    section: IP
+    notes: Set/update is not exposed; create, print and remove are.
+    commands:
+      add:
+        status: implemented
+        tools: [create_dhcp_server]
+        params: [name, interface, lease-time, address-pool, disabled, authoritative, delay-threshold, comment]
+        accepted_gaps:
+          - add-arp
+          - add-dns-entries
+          - add-dns-entries-suffix
+          - address-lists
+          - allow-dual-stack-queue
+          - always-broadcast
+          - bootp-lease-time
+          - bootp-support
+          - client-mac-limit
+          - conflict-detection
+          - dhcp-option-set
+          - dynamic-lease-identifiers
+          - insert-queue-before
+          - ipv6-only-preferred
+          - lease-script
+          - parent-queue
+          - relay
+          - server-address
+          - support-broadband-tr101
+          - use-framed-as-classless
+          - use-radius
+          - use-reconfigure
+      print:
+        status: implemented
+        tools: [list_dhcp_servers, get_dhcp_server]
+        params: [name, interface, disabled, invalid]
+      set:
+        status: planned
+      remove:
+        status: implemented
+        tools: [remove_dhcp_server]
+        params: [name]
+
+  /ip/dhcp-server/network:
+    title: DHCP network
+    section: IP
+    notes: Listing and getting networks is not exposed.
+    commands:
+      add:
+        status: implemented
+        tools: [create_dhcp_network]
+        params: [address, gateway, netmask, dns-server, domain, wins-server, ntp-server, dhcp-option, comment]
+        accepted_gaps: [boot-file-name, caps-manager, cmr-none, cmr-server, dhcp-option-set, dns-none, next-server, ntp-none]
+      print:
+        status: planned
+      set:
+        status: implemented
+        tools: [update_dhcp_network]
+        params: [gateway, netmask, dns-server, domain, wins-server, ntp-server, dhcp-option, comment]
+        accepted_gaps: [boot-file-name, caps-manager, cmr-none, cmr-server, dhcp-option-set, dns-none, next-server, ntp-none]
+      remove:
+        status: implemented
+        tools: [remove_dhcp_network]
+        params: [address]
+
+  /ip/dhcp-server/lease:
+    title: DHCP leases
+    section: IP
+    notes: Only the detailed print is exposed; add, make-static and remove are not.
+    manual_paths: [/ip/dhcp-server/lease, /ip/dhcp-server/lease/make-static]
+    commands:
+      print:
+        status: implemented
+        tools: [list_dhcp_leases]
+        params: [active-address, active-mac-address, active-client-id, active-host-name, active-class-id, active-server, status, lease-time, last-seen]
+        accepted_gaps:
+          - address
+          - address-lists
+          - agent-circuit-id
+          - agent-remote-id
+          - allow-dual-stack-queue
+          - always-broadcast
+          - block-access
+          - client-id
+          - dhcp-option
+          - dhcp-option-set
+          - insert-queue-before
+          - mac-address
+          - parent-queue
+          - queue-type
+          - rate-limit
+          - routes
+          - server
+          - use-src-mac
+      add:
+        status: planned
+      make-static:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/dhcp-server/option:
+    title: DHCP options
+    section: IP
+    notes: Not implemented. DHCP options are passed as a list on create_dhcp_network.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/dhcp-client:
+    title: DHCP client
+    section: IP
+    notes: Not implemented.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/dhcp-relay:
+    title: DHCP relay
+    section: IP
+    notes: Not implemented.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/dns:
+    title: DNS settings
+    section: IP
+    commands:
+      set:
+        status: implemented
+        tools: [set_dns_servers]
+        params: [servers, allow-remote-requests, max-udp-packet-size, max-concurrent-queries, cache-size, cache-max-ttl, use-doh-server, verify-doh-cert]
+        accepted_gaps:
+          - address-list-extra-time
+          - doh-max-concurrent-queries
+          - doh-max-server-connections
+          - doh-timeout
+          - max-concurrent-tcp-sessions
+          - mdns-repeat-ifaces
+          - query-server-timeout
+          - query-total-timeout
+          - vrf
+      print:
+        status: implemented
+        tools: [get_dns_settings]
+      export:
+        status: implemented
+        tools: [export_dns_config]
+        params: [file]
+
+  /ip/dns/static:
+    title: Static DNS
+    section: IP
+    commands:
+      add:
+        status: implemented
+        tools: [add_dns_static, add_dns_regexp]
+        params: [name, address, cname, mx-preference, mx-exchange, text, srv-priority, srv-weight, srv-port, srv-target, ttl, comment, disabled, regexp]
+        accepted_gaps: [address-list, forward-to, match-subdomain, ns]
+      print:
+        status: implemented
+        tools: [list_dns_static, get_dns_static]
+        params: [name, address, type, disabled, regexp]
+      set:
+        status: implemented
+        tools: [update_dns_static, enable_dns_static, disable_dns_static]
+        params: [name, address, cname, mx-preference, mx-exchange, text, srv-priority, srv-weight, srv-port, srv-target, ttl, comment, disabled, regexp]
+        accepted_gaps: [address-list, forward-to, match-subdomain, ns]
+      remove:
+        status: implemented
+        tools: [remove_dns_static]
+        params: [name]
+
+  /ip/dns/cache:
+    title: DNS cache
+    section: IP
+    manual_paths: [/ip/dns/cache, /ip/dns/cache/flush]
+    commands:
+      print:
+        status: implemented
+        tools: [get_dns_cache]
+      flush:
+        status: implemented
+        tools: [flush_dns_cache]
+
+  /ip/firewall/filter:
+    title: IPv4 firewall filter
+    section: IP
+    notes: >-
+      The IPv4 create_filter_rule action list includes jump but the tool has no
+      jump_target parameter; the IPv6 tool does. Action is otherwise covered.
+      Advanced matchers and action options not exposed by the tools are
+      recorded in accepted_gaps.
+    commands:
+      add:
+        status: partial
+        tools: [create_filter_rule]
+        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
+        accepted_gaps:
+          - address-list
+          - address-list-timeout
+          - connection-bytes
+          - connection-limit
+          - connection-mark
+          - connection-rate
+          - connection-type
+          - content
+          - dscp
+          - dst-address-type
+          - dst-limit
+          - fragment
+          - hotspot
+          - hw-offload
+          - icmp-options
+          - in-bridge-port
+          - in-bridge-port-list
+          - ingress-priority
+          - ipsec-policy
+          - ipv4-options
+          - jump-target
+          - layer7-protocol
+          - nth
+          - out-bridge-port
+          - out-bridge-port-list
+          - p2p
+          - packet-mark
+          - packet-size
+          - per-connection-classifier
+          - port
+          - priority
+          - psd
+          - random
+          - realm
+          - reject-with
+          - routing-mark
+          - src-address-type
+          - src-mac-address
+          - tcp-mss
+          - time
+          - tls-host
+          - tos
+          - ttl
+        notes: jump_target is missing for action="jump".
+      print:
+        status: implemented
+        tools: [list_filter_rules, get_filter_rule]
+        params: [chain, action, src-address, dst-address, protocol, in-interface, out-interface, disabled, invalid, dynamic]
+      set:
+        status: implemented
+        tools: [update_filter_rule]
+        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix]
+        accepted_gaps:
+          - address-list
+          - address-list-timeout
+          - connection-bytes
+          - connection-limit
+          - connection-mark
+          - connection-rate
+          - connection-type
+          - content
+          - dscp
+          - dst-address-type
+          - dst-limit
+          - fragment
+          - hotspot
+          - hw-offload
+          - icmp-options
+          - in-bridge-port
+          - in-bridge-port-list
+          - ingress-priority
+          - ipsec-policy
+          - ipv4-options
+          - jump-target
+          - layer7-protocol
+          - nth
+          - out-bridge-port
+          - out-bridge-port-list
+          - p2p
+          - packet-mark
+          - packet-size
+          - per-connection-classifier
+          - port
+          - priority
+          - psd
+          - random
+          - realm
+          - reject-with
+          - routing-mark
+          - src-address-type
+          - src-mac-address
+          - tcp-mss
+          - time
+          - tls-host
+          - tos
+          - ttl
+      remove:
+        status: implemented
+        tools: [remove_filter_rule]
+      move:
+        status: implemented
+        tools: [move_filter_rule]
+      enable:
+        status: implemented
+        tools: [enable_filter_rule]
+      disable:
+        status: implemented
+        tools: [disable_filter_rule]
+
+  /ip/firewall/nat:
+    title: IPv4 NAT
+    section: IP
+    commands:
+      add:
+        status: implemented
+        tools: [create_nat_rule]
+        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, to-addresses, to-ports, comment, disabled, log, log-prefix, place-before]
+        accepted_gaps:
+          - address-list
+          - address-list-timeout
+          - connection-bytes
+          - connection-limit
+          - connection-mark
+          - connection-rate
+          - connection-type
+          - content
+          - dscp
+          - dst-address-list
+          - dst-address-type
+          - dst-limit
+          - fragment
+          - hotspot
+          - icmp-options
+          - in-bridge-port
+          - in-bridge-port-list
+          - in-interface-list
+          - ingress-priority
+          - ipsec-policy
+          - ipv4-options
+          - jump-target
+          - layer7-protocol
+          - limit
+          - nth
+          - out-bridge-port
+          - out-bridge-port-list
+          - out-interface-list
+          - packet-mark
+          - packet-size
+          - per-connection-classifier
+          - port
+          - priority
+          - psd
+          - random
+          - randomise-ports
+          - realm
+          - routing-mark
+          - same-not-by-dst
+          - socks5-port
+          - socks5-server
+          - socksify-service
+          - src-address-list
+          - src-address-type
+          - src-mac-address
+          - tcp-mss
+          - time
+          - tos
+          - ttl
+        notes: >-
+          action is a free string in the schema; the implementation validates it
+          per chain. Advanced matchers and action options not exposed by the
+          tool are recorded in accepted_gaps.
+      print:
+        status: implemented
+        tools: [list_nat_rules, get_nat_rule]
+        params: [chain, action, src-address, dst-address, protocol, in-interface, out-interface, disabled, invalid]
+      set:
+        status: implemented
+        tools: [update_nat_rule]
+        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, to-addresses, to-ports, comment, disabled, log, log-prefix]
+        accepted_gaps:
+          - address-list
+          - address-list-timeout
+          - connection-bytes
+          - connection-limit
+          - connection-mark
+          - connection-rate
+          - connection-type
+          - content
+          - dscp
+          - dst-address-list
+          - dst-address-type
+          - dst-limit
+          - fragment
+          - hotspot
+          - icmp-options
+          - in-bridge-port
+          - in-bridge-port-list
+          - in-interface-list
+          - ingress-priority
+          - ipsec-policy
+          - ipv4-options
+          - jump-target
+          - layer7-protocol
+          - limit
+          - nth
+          - out-bridge-port
+          - out-bridge-port-list
+          - out-interface-list
+          - packet-mark
+          - packet-size
+          - per-connection-classifier
+          - port
+          - priority
+          - psd
+          - random
+          - randomise-ports
+          - realm
+          - routing-mark
+          - same-not-by-dst
+          - socks5-port
+          - socks5-server
+          - socksify-service
+          - src-address-list
+          - src-address-type
+          - src-mac-address
+          - tcp-mss
+          - time
+          - tos
+          - ttl
+      remove:
+        status: implemented
+        tools: [remove_nat_rule]
+      move:
+        status: implemented
+        tools: [move_nat_rule]
+      enable:
+        status: implemented
+        tools: [enable_nat_rule]
+      disable:
+        status: implemented
+        tools: [disable_nat_rule]
+
+  /ip/firewall/address-list:
+    title: IPv4 address list
+    section: IP
+    commands:
+      add:
+        status: implemented
+        tools: [create_address_list_entry]
+        params: [list, address, comment, timeout, disabled]
+      print:
+        status: implemented
+        tools: [list_address_list_entries, get_address_list_entry]
+        params: [list, address, comment, disabled, dynamic]
+      set:
+        status: implemented
+        tools: [update_address_list_entry, enable_address_list_entry, disable_address_list_entry]
+        params: [list, address, comment, timeout, disabled]
+      remove:
+        status: implemented
+        tools: [remove_address_list_entry]
+        params: [list, address]
+
+  /ip/firewall/mangle:
+    title: Mangle
+    section: IP
+    notes: Not implemented.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/firewall/raw:
+    title: Raw firewall
+    section: IP
+    notes: Not implemented.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/firewall/connection:
+    title: Connection tracking
+    section: IP
+    notes: Not implemented.
+    commands:
+      print:
+        status: planned
+
+  /ip/route:
+    title: IPv4 routes
+    section: IP
+    notes: >-
+      Route creation, listing, update, removal, enable/disable and path check are
+      exposed. Dedicated routing tables and routing rules are not.
+    manual_paths: [/ip/route, /ip/route/check]
+    commands:
+      add:
+        status: implemented
+        tools: [add_route, add_default_route, add_blackhole_route]
+        params: [dst-address, gateway, blackhole, distance, scope, target-scope, routing-table, comment, disabled, vrf-interface, pref-src, check-gateway]
+        accepted_gaps: [suppress-hw-offload]
+      print:
+        status: implemented
+        tools: [list_routes, get_route, get_routing_table]
+        params: [dst-address, gateway, routing-table, distance, active, disabled, dynamic, static]
+      set:
+        status: implemented
+        tools: [update_route]
+        params: [dst-address, gateway, distance, scope, target-scope, routing-table, comment, disabled, vrf-interface, pref-src, check-gateway]
+      remove:
+        status: implemented
+        tools: [remove_route]
+      enable:
+        status: implemented
+        tools: [enable_route]
+      disable:
+        status: implemented
+        tools: [disable_route]
+      check:
+        status: implemented
+        tools: [check_route_path]
+        accepted_gaps: [dst-ip, src-ip]
+
+  /ip/route/cache:
+    title: Route cache
+    section: IP
+    notes: RouterOS 7 has no route cache; the tools explain that instead of running a command.
+    allow_missing_manual: true
+    commands:
+      print:
+        status: not_applicable
+        tools: [get_route_cache]
+      flush:
+        status: not_applicable
+        tools: [flush_route_cache]
+
+  /ip/arp:
+    title: ARP table
+    section: IP
+    notes: Read-only view.
+    commands:
+      print:
+        status: implemented
+        tools: [list_arp_entries]
+        params: [address, mac-address, interface, status]
+        accepted_gaps: [published]
+
+  /ip/service:
+    title: IP services
+    section: IP
+    notes: Read-only view of the management services.
+    commands:
+      print:
+        status: implemented
+        tools: [list_ip_services]
+        params: [name, disabled]
+        accepted_gaps: [address, available-from, certificate, max-sessions, port, tls-version, vrf]
+
+  /ip/ipsec/installed-sa:
+    title: IPsec installed SAs
+    section: IP
+    notes: Read-only view. The Flags legend is preserved because S means SEEN-TRAFFIC.
+    commands:
+      print:
+        status: implemented
+        tools: [get_ipsec_installed_sa]
+        params: [src-address, dst-address]
+        accepted_gaps:
+          - add-lifetime
+          - addtime
+          - auth-algorithm
+          - auth-key
+          - current-bytes
+          - current-packets
+          - enc-algorithm
+          - enc-key
+          - enc-key-size
+          - expires-in
+          - invalid-packets
+          - replay
+          - spi
+          - state
+
+  /ip/ipsec/active-peers:
+    title: IPsec active peers
+    section: IP
+    notes: Read-only view.
+    commands:
+      print:
+        status: implemented
+        tools: [get_ipsec_active_peers]
+        params: [remote-address, state]
+
+  /ip/ipsec/peer:
+    title: IPsec peers
+    section: IP
+    notes: Read-only view; peer configuration is not exposed.
+    commands:
+      print:
+        status: implemented
+        tools: [list_ipsec_peers]
+        params: [name, address]
+        accepted_gaps: [exchange-mode, local-address, passive, port, ppk-secret, profile, send-initial-contact]
+
+  /ip/ipsec/policy:
+    title: IPsec policies
+    section: IP
+    notes: Read-only view; policy configuration is not exposed.
+    commands:
+      print:
+        status: implemented
+        tools: [list_ipsec_policies]
+        params: [peer, src-address, dst-address]
+        accepted_gaps:
+          - action
+          - dst-port
+          - group
+          - ipsec-protocols
+          - level
+          - proposal
+          - protocol
+          - sa-dst-address
+          - sa-src-address
+          - src-port
+          - template
+          - tunnel
+
+  /ip/ipsec/profile:
+    title: IPsec profiles
+    section: IP
+    notes: Read-only view; profile configuration is not exposed.
+    commands:
+      print:
+        status: implemented
+        tools: [list_ipsec_profiles]
+        params: [name]
+        accepted_gaps:
+          - dh-group
+          - dpd-interval
+          - dpd-maximum-failures
+          - enc-algorithm
+          - hash-algorithm
+          - lifebytes
+          - lifetime
+          - nat-traversal
+          - ppk
+          - prf-algorithm
+          - proposal-check
+
+  /ip/ipsec/proposal:
+    title: IPsec proposals
+    section: IP
+    notes: Read-only view; proposal configuration is not exposed.
+    commands:
+      print:
+        status: implemented
+        tools: [list_ipsec_proposals]
+        params: [name]
+        accepted_gaps: [auth-algorithms, enc-algorithms, lifetime, pfs-group]
+
+  /ipv6/address:
+    title: IPv6 address
+    section: IPv6
+    notes: Set/update is not exposed; add, print and remove are.
+    commands:
+      add:
+        status: implemented
+        tools: [add_ipv6_address]
+        params: [address, interface, advertise, eui-64, from-pool, no-dad, comment, disabled]
+        accepted_gaps: [auto-link-local, from-pool-policy]
+      print:
+        status: implemented
+        tools: [list_ipv6_addresses, get_ipv6_address]
+        params: [interface, address, disabled, dynamic, global, link-local]
+      set:
+        status: planned
+      remove:
+        status: implemented
+        tools: [remove_ipv6_address]
+        params: [address]
+
+  /ipv6/dhcp-server/binding:
+    title: DHCPv6 bindings
+    section: IPv6
+    notes: Only the detailed print is exposed; add, make-static and remove are not.
+    manual_paths: [/ipv6/dhcp-server/binding, /ipv6/dhcp-server/binding/make-static]
+    commands:
+      print:
+        status: implemented
+        tools: [list_dhcpv6_bindings]
+        params: [address, duid, iaid, server, status, life-time, last-seen]
+        accepted_gaps:
+          - address-lists
+          - allow-dual-stack-queue
+          - dhcp-option
+          - ia-type
+          - insert-queue-before
+          - parent-queue
+          - prefix-pool
+          - queue-type
+          - rate-limit
+      add:
+        status: planned
+      make-static:
+        status: planned
+      remove:
+        status: planned
+
+  /ipv6/firewall/filter:
+    title: IPv6 firewall filter
+    section: IPv6
+    notes: >-
+      IPv6 here is NAT-free, so connection-nat-state is intentionally not
+      exposed. Advanced matchers and action options not exposed by the tools
+      are recorded in accepted_gaps.
+    commands:
+      add:
+        status: implemented
+        tools: [create_ipv6_filter_rule]
+        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, connection-state, src-address-list, dst-address-list, src-address-type, dst-address-type, icmp-options, hop-limit, headers, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
+        accepted_gaps:
+          - address-list
+          - address-list-timeout
+          - connection-bytes
+          - connection-limit
+          - connection-mark
+          - connection-nat-state
+          - connection-rate
+          - connection-type
+          - content
+          - dscp
+          - dst-limit
+          - in-bridge-port
+          - in-bridge-port-list
+          - in-interface-list
+          - ingress-priority
+          - ipsec-policy
+          - nth
+          - out-bridge-port
+          - out-bridge-port-list
+          - out-interface-list
+          - packet-mark
+          - packet-size
+          - per-connection-classifier
+          - port
+          - priority
+          - random
+          - reject-with
+          - routing-mark
+          - src-mac-address
+          - tcp-mss
+          - time
+          - tls-host
+          - tos
+      print:
+        status: implemented
+        tools: [list_ipv6_filter_rules, get_ipv6_filter_rule]
+        params: [chain, action, src-address, dst-address, protocol, in-interface, out-interface, disabled, invalid, dynamic]
+      set:
+        status: implemented
+        tools: [update_ipv6_filter_rule]
+        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, connection-state, src-address-list, dst-address-list, src-address-type, dst-address-type, icmp-options, hop-limit, headers, limit, tcp-flags, comment, disabled, log, log-prefix]
+        accepted_gaps:
+          - address-list
+          - address-list-timeout
+          - connection-bytes
+          - connection-limit
+          - connection-mark
+          - connection-nat-state
+          - connection-rate
+          - connection-type
+          - content
+          - dscp
+          - dst-limit
+          - in-bridge-port
+          - in-bridge-port-list
+          - in-interface-list
+          - ingress-priority
+          - ipsec-policy
+          - nth
+          - out-bridge-port
+          - out-bridge-port-list
+          - out-interface-list
+          - packet-mark
+          - packet-size
+          - per-connection-classifier
+          - port
+          - priority
+          - random
+          - reject-with
+          - routing-mark
+          - src-mac-address
+          - tcp-mss
+          - time
+          - tls-host
+          - tos
+      remove:
+        status: implemented
+        tools: [remove_ipv6_filter_rule]
+      move:
+        status: implemented
+        tools: [move_ipv6_filter_rule]
+      enable:
+        status: implemented
+        tools: [enable_ipv6_filter_rule]
+      disable:
+        status: implemented
+        tools: [disable_ipv6_filter_rule]
+
+  /ipv6/firewall/address-list:
+    title: IPv6 address list
+    section: IPv6
+    commands:
+      add:
+        status: implemented
+        tools: [create_address_list_entry]
+        params: [list, address, comment, timeout, disabled]
+      print:
+        status: implemented
+        tools: [list_address_list_entries, get_address_list_entry]
+        params: [list, address, comment, disabled, dynamic]
+      set:
+        status: implemented
+        tools: [update_address_list_entry, enable_address_list_entry, disable_address_list_entry]
+        params: [list, address, comment, timeout, disabled]
+      remove:
+        status: implemented
+        tools: [remove_address_list_entry]
+        params: [list, address]
+
+  /ipv6/neighbor:
+    title: IPv6 neighbors
+    section: IPv6
+    notes: Read-only view.
+    commands:
+      print:
+        status: implemented
+        tools: [list_ipv6_neighbors]
+        params: [address, mac-address, interface, status]
+
+  /queue/type:
+    title: Queue types
+    section: Queues
+    commands:
+      add:
+        status: implemented
+        tools: [create_queue_type]
+        params: [name, kind, cake-flowmode, cake-nat, cake-overhead, cake-mpu, cake-diffserv, cake-ack-filter, cake-rtt, cake-wash, cake-overhead-scheme, pcq-rate, pcq-limit, pcq-classifier, pfifo-limit, bfifo-limit, sfq-perturb, sfq-allot, fq-codel-limit, fq-codel-quantum, fq-codel-target, fq-codel-interval, red-limit, red-min-threshold, red-max-threshold, red-burst, red-avg-packet]
+        accepted_gaps:
+          - cake-atm
+          - cake-autorate-ingress
+          - cake-bandwidth
+          - cake-memlimit
+          - cake-rtt-scheme
+          - codel-ce-threshold
+          - codel-ecn
+          - codel-interval
+          - codel-limit
+          - codel-target
+          - fq-codel-ce-threshold
+          - fq-codel-ecn
+          - fq-codel-flows
+          - fq-codel-memlimit
+          - mq-pfifo-limit
+          - pcq-burst-rate
+          - pcq-burst-threshold
+          - pcq-burst-time
+          - pcq-dst-address-mask
+          - pcq-dst-address6-mask
+          - pcq-src-address-mask
+          - pcq-src-address6-mask
+          - pcq-total-limit
+      print:
+        status: implemented
+        tools: [list_queue_types, get_queue_type]
+        params: [name, kind]
+      set:
+        status: implemented
+        tools: [update_queue_type]
+        params: [name, cake-flowmode, cake-nat, cake-overhead, cake-mpu, cake-diffserv, cake-ack-filter, cake-rtt, cake-wash, cake-overhead-scheme, pcq-rate, pcq-limit, pcq-classifier]
+        accepted_gaps:
+          - cake-atm
+          - cake-autorate-ingress
+          - cake-bandwidth
+          - cake-memlimit
+          - cake-rtt-scheme
+          - codel-ce-threshold
+          - codel-ecn
+          - codel-interval
+          - codel-limit
+          - codel-target
+          - fq-codel-ce-threshold
+          - fq-codel-ecn
+          - fq-codel-flows
+          - fq-codel-memlimit
+          - mq-pfifo-limit
+          - pcq-burst-rate
+          - pcq-burst-threshold
+          - pcq-burst-time
+          - pcq-dst-address-mask
+          - pcq-dst-address6-mask
+          - pcq-src-address-mask
+          - pcq-src-address6-mask
+          - pcq-total-limit
+      remove:
+        status: implemented
+        tools: [remove_queue_type]
+        params: [name]
+
+  /queue/tree:
+    title: Queue trees
+    section: Queues
+    commands:
+      add:
+        status: implemented
+        tools: [create_queue_tree]
+        params: [name, parent, queue, packet-mark, max-limit, limit-at, burst-limit, burst-threshold, burst-time, bucket-size, priority, comment, disabled]
+      print:
+        status: implemented
+        tools: [list_queue_trees, get_queue_tree]
+        params: [name, parent, disabled, invalid]
+      set:
+        status: implemented
+        tools: [update_queue_tree]
+        params: [name, parent, queue, packet-mark, max-limit, limit-at, burst-limit, burst-threshold, burst-time, bucket-size, priority, comment, disabled]
+      remove:
+        status: implemented
+        tools: [remove_queue_tree]
+        params: [name]
+      enable:
+        status: implemented
+        tools: [enable_queue_tree]
+        params: [name]
+      disable:
+        status: implemented
+        tools: [disable_queue_tree]
+        params: [name]
+
+  /queue/simple:
+    title: Simple queues
+    section: Queues
+    commands:
+      add:
+        status: implemented
+        tools: [create_simple_queue]
+        params: [name, target, dst, max-limit, limit-at, burst-limit, burst-threshold, burst-time, bucket-size, queue, parent, priority, packet-marks, comment, disabled]
+      print:
+        status: implemented
+        tools: [list_simple_queues, get_simple_queue]
+        params: [name, target, disabled, invalid]
+        accepted_gaps:
+          - time
+          - total-bucket-size
+          - total-burst-limit
+          - total-burst-threshold
+          - total-burst-time
+          - total-limit-at
+          - total-max-limit
+          - total-priority
+          - total-queue
+      set:
+        status: implemented
+        tools: [update_simple_queue]
+        params: [name, target, dst, max-limit, limit-at, burst-limit, burst-threshold, burst-time, bucket-size, queue, parent, priority, packet-marks, comment, disabled]
+      remove:
+        status: implemented
+        tools: [remove_simple_queue]
+        params: [name]
+      enable:
+        status: implemented
+        tools: [enable_simple_queue]
+        params: [name]
+      disable:
+        status: implemented
+        tools: [disable_simple_queue]
+        params: [name]
+
+  /user:
+    title: Users
+    section: Users
+    notes: The manual documents the CLI reference as `## user(Cli-reference)`; the subpages are separate menus in this manifest.
+    manual_paths: [/user, /user/expire-password]
+    commands:
+      add:
+        status: implemented
+        tools: [add_user]
+        params: [name, password, group, address, comment, disabled]
+        accepted_gaps: [inactivity-policy, inactivity-timeout]
+      print:
+        status: implemented
+        tools: [list_users, get_user]
+        params: [name, group, disabled]
+      set:
+        status: implemented
+        tools: [update_user, enable_user, disable_user]
+        params: [name, password, group, address, comment, disabled]
+        accepted_gaps: [inactivity-policy, inactivity-timeout]
+      remove:
+        status: implemented
+        tools: [remove_user]
+        params: [name]
+      export:
+        status: implemented
+        tools: [export_user_config]
+        params: [file]
+      expire-password:
+        status: planned
+
+  /user/settings:
+    title: User settings
+    section: Users
+    notes: Not implemented. Password complexity settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /user/group:
+    title: User groups
+    section: Users
+    commands:
+      add:
+        status: implemented
+        tools: [add_user_group]
+        params: [name, policy, skin, comment]
+      print:
+        status: implemented
+        tools: [list_user_groups, get_user_group]
+        params: [name, policy]
+      set:
+        status: implemented
+        tools: [update_user_group]
+        params: [name, policy, skin, comment]
+      remove:
+        status: implemented
+        tools: [remove_user_group]
+        params: [name]
+
+  /user/active:
+    title: Active users
+    section: Users
+    commands:
+      print:
+        status: implemented
+        tools: [get_active_users]
+      remove:
+        status: implemented
+        tools: [disconnect_user]
+
+  /user/ssh-keys:
+    title: User SSH keys
+    section: Users
+    notes: >-
+      Keys are imported from a public-key file; inline key/info fields are
+      returned by print but are not accepted as parameters.
+    manual_paths: [/user/ssh-keys, /user/ssh-keys/import]
+    commands:
+      import:
+        status: implemented
+        tools: [set_user_ssh_keys]
+        params: [user, public-key-file]
+      print:
+        status: implemented
+        tools: [list_user_ssh_keys]
+        params: [user]
+        accepted_gaps: [info, key]
+      remove:
+        status: implemented
+        tools: [remove_user_ssh_key]
+
+  /system/resource:
+    title: System resource
+    section: System
+    commands:
+      print:
+        status: implemented
+        tools: [get_system_resource]
+
+  /system/health:
+    title: System health
+    section: System
+    commands:
+      print:
+        status: implemented
+        tools: [get_system_health]
+        accepted_gaps: [state-after-reboot]
+
+  /system/health/settings:
+    title: Health settings
+    section: System
+    notes: Not implemented. Fan and temperature monitoring settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /system/clock:
+    title: System clock
+    section: System
+    commands:
+      print:
+        status: implemented
+        tools: [get_system_clock]
+        accepted_gaps: [date, time, time-zone-autodetect, time-zone-name]
+
+  /system/clock/manual:
+    title: Manual clock settings
+    section: System
+    notes: Not implemented. Manual GMT offset and daylight-saving settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /system/routerboard:
+    title: RouterBOARD
+    section: System
+    commands:
+      print:
+        status: implemented
+        tools: [get_system_routerboard]
+
+  /system/package:
+    title: System packages
+    section: System
+    commands:
+      print:
+        status: implemented
+        tools: [list_system_packages]
+
+  /system/package/update:
+    title: Package update
+    section: System
+    notes: >-
+      The print tool reads the stored update status; channel, check-certificate,
+      ip-version and mode are not exposed. check-for-updates and download are
+      planned.
+    manual_paths: [/system/package/update, /system/package/update/check-for-updates, /system/package/update/download]
+    commands:
+      print:
+        status: implemented
+        tools: [get_system_package_update]
+        accepted_gaps: [channel, check-certificate, ip-version, mode]
+      check-for-updates:
+        status: planned
+        accepted_gaps: [fetch-changelog]
+      download:
+        status: planned
+        accepted_gaps: [ignore-missing]
+
+  /system/scheduler:
+    title: Schedulers
+    section: System
+    notes: Read-only view; scheduler creation and editing are not exposed.
+    commands:
+      print:
+        status: implemented
+        tools: [list_schedulers]
+        params: [name]
+        accepted_gaps: [days, interval, on-event, policy, start-date, start-time]
+
+  /system/script:
+    title: Scripts
+    section: System
+    notes: Read-only view; script bodies are withheld unless explicitly requested.
+    commands:
+      print:
+        status: implemented
+        tools: [list_scripts]
+        params: [name]
+        accepted_gaps: [dont-require-permissions, owner, policy, source]
+
+  /system/backup:
+    title: System backup
+    section: System
+    notes: The manual documents save and load as separate command pages.
+    manual_paths: [/system/backup/save, /system/backup/load]
+    commands:
+      save:
+        status: implemented
+        tools: [create_backup]
+        params: [name, dont-encrypt, password-file]
+        accepted_gaps: [encryption]
+      load:
+        status: implemented
+        tools: [restore_backup]
+        params: [name, password]
+        accepted_gaps: [force-v6-to-v7-configuration-upgrade]
+
+  /certificate:
+    title: Certificates
+    section: System
+    notes: Not implemented.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+      sign:
+        status: planned
+
+  /system/identity:
+    title: System identity
+    section: System
+    notes: Not implemented.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /system/logging:
+    title: System logging
+    section: System
+    notes: Not implemented. The log reader covers /log, not the logging actions.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /system/ntp:
+    title: NTP
+    section: System
+    notes: Not implemented. The manual documents client and server as separate pages.
+    manual_paths: [/system/ntp/client, /system/ntp/server]
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /system/note:
+    title: System note
+    section: System
+    notes: Not implemented.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /tool/netwatch:
+    title: Netwatch
+    section: Tools and files
+    notes: Read-only view; probe creation and editing are not exposed.
+    commands:
+      print:
+        status: implemented
+        tools: [list_netwatch]
+        params: [host, comment, status, type]
+        accepted_gaps:
+          - accept-icmp-time-exceeded
+          - certificate
+          - check-certificate
+          - dns-server
+          - down-script
+          - early-failure-detection
+          - early-success-detection
+          - http-codes
+          - ignore-initial-down
+          - ignore-initial-up
+          - interval
+          - name
+          - packet-count
+          - packet-interval
+          - packet-size
+          - port
+          - record-type
+          - src-address
+          - start-delay
+          - startup-delay
+          - test-script
+          - thr-avg
+          - thr-http-time
+          - thr-jitter
+          - thr-loss-count
+          - thr-loss-percent
+          - thr-max
+          - thr-stdev
+          - thr-tcp-conn-time
+          - timeout
+          - ttl
+          - up-script
+
+  /log:
+    title: Log
+    section: Tools and files
+    notes: Read-only log views; export writes a file, and monitor uses a count snapshot.
+    commands:
+      print:
+        status: implemented
+        tools: [get_logs, get_logs_by_severity, get_logs_by_topic, search_logs, get_system_events, get_security_logs, export_logs]
+        params: [topics, message, time, file]
+      clear:
+        status: not_applicable
+        tools: [clear_logs]
+        notes: RouterOS has no command to clear the in-memory log.
+
+  /file:
+    title: Files
+    section: Tools and files
+    notes: File listing, removal and SFTP transfers are exposed; file creation and editing are not.
+    commands:
+      print:
+        status: implemented
+        tools: [list_backups, backup_info]
+        params: [name, type]
+        accepted_gaps: [contents]
+      remove:
+        status: implemented
+        tools: [remove_file]
+        params: [name]
+
+  /export:
+    title: Configuration export
+    section: Tools and files
+    notes: Documented in the configuration-management pages rather than a standalone CLI page.
+    allow_missing_manual: true
+    commands:
+      export:
+        status: implemented
+        tools: [create_export, export_section]
+        params: [file, show-sensitive, verbose, compact]
+
+  /import:
+    title: Configuration import
+    section: Tools and files
+    commands:
+      import:
+        status: implemented
+        tools: [import_configuration]
+        params: [file, file-name, run-after-reset, verbose]
+        accepted_gaps: [dry-run, from-line]
+
+  /routing/table:
+    title: Routing tables
+    section: Routing
+    notes: Not implemented. Routes can use an existing routing-table name, but table management is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  # ── Additional menus declared in scope ────────────────────────────────────
+  # These menus are in scope but not implemented yet; the rest are recorded
+  # under `excluded`.
+
+  /interface/macsec:
+    title: MACsec
+    section: Interfaces
+    notes: Not implemented. MACsec link security is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/macvlan:
+    title: MAC VLAN
+    section: Interfaces
+    notes: Not implemented. MAC VLAN interfaces are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/veth:
+    title: Virtual Ethernet
+    section: Interfaces
+    notes: Not implemented. Virtual Ethernet interfaces are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/vrrp:
+    title: VRRP
+    section: Interfaces
+    notes: Not implemented. VRRP is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/aaa:
+    title: Wi-Fi AAA
+    section: Interfaces
+    notes: Not implemented. Wi-Fi AAA profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/access-list:
+    title: Wi-Fi access list
+    section: Interfaces
+    notes: Not implemented. Wi-Fi access-list management is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/cap:
+    title: Wi-Fi CAP
+    section: Interfaces
+    notes: Not implemented. Wi-Fi CAP settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /interface/wifi/capsman:
+    title: Wi-Fi CAPsMAN
+    section: Interfaces
+    notes: Not implemented. CAPsMAN management is not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /interface/wifi/channel:
+    title: Wi-Fi channel
+    section: Interfaces
+    notes: Not implemented. Wi-Fi channel profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/configuration:
+    title: Wi-Fi configuration
+    section: Interfaces
+    notes: Not implemented. Wi-Fi configuration profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/datapath:
+    title: Wi-Fi datapath
+    section: Interfaces
+    notes: Not implemented. Wi-Fi datapath profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/interworking:
+    title: Wi-Fi interworking
+    section: Interfaces
+    notes: Not implemented. Wi-Fi interworking profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/network:
+    title: Wi-Fi network
+    section: Interfaces
+    notes: Not implemented. Wi-Fi network profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/provisioning:
+    title: Wi-Fi provisioning
+    section: Interfaces
+    notes: Not implemented. Wi-Fi provisioning is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/radio:
+    title: Wi-Fi radio
+    section: Interfaces
+    notes: Not implemented. The Wi-Fi radio inventory is not exposed.
+    commands:
+      print:
+        status: planned
+
+  /interface/wifi/roam:
+    title: Wi-Fi roaming
+    section: Interfaces
+    notes: Not implemented. The Wi-Fi roam command is not exposed.
+    commands:
+      roam:
+        status: planned
+
+  /interface/wifi/security:
+    title: Wi-Fi security
+    section: Interfaces
+    notes: Not implemented. Wi-Fi security profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/steering:
+    title: Wi-Fi steering
+    section: Interfaces
+    notes: Not implemented. Wi-Fi steering profiles are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /interface/wifi/wps-client:
+    title: Wi-Fi WPS client
+    section: Interfaces
+    notes: Not implemented. The Wi-Fi WPS client command is not exposed.
+    commands:
+      wps-client:
+        status: planned
+
+  /ip/dhcp-server/config:
+    title: DHCP server config
+    section: IP
+    notes: Not implemented. Global DHCP server settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /ip/dhcp-server/matcher:
+    title: DHCP matcher
+    section: IP
+    notes: Not implemented. DHCP matcher rules are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/dns/adlist:
+    title: DNS adlist
+    section: IP
+    notes: Not implemented. DNS adlist management is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+      pause:
+        status: planned
+
+  /ip/dns/cache/all:
+    title: DNS cache (all records)
+    section: IP
+    notes: Not implemented. The all-records DNS cache view is not exposed.
+    commands:
+      print:
+        status: planned
+
+  /ip/dns/forwarders:
+    title: DNS forwarders
+    section: IP
+    notes: Not implemented. DNS forwarder configuration is not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/ipsec/policy/group:
+    title: IPsec policy groups
+    section: IP
+    notes: Not implemented. IPsec policy groups are not exposed.
+    commands:
+      add:
+        status: planned
+      print:
+        status: planned
+      set:
+        status: planned
+      remove:
+        status: planned
+
+  /ip/service/webserver:
+    title: Web server service
+    section: IP
+    notes: Not implemented. Web server service settings are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /system/resource/cpu:
+    title: CPU resource
+    section: System
+    notes: Not implemented. Per-CPU resource details are not exposed.
+    commands:
+      print:
+        status: planned
+
+  /system/resource/hardware:
+    title: Hardware resource
+    section: System
+    notes: Not implemented. Hardware resource details are not exposed.
+    commands:
+      print:
+        status: planned
+
+  /system/resource/irq:
+    title: IRQ resource
+    section: System
+    notes: Not implemented. IRQ resource details and CPU pinning are not exposed.
+    commands:
+      print:
+        status: planned
+      set:
+        status: planned
+
+  /system/script/job:
+    title: Script jobs
+    section: System
+    notes: Not implemented. Running script jobs are not exposed.
+    commands:
+      print:
+        status: planned
+
+  /file/copy:
+    title: File copy
+    section: Tools and files
+    notes: Not implemented. Copying files on the device is not exposed.
+    commands:
+      copy:
+        status: planned
+
+server_tools:
+  list_devices:
+    kind: server
+    note: Inventory discovery; no RouterOS command.
+  safe_mode_status:
+    kind: interactive
+    note: Reads the persistent safe-mode shell state.
+  enable_safe_mode:
+    kind: interactive
+    note: Opens a persistent shell and sends Ctrl-X.
+  commit_safe_mode:
+    kind: interactive
+    note: Sends Ctrl-X again and closes the safe-mode shell.
+  rollback_safe_mode:
+    kind: interactive
+    note: Closes the shell to trigger RouterOS's automatic revert.
+  generate_wireguard_client_config:
+    kind: local
+    note: Formats a client configuration; does not contact the router.
+  test_dns_query:
+    kind: command
+    note: Runs :resolve on the device.
+  create_basic_firewall_setup:
+    kind: composite
+    note: Adds five /ip/firewall/filter rules in one call.
+  check_wireless_support:
+    kind: composite
+    note: Combines system resource, packages, interfaces and wireless detection.
+  get_dns_cache_statistics:
+    kind: composite
+    note: Combines /ip/dns print with /ip/dns/cache print count-only.
+  get_log_statistics:
+    kind: composite
+    note: Combines /log print count-only with per-topic and time-window counts.
+  get_route_statistics:
+    kind: composite
+    note: Combines several /ip/route print count-only queries.
+  monitor_logs:
+    kind: composite
+    note: Takes a count snapshot, waits, then reads the new entries.
+  download_file:
+    kind: sftp
+    note: Transfers raw bytes over the SSH SFTP subsystem.
+  upload_file:
+    kind: sftp
+    note: Transfers raw bytes over the SSH SFTP subsystem.
+
+excluded:
+  - menu: /container
+    reason: Container management is out of scope.
+  - menu: /routing/bgp
+    reason: Requires a dedicated routing scope.
+  - menu: /routing/ospf
+    reason: Requires a dedicated routing scope.
+  - menu: /ip/hotspot
+    reason: Hotspot management is out of scope.
+  - menu: /user/aaa
+    reason: AAA/RADIUS management is out of scope.
+  - menu: /queue/interface
+    reason: Interface queue configuration is out of scope.
+  - menu: /tool/sniffer
+    reason: Packet capture is out of scope.
+  - menu: /tool/torch
+    reason: Streaming traffic monitor; not suitable for a non-interactive SSH session.
+  - menu: /tool/bandwidth-test
+    reason: Throughput testing is out of scope.
+  - menu: /tool/fetch
+    reason: Arbitrary file/HTTP transfer from the router is out of scope.
+  - menu: /ip/ipsec/identity
+    reason: print detail exposes secret= in clear text; intentionally not exposed.
+  - menu: /system/reset
+    reason: Destructive operation; not exposed.
+  - menu: /system/reboot
+    reason: Destructive operation; not exposed.
+  - menu: /system/shutdown
+    reason: Destructive operation; not exposed.
+  - menu: /interface/bonding
+    reason: Bonding is out of scope.
+  - menu: /interface/dot1x
+    reason: 802.1X authentication is out of scope.
+  - menu: /interface/monitor-traffic
+    reason: Streaming traffic monitor; not suitable for a non-interactive SSH session.
+  - menu: /interface/eoip
+    reason: EoIP tunnels are out of scope.
+  - menu: /interface/gre
+    reason: GRE tunnels are out of scope.
+  - menu: /interface/vxlan
+    reason: VXLAN is out of scope.
+  - menu: /interface/pppoe-client
+    reason: PPPoE client configuration is out of scope.
+  - menu: /interface/lte
+    reason: LTE configuration is out of scope.
+  - menu: /ppp
+    reason: PPP/PPPoE server management is out of scope.
+  - menu: /radius
+    reason: RADIUS client management is out of scope.
+  - menu: /user-manager
+    reason: User Manager is out of scope.
+  - menu: /ip/cloud
+    reason: MikroTik cloud services are out of scope.
+  - menu: /tool/romon
+    reason: RoMON management is out of scope.
+  - menu: /tool/sms
+    reason: SMS sending is out of scope.
+  - menu: /tool/e-mail
+    reason: Email sending is out of scope.
+  - menu: /system/ups
+    reason: UPS monitoring is out of scope.
+  - menu: /system/watchdog
+    reason: Watchdog configuration is out of scope.
+  - menu: /ip/firewall/layer7-protocol
+    reason: Layer 7 matcher management is out of scope.
+  - menu: /ip/firewall/service-port
+    reason: Service-port helper management is out of scope.
+  - menu: /ip/firewall/helper
+    reason: Firewall helper management is out of scope.
+  - menu: /ipv6/firewall/nat
+    reason: IPv6 NAT is out of scope.
+  - menu: /interface/detect-internet
+    reason: Detect Internet is out of scope.
+  - menu: /tool/graphing
+    reason: Graphing is out of scope.
+  - menu: /tool/mac-server
+    reason: MAC server management is out of scope.
+  # ── Additional menus deliberately left out of scope ──────────────────────
+  - menu: /system/package/update/install
+    reason: Installs downloaded packages and reboots the device; destructive operation not exposed.
+  - menu: /system/package/apply-changes
+    reason: Applies package changes and reboots the device; destructive operation not exposed.
+  - menu: /system/package/local-update
+    reason: Installs packages from local files and reboots the device; destructive operation not exposed.
+  - menu: /system/routerboard/mode-button
+    reason: RouterBOARD hardware button configuration is out of scope.
+  - menu: /system/routerboard/reset-button
+    reason: Resets RouterBOARD configuration; destructive operation not exposed.
+  - menu: /system/routerboard/settings
+    reason: RouterBOARD hardware settings are out of scope.
+  - menu: /system/routerboard/usb
+    reason: RouterBOARD USB mode configuration is out of scope.
+  - menu: /system/routerboard/wps-button
+    reason: RouterBOARD hardware button configuration is out of scope.
+  - menu: /system/backup/cloud
+    reason: Cloud backup services are out of scope.
+  - menu: /system/script/environment
+    reason: Script environment variables may hold credentials; not exposed.
+  - menu: /user/ssh-keys/private
+    reason: Private key material is not exposed.
+  - menu: /ip/dhcp-server/alert
+    reason: DHCP alerting integrations (email/webhook) are out of scope.
+  - menu: /ip/dhcp-server/setup
+    reason: Interactive DHCP setup wizard; not suitable for a non-interactive SSH session.
+  - menu: /file/head
+    reason: Reads arbitrary file contents, which may include credentials; use download_file under controlled access.
+  - menu: /file/read
+    reason: Reads arbitrary file contents, which may include credentials; use download_file under controlled access.
+  - menu: /file/tail
+    reason: Reads arbitrary file contents, which may include credentials; use download_file under controlled access.
+  - menu: /file/rsync-daemon
+    reason: File synchronization services are out of scope.
+  - menu: /file/sync
+    reason: File synchronization services are out of scope.
+  - menu: /interface/wireguard/peers/show-client-config
+    reason: Returns client configuration including private key material; use generate_wireguard_client_config locally.
+  - menu: /interface/wireguard/wg-export
+    reason: Exports WireGuard configuration including private keys; not exposed.
+  - menu: /interface/wireguard/wg-import
+    reason: Bulk WireGuard configuration import bypasses per-peer validation; not exposed.
+  - menu: /system/resource/monitor
+    reason: Streaming resource monitor; not suitable for a non-interactive SSH session.
+  - menu: /interface/6to4
+    reason: 6to4 tunnels are out of scope.
+  - menu: /interface/eoipv6
+    reason: EoIPv6 tunnels are out of scope.
+  - menu: /interface/gre6
+    reason: GRE6 tunnels are out of scope.
+  - menu: /interface/ipip
+    reason: IPIP tunnels are out of scope.
+  - menu: /interface/ipipv6
+    reason: IPIPv6 tunnels are out of scope.
+  - menu: /interface/l2tp-client
+    reason: L2TP client configuration is out of scope.
+  - menu: /interface/l2tp-ether
+    reason: L2TP Ether interfaces are out of scope.
+  - menu: /interface/l2tp-server
+    reason: L2TP server configuration is out of scope.
+  - menu: /interface/mesh
+    reason: Mesh wireless configuration is out of scope.
+  - menu: /interface/ovpn-client
+    reason: OpenVPN client configuration is out of scope.
+  - menu: /interface/ovpn-server
+    reason: OpenVPN server configuration is out of scope.
+  - menu: /interface/ppp-client
+    reason: PPP client configuration is out of scope.
+  - menu: /interface/ppp-server
+    reason: PPP server configuration is out of scope.
+  - menu: /interface/pppoe-server
+    reason: PPPoE server configuration is out of scope.
+  - menu: /interface/pptp-client
+    reason: PPTP client configuration is out of scope.
+  - menu: /interface/pptp-server
+    reason: PPTP server configuration is out of scope.
+  - menu: /interface/pwr-line
+    reason: Power-line interfaces are out of scope.
+  - menu: /interface/sstp-client
+    reason: SSTP client configuration is out of scope.
+  - menu: /interface/sstp-server
+    reason: SSTP server configuration is out of scope.
+  - menu: /interface/vpls
+    reason: VPLS is out of scope.
+  - menu: /interface/w60g
+    reason: 60 GHz wireless interfaces are out of scope.
+  - menu: /interface/xfrm
+    reason: XFRM interfaces are out of scope.
+  - menu: /interface/wifi/devel
+    reason: Low-level Wi-Fi development settings are out of scope.
+  - menu: /interface/wifi/flat-snoop
+    reason: Wi-Fi snooping is out of scope.
+  - menu: /interface/wifi/frequency-scan
+    reason: Streaming frequency scan; not suitable for a non-interactive SSH session.
+  - menu: /interface/wifi/monitor
+    reason: Streaming Wi-Fi monitor; not suitable for a non-interactive SSH session.
+  - menu: /interface/wifi/sniffer
+    reason: Wi-Fi packet capture is out of scope.
+  - menu: /interface/wifi/spectral-scan
+    reason: Streaming spectral scan; not suitable for a non-interactive SSH session.
+  # ── Operational/diagnostic command pages surfaced by the read-only-aware parser ──
+  - menu: /interface/blink
+    reason: LED blink is a diagnostic operation; not exposed.
+  - menu: /interface/reset-counters
+    reason: Interface counter reset is an operational command; not exposed.
+  - menu: /interface/wifi/liberate
+    reason: Wi-Fi liberate is an operational command; not exposed.
+  - menu: /interface/wifi/reset-mac-address
+    reason: Wi-Fi MAC reset is an operational command; not exposed.
+  - menu: /interface/wifi/trigger-radar
+    reason: Wi-Fi radar trigger is a diagnostic operation; not exposed.
+  - menu: /interface/wifi/wps-push-button
+    reason: Wi-Fi WPS push-button operation is not exposed.
+  - menu: /ip/dhcp-server/lease/check-status
+    reason: Lease status check is an operational command; not exposed.
+  - menu: /ip/dhcp-server/lease/send-reconfigure
+    reason: Lease reconfigure is an operational command; not exposed.
+  - menu: /ip/firewall/filter/reset-counters
+    reason: Firewall counter reset is an operational command; not exposed.
+  - menu: /ip/firewall/filter/reset-counters-all
+    reason: Firewall counter reset is an operational command; not exposed.
+  - menu: /ip/firewall/nat/reset-counters
+    reason: NAT counter reset is an operational command; not exposed.
+  - menu: /ip/firewall/nat/reset-counters-all
+    reason: NAT counter reset is an operational command; not exposed.
+  - menu: /ip/ipsec/active-peers/kill-connections
+    reason: Killing IPsec connections is destructive; not exposed.
+  - menu: /ip/ipsec/installed-sa/flush
+    reason: Flushing installed SAs is destructive; not exposed.
+  - menu: /ipv6/dhcp-server/binding/send-reconfigure
+    reason: Binding reconfigure is an operational command; not exposed.
+  - menu: /ipv6/firewall/filter/reset-counters
+    reason: Firewall counter reset is an operational command; not exposed.
+  - menu: /ipv6/firewall/filter/reset-counters-all
+    reason: Firewall counter reset is an operational command; not exposed.
+  - menu: /queue/simple/reset-counters
+    reason: Queue counter reset is an operational command; not exposed.
+  - menu: /queue/simple/reset-counters-all
+    reason: Queue counter reset is an operational command; not exposed.
+  - menu: /queue/tree/reset-counters
+    reason: Queue counter reset is an operational command; not exposed.
+  - menu: /queue/tree/reset-counters-all
+    reason: Queue counter reset is an operational command; not exposed.
+  - menu: /system/package/disable
+    reason: Package lifecycle operation; not exposed.
+  - menu: /system/package/downgrade
+    reason: Package downgrade is destructive; not exposed.
+  - menu: /system/package/enable
+    reason: Package lifecycle operation; not exposed.
+  - menu: /system/package/uninstall
+    reason: Package uninstall is destructive; not exposed.
+  - menu: /system/package/unschedule
+    reason: Package lifecycle operation; not exposed.
+  - menu: /system/package/update/cancel
+    reason: Cancelling a package update is an operational command; not exposed.
+  - menu: /system/routerboard/upgrade
+    reason: RouterBOARD firmware upgrade is destructive; not exposed.

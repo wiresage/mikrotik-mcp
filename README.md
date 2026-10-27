@@ -41,6 +41,7 @@ https://github.com/user-attachments/assets/185b2c39-8f55-4f26-a74c-2ac459ad38f5
 ### Quick Links
 
 - **[Installation Guide](docs/getting-started/installation.md)** - Get started with MikroTik MCP
+- **[API Coverage](docs/api-coverage.md)** - Implemented and planned RouterOS features
 - **[Testing Guide](docs/getting-started/testing.md)** - Run integration tests
 - **[Claude Desktop Integration](docs/integrations/claude-desktop.md)** - Configure for Claude Desktop
 - **[MCP Inspector](docs/integrations/inspector.md)** - Interactive testing tool

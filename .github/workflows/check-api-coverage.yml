@@ -1,0 +1,112 @@
+# Manually triggered coverage check against the published RouterOS manual.
+#
+# NOTE: This workflow downloads https://manual.mikrotik.com/llms-full.txt into
+# the GitHub Actions runner. It does not run in the MCP server, and it does not
+# download anything on user machines. The MCP server itself only speaks SSH to
+# the configured RouterOS devices at runtime.
+name: Check API coverage
+
+on:
+  workflow_dispatch:
+    inputs:
+      manual_url:
+        description: "Corpus URL downloaded into the CI runner (default: https://manual.mikrotik.com/llms-full.txt)"
+        required: false
+        default: "https://manual.mikrotik.com/llms-full.txt"
+      strict:
+        description: "Fail on warnings as well as manifest errors"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-api-coverage
+  cancel-in-progress: false
+
+jobs:
+  check-api-coverage:
+    name: Check declared coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Download manual into the runner
+        env:
+          MANUAL_URL: ${{ inputs.manual_url }}
+        run: |
+          case "$MANUAL_URL" in
+            https://manual.mikrotik.com/*) ;;
+            *)
+              echo "Refusing non-official manual URL: $MANUAL_URL" >&2
+              exit 1
+              ;;
+          esac
+          effective_url=$(
+            curl --fail --location --proto '=https' --proto-redir '=https' \
+              --tlsv1.2 --max-time 120 --max-filesize 50000000 \
+              -w '%{url_effective}' \
+              -o "$RUNNER_TEMP/llms-full.txt" "$MANUAL_URL"
+          )
+          case "$effective_url" in
+            https://manual.mikrotik.com/*) ;;
+            *)
+              echo "Refusing redirected manual URL: $effective_url" >&2
+              exit 1
+              ;;
+          esac
+          sha256sum "$RUNNER_TEMP/llms-full.txt"
+
+      - name: Check declared coverage
+        run: |
+          args=(
+            --manual "$RUNNER_TEMP/llms-full.txt"
+            --check
+            --report "$RUNNER_TEMP/api-coverage-drift.md"
+            --json "$RUNNER_TEMP/api-coverage-drift.json"
+          )
+          if [ "${{ inputs.strict }}" = "true" ]; then
+            args+=(--strict)
+          fi
+          python scripts/api_coverage.py "${args[@]}"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage-report
+          path: |
+            ${{ runner.temp }}/api-coverage-drift.md
+            ${{ runner.temp }}/api-coverage-drift.json
+          retention-days: 30
+
+      - name: Job summary
+        if: always()
+        env:
+          MANUAL_URL: ${{ inputs.manual_url }}
+        run: |
+          {
+            echo "> This run downloaded $MANUAL_URL into the CI runner."
+            echo "> The MCP server itself never accesses the internet at runtime."
+            echo
+            if [ -f "$RUNNER_TEMP/api-coverage-drift.md" ]; then
+              cat "$RUNNER_TEMP/api-coverage-drift.md"
+            else
+              echo "No drift report was produced; see the job log."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
