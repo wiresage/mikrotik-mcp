@@ -1,5 +1,6 @@
 from typing import Optional, List
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 import re
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
@@ -19,15 +20,16 @@ async def mikrotik_add_user(
     """Adds a user to MikroTik device."""
     await ctx.info(f"Adding user: name={name}, group={group}")
 
-    cmd = f'/user add name="{name}" password="{password}" group={group}'
+    cmd = f'/user add name="{name}" password="{ros_quoted(password)}" group={group}'
     # The connector logs every command; keep the password out of both sinks.
-    redact = [password]
+    # What reaches the command line is the escaped form, so blank both.
+    redact = [password, ros_quoted(password)]
 
     if address:
         cmd += f" address={address}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     if disabled:
         cmd += " disabled=yes"
@@ -130,7 +132,7 @@ async def mikrotik_update_user(
     if new_name:
         updates.append(f'name="{new_name}"')
     if password:
-        updates.append(f'password="{password}"')
+        updates.append(f'password="{ros_quoted(password)}"')
     if group:
         updates.append(f'group={group}')
     if address is not None:
@@ -139,7 +141,7 @@ async def mikrotik_update_user(
         else:
             updates.append(f"address={address}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
 
@@ -149,7 +151,7 @@ async def mikrotik_update_user(
     cmd += " " + " ".join(updates)
 
     result = await execute_mikrotik_command(
-        cmd, ctx, device=device, redact=[password] if password else None
+        cmd, ctx, device=device, redact=[password, ros_quoted(password)] if password else None
     )
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -227,7 +229,7 @@ async def mikrotik_add_user_group(
         cmd += f' skin="{skin}"'
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -323,7 +325,7 @@ async def mikrotik_update_user_group(
         else:
             updates.append(f'skin="{skin}"')
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
 
     if not updates:
         return "No updates specified."

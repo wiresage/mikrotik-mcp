@@ -3,6 +3,7 @@ from typing import Optional
 from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ._selectors import resolve_item_id, item_count, has_item_rows
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
@@ -34,7 +35,7 @@ async def mikrotik_create_wireguard_interface(
     if mtu is not None:
         cmd += f" mtu={mtu}"
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 
@@ -124,7 +125,7 @@ async def mikrotik_update_wireguard_interface(
     if mtu is not None:
         updates.append(f"mtu={mtu}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
 
@@ -236,7 +237,7 @@ async def mikrotik_add_wireguard_peer(
     if persistent_keepalive:
         cmd += f' persistent-keepalive={persistent_keepalive}'
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 
@@ -346,7 +347,7 @@ async def mikrotik_update_wireguard_peer(
     if persistent_keepalive is not None:
         updates.append(f"persistent-keepalive={persistent_keepalive}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
 

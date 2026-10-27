@@ -2,6 +2,7 @@ import ipaddress
 from typing import Optional
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 
@@ -61,7 +62,7 @@ async def mikrotik_add_ipv6_address(
     if no_dad:
         cmd += " no-dad=yes"
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 

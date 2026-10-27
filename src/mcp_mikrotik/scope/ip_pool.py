@@ -3,6 +3,7 @@ from typing import Optional, List
 from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
 @mcp.tool(name="create_ip_pool", annotations=annotate(WRITE, "Add IP Pool"))
@@ -30,7 +31,7 @@ async def mikrotik_create_ip_pool(
         cmd += f' next-pool="{next_pool}"'
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -169,7 +170,7 @@ async def mikrotik_update_ip_pool(
         else:
             updates.append(f'next-pool="{next_pool}"')
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
 
     if not updates:
         return "No updates specified."

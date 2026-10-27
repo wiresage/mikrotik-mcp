@@ -72,6 +72,7 @@ Check these before trusting a new command, and verify on a real device (a 7.21 c
 - **A `set` or `remove` through `[find ...]` that matches nothing succeeds silently.** Count first and say "not found".
 - **`print detail` prints the Flags legend even when nothing matches.** Decide "no results" by looking for real data (for example `"name=" in result`), not by checking for an empty string.
 - **Quote enum values in `where` clauses:** `protocol="udp"`. An unquoted value can match nothing, with no error (issue #135).
+- **Free text goes through `ros_quoted`.** Inside double quotes RouterOS reads `"`, `\` and `$` as syntax and turns non-ASCII bytes into blanks, so a comment like `say "hi"` fails with "expected end of command", `cost $5` loses the `$5` and `café` is stored as `caf `. Wrap every comment, log prefix, TXT text, SSID and password in `ros_quoted()` (`scope/_quoting.py`) before it goes into a command, and put both the raw and the escaped form of a secret in `redact=`.
 - **Do not pass print positions as ids.** Numbers come from a per-device map that any `print` rebuilds, and every command here uses its own SSH connection. Use `*hex` ids, or resolve a position with `:pick [<menu> find] N` as `scope/_selectors.py` does. `:put [<menu> add ...]` echoes the new `*id`.
 - **No interactive or streaming commands** (`follow`, `monitor` without `once`, anything that waits). They hang the non-interactive session.
 - **Target RouterOS 7.** Some names changed from v6 (`routing-mark` is now `routing-table`), so do not copy v6 syntax from old forum posts.

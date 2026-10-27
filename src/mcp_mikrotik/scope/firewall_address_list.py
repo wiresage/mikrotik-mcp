@@ -2,6 +2,7 @@ import ipaddress
 from typing import Literal, Optional
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
@@ -76,7 +77,7 @@ async def mikrotik_create_address_list_entry(
 
     cmd = f'{_tree(family)} add list="{list_name}" address={address}'
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if timeout:
         cmd += f" timeout={timeout}"
     if disabled:
@@ -193,9 +194,9 @@ async def mikrotik_update_address_list_entry(
     if new_list_name:
         updates.append(f'list="{new_list_name}"')
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
         if comment:
-            assertions.append(f'comment="{comment}"')
+            assertions.append(f'comment="{ros_quoted(comment)}"')
     if timeout is not None:
         updates.append("timeout=0" if timeout == "" else f"timeout={timeout}")
     if disabled is not None:

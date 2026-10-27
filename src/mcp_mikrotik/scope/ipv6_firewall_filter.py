@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ._selectors import resolve_item_id, item_count, item_at_position, move_to_position
@@ -96,13 +97,13 @@ async def mikrotik_create_ipv6_filter_rule(
     if tcp_flags:
         cmd += f" tcp-flags={tcp_flags}"
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
     if log:
         cmd += " log=yes"
         if log_prefix:
-            cmd += f' log-prefix="{log_prefix}"'
+            cmd += f' log-prefix="{ros_quoted(log_prefix)}"'
     if place_before:
         cmd += f" place-before={place_before}"
 
@@ -293,13 +294,13 @@ async def mikrotik_update_ipv6_filter_rule(
         if value is not None:
             updates.append(f"!{field}" if value == "" else f"{field}={value}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
     if log is not None:
         updates.append(f'log={"yes" if log else "no"}')
         if log and log_prefix:
-            updates.append(f'log-prefix="{log_prefix}"')
+            updates.append(f'log-prefix="{ros_quoted(log_prefix)}"')
 
     if not updates:
         return "No updates specified."
