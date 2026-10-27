@@ -19,6 +19,7 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[Logs](logs/README.md)** - Log Management
 - **[Firewall](firewall/README.md)** - Firewall Filter Rules Management
 - **[IPv6 Firewall](ipv6-firewall/README.md)** - IPv6 Firewall Filter Rules Management
+- **[Firewall Raw](firewall-raw/README.md)** - IPv4 and IPv6 Firewall Raw Rules (pre-conntrack)
 - **[Address Lists](address-list/README.md)** - IPv4 and IPv6 Firewall Address Lists
 - **[Routes](routes/README.md)** - Route Management
 - **[DNS](dns/README.md)** - DNS Management
