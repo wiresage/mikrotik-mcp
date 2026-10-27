@@ -5,6 +5,7 @@ from mcp.server.mcpserver import Context
 
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ._selectors import has_item_rows
 
 _DURATION_RE = re.compile(r"(?:\d+[wdhms])+")
@@ -47,7 +48,7 @@ async def mikrotik_create_dhcp_server(
         cmd += f" delay-threshold={delay_threshold}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -254,7 +255,7 @@ async def mikrotik_create_dhcp_network(
         cmd += f" dhcp-option={','.join(dhcp_option)}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -316,7 +317,7 @@ async def mikrotik_update_dhcp_network(
     if dhcp_option is not None:
         updates.append("!dhcp-option" if not dhcp_option else f"dhcp-option={','.join(dhcp_option)}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
 
     if not updates:
         return "No updates specified."
@@ -380,7 +381,7 @@ async def mikrotik_create_dhcp_pool(
         cmd += f" next-pool={next_pool}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 

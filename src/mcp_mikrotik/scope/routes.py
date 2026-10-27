@@ -1,5 +1,6 @@
 from typing import Optional, List
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ._selectors import _ID_RE, has_item_rows, resolve_item_id, item_count
@@ -42,7 +43,7 @@ async def mikrotik_add_route(
     if routing_table:
         cmd += f' routing-table="{routing_table}"'
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
     if vrf_interface:
@@ -186,7 +187,7 @@ async def mikrotik_update_route(
         # always belongs to a table, so clearing means back to "main".
         updates.append(f'routing-table="{routing_table or "main"}"')
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
     if vrf_interface is not None:
@@ -400,7 +401,7 @@ async def mikrotik_add_blackhole_route(
     cmd = f"/ip route add dst-address={dst_address} blackhole distance={distance}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(f":put [{cmd}]", ctx, device=device)
 

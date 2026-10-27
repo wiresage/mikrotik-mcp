@@ -108,7 +108,7 @@ async def mikrotik_add_dns_static(
         cmd += f' mx-preference={mx_preference} mx-exchange="{mx_exchange}"'
 
     if text:
-        cmd += f' text="{text}"'
+        cmd += f' text="{ros_quoted(text)}"'
 
     if srv_priority is not None and srv_weight is not None and srv_port is not None and srv_target:
         cmd += f" srv-priority={srv_priority} srv-weight={srv_weight} srv-port={srv_port}"
@@ -118,7 +118,7 @@ async def mikrotik_add_dns_static(
         cmd += f" ttl={ttl}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     if disabled:
         cmd += " disabled=yes"
@@ -239,7 +239,7 @@ async def mikrotik_update_dns_static(
         if text == "":
             updates.append("!text")
         else:
-            updates.append(f'text="{text}"')
+            updates.append(f'text="{ros_quoted(text)}"')
     if srv_priority is not None:
         updates.append(f"srv-priority={srv_priority}")
     if srv_weight is not None:
@@ -257,7 +257,7 @@ async def mikrotik_update_dns_static(
         else:
             updates.append(f"ttl={ttl}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
     if regexp is not None:
