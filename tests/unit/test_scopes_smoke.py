@@ -8,6 +8,7 @@ from tests.conftest import FakeExecutor, make_dummy_value
 
 SCOPE_MODULES = [
     "backup",
+    "bridge",
     "dhcp",
     "dns",
     "firewall_address_list",
