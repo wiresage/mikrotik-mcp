@@ -246,3 +246,111 @@ def test_port_update_rejects_a_silent_no_op(ctx, monkeypatch):
 
     out = _run(b.mikrotik_update_bridge_port(ctx, interface="ether2", pvid=10))
     assert out.startswith("Failed to update bridge port: the device reported no error")
+
+
+# ---------------------------------------------------------------------------
+# list_bridge_ports (had no test of its own)
+# ---------------------------------------------------------------------------
+
+def test_list_bridge_ports_without_filters(ctx, monkeypatch):
+    fake = _scripted()
+    b = _patch(monkeypatch, fake)
+
+    out = _run(b.mikrotik_list_bridge_ports(ctx))
+    assert fake.sent == ["/interface bridge port print"]
+    assert out.startswith("BRIDGE PORTS:")
+
+
+def test_list_bridge_ports_filters_by_bridge_and_interface(ctx, monkeypatch):
+    fake = _scripted()
+    b = _patch(monkeypatch, fake)
+
+    _run(b.mikrotik_list_bridge_ports(ctx, bridge_filter="br1", interface_filter="ether2"))
+    assert fake.sent == ['/interface bridge port print where bridge="br1" interface="ether2"']
+
+
+@pytest.mark.parametrize("reply", ["", "   ", "no such item"])
+def test_list_bridge_ports_reports_when_nothing_matches(ctx, monkeypatch, reply):
+    async def empty(command, _ctx, device=None):
+        return reply
+
+    b = _patch(monkeypatch, empty)
+    out = _run(b.mikrotik_list_bridge_ports(ctx, interface_filter="nope"))
+    assert out == "No bridge ports found matching the criteria."
+
+
+# ---------------------------------------------------------------------------
+# Free text and names reach RouterOS as data, never as syntax
+# ---------------------------------------------------------------------------
+
+BS = chr(92)  # one backslash, written this way so the tests do not depend on how a backslash is escaped here
+EVIL = 'x" ; :log info INJECTED ; "'
+
+
+def _outside_quotes(command):
+    """What RouterOS would read as commands: the text outside double-quoted strings."""
+    outside, quoted, i = [], False, 0
+    while i < len(command):
+        char = command[i]
+        if quoted and char == BS:
+            i += 2  # the escaped character belongs to the string
+            continue
+        if char == '"':
+            quoted = not quoted
+        elif not quoted:
+            outside.append(char)
+        i += 1
+    return "".join(outside)
+
+
+INJECTION_CASES = [
+    ("mikrotik_list_bridge_vlans", {"bridge_filter": EVIL}),
+    ("mikrotik_list_bridge_ports", {"bridge_filter": EVIL}),
+    ("mikrotik_list_bridge_ports", {"interface_filter": EVIL}),
+    ("mikrotik_add_bridge_vlan", {"bridge": EVIL, "vlan_ids": "10"}),
+    ("mikrotik_add_bridge_vlan", {"bridge": "br1", "vlan_ids": "10", "tagged": EVIL}),
+    ("mikrotik_add_bridge_vlan", {"bridge": "br1", "vlan_ids": "10", "untagged": EVIL}),
+    ("mikrotik_add_bridge_vlan", {"bridge": "br1", "vlan_ids": "10", "comment": EVIL}),
+    ("mikrotik_update_bridge_vlan", {"bridge": EVIL, "vlan_ids": "10", "comment": "c"}),
+    ("mikrotik_update_bridge_vlan", {"bridge": "br1", "vlan_ids": "10", "tagged": EVIL}),
+    ("mikrotik_update_bridge_vlan", {"bridge": "br1", "vlan_ids": "10", "untagged": EVIL}),
+    ("mikrotik_update_bridge_vlan", {"bridge": "br1", "vlan_ids": "10", "comment": EVIL}),
+    ("mikrotik_remove_bridge_vlan", {"bridge": EVIL, "vlan_ids": "10"}),
+    ("mikrotik_update_bridge_port", {"interface": EVIL, "pvid": 5}),
+]
+
+
+@pytest.mark.parametrize("tool,kwargs", INJECTION_CASES, ids=[f"{t}-{'-'.join(k)}" for t, k in INJECTION_CASES])
+def test_a_value_cannot_close_its_quotes_and_run_a_second_command(ctx, monkeypatch, tool, kwargs):
+    """The two list tools are read-only: a filter that ran a second command would get round --read-only."""
+    fake = _scripted()
+    b = _patch(monkeypatch, fake)
+
+    _run(getattr(b, tool)(ctx, **kwargs))
+
+    assert fake.sent, "the tool sent nothing, so the test proves nothing"
+    for command in fake.sent:
+        assert "INJECTED" not in _outside_quotes(command), command
+
+
+def test_a_comment_with_quotes_dollar_and_backslash_is_escaped(ctx, monkeypatch):
+    fake = _scripted()
+    b = _patch(monkeypatch, fake)
+
+    _run(b.mikrotik_add_bridge_vlan(ctx, bridge="br1", vlan_ids="10", comment=f'say "hi" $5 {BS}b'))
+
+    add = next(c for c in fake.sent if c.startswith(":put"))
+    assert f'comment="say {BS}"hi{BS}" {BS}$5 {BS}{BS}b"' in add
+
+
+def test_the_comment_check_after_an_update_uses_the_same_escaping(ctx, monkeypatch):
+    fake = _scripted()
+    b = _patch(monkeypatch, fake)
+
+    _run(b.mikrotik_update_bridge_vlan(ctx, bridge="br1", vlan_ids="10", comment='a "b" $c'))
+
+    expected = f'comment="a {BS}"b{BS}" {BS}$c"'
+    set_cmd = next(c for c in fake.sent if " set " in c)
+    check = [c for c in fake.sent if "count-only" in c][-1]
+    assert expected in set_cmd
+    assert expected in check

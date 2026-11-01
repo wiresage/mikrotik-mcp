@@ -2,6 +2,7 @@ import re
 from typing import Annotated, Literal, Optional
 from pydantic import Field
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
@@ -26,7 +27,7 @@ def _bad_vlan_ids(value: str) -> Optional[str]:
 def _static(bridge: str, vlan_ids: str) -> str:
     # vlan-ids matches the stored list exactly: an entry holding "20,30" is
     # found by vlan-ids=20,30 and not by vlan-ids=20.
-    return f'bridge="{bridge}" vlan-ids={vlan_ids} dynamic=no'
+    return f'bridge="{ros_quoted(bridge)}" vlan-ids={vlan_ids} dynamic=no'
 
 
 async def _count(menu: str, where: str, ctx: Context, device: Optional[str]) -> str:
@@ -54,7 +55,7 @@ async def mikrotik_list_bridge_vlans(
 
     filters = []
     if bridge_filter:
-        filters.append(f'bridge="{bridge_filter}"')
+        filters.append(f'bridge="{ros_quoted(bridge_filter)}"')
     if vlan_ids_filter:
         filters.append(f"vlan-ids={vlan_ids_filter}")
     if dynamic_only:
@@ -94,16 +95,16 @@ async def mikrotik_add_bridge_vlan(
 
     await ctx.info(f"Adding bridge VLAN: bridge={bridge}, vlan_ids={vlan_ids}")
 
-    cmd = f'{_VLAN} add bridge="{bridge}" vlan-ids={vlan_ids}'
+    cmd = f'{_VLAN} add bridge="{ros_quoted(bridge)}" vlan-ids={vlan_ids}'
 
     if tagged:
-        cmd += f' tagged="{tagged}"'
+        cmd += f' tagged="{ros_quoted(tagged)}"'
 
     if untagged:
-        cmd += f' untagged="{untagged}"'
+        cmd += f' untagged="{ros_quoted(untagged)}"'
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     if disabled:
         cmd += " disabled=yes"
@@ -155,13 +156,13 @@ async def mikrotik_update_bridge_vlan(
     if new_vlan_ids:
         updates.append(f"vlan-ids={new_vlan_ids}")
     if tagged is not None:
-        updates.append(f'tagged="{tagged}"')
+        updates.append(f'tagged="{ros_quoted(tagged)}"')
     if untagged is not None:
-        updates.append(f'untagged="{untagged}"')
+        updates.append(f'untagged="{ros_quoted(untagged)}"')
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
         if comment:
-            assertions.append(f'comment="{comment}"')
+            assertions.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         state = "yes" if disabled else "no"
         updates.append(f"disabled={state}")
@@ -248,9 +249,9 @@ async def mikrotik_list_bridge_ports(
 
     filters = []
     if bridge_filter:
-        filters.append(f'bridge="{bridge_filter}"')
+        filters.append(f'bridge="{ros_quoted(bridge_filter)}"')
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
 
     if filters:
         cmd += " where " + " ".join(filters)
@@ -293,7 +294,7 @@ async def mikrotik_update_bridge_port(
     if not updates:
         return "No updates specified."
 
-    where = f'interface="{interface}"'
+    where = f'interface="{ros_quoted(interface)}"'
     # A set through a [find] that matches nothing succeeds silently.
     if await _count(_PORT, where, ctx, device) == "0":
         return f"Bridge port for interface '{interface}' not found."
