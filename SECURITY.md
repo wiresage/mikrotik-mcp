@@ -5,13 +5,26 @@
 MikroTik MCP provides programmatic access to MikroTik RouterOS devices through SSH connections. Given the sensitive nature of network infrastructure management, security is a critical concern. This document outlines our security policy and provides guidance on reporting security vulnerabilities.
 
 
+## Supported Versions
+
+MikroTik MCP is released continuously, and security fixes ship in the latest release only. Before you report a problem, please check that it still exists in the newest release and tell us which version you tested.
+
+| Distribution | Receives security fixes |
+| --- | --- |
+| [`mcp-server-mikrotik`](https://pypi.org/project/mcp-server-mikrotik/) on PyPI | The latest release |
+| `ghcr.io/wiresage/mikrotik-mcp` (Docker) | The `latest` tag and the newest version tag |
+| Older releases | No, please upgrade |
+
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in MikroTik MCP, please report it by:
+**Please do not report a vulnerability in a public issue, discussion or pull request.** Anything posted there is visible to everyone, including people who would exploit it, before a fix exists. Use GitHub's private vulnerability reporting instead:
 
-**Creating a security issue at:** https://github.com/wiresage/mikrotik-mcp/issues
+1. Go to [**Report a vulnerability**](https://github.com/wiresage/mikrotik-mcp/security/advisories/new). You can also open the **Security** tab of the repository and choose **Report a vulnerability**.
+2. Fill in the form and submit it. Only the maintainers, and anyone you invite to the report, can see it.
 
-When reporting a security issue, please include:
+If you cannot use GitHub, open a public issue that says only that you have a security report, with no technical details, and a maintainer will arrange a private channel.
+
+When reporting, please include:
 
 - **Description**: A clear description of the vulnerability
 - **Impact**: Potential impact if exploited
@@ -22,10 +35,28 @@ When reporting a security issue, please include:
 
 ### What to Expect
 
-- **Acknowledgment**: We will acknowledge receipt of your report within 48 hours
-- **Assessment**: We will assess the severity and impact of the reported vulnerability
-- **Resolution**: We will work on a fix and release it as soon as possible
-- **Credit**: We will credit you in the release notes (unless you prefer to remain anonymous)
+- **Acknowledgment**: We will acknowledge receipt of your report within 7 days
+- **Assessment**: Within 14 days we will tell you whether we can reproduce the issue and how severe we consider it
+- **Updates**: We will update you at least every 14 days until the report is closed
+- **Resolution**: We aim to release a fix within 90 days of your report. The fix and a GitHub Security Advisory that names the affected and fixed versions are published together, with a CVE requested where it applies
+- **Credit**: We will credit you in the advisory (unless you prefer to remain anonymous)
+
+If you have heard nothing after 14 days, please open a public issue that says only that a security report is waiting, with no details, so that we notice it.
+
+### Disclosure
+
+We follow coordinated disclosure: please keep the details private until the fixed release is out. If 90 days pass after your report without a fix or a reply from us, you are free to publish what you found.
+
+### Scope
+
+In scope are the `mcp-server-mikrotik` package and the `ghcr.io/wiresage/mikrotik-mcp` image built from this repository, for example:
+
+- A tool argument that breaks out of the RouterOS command it belongs to (command injection), including in tools marked read-only
+- Credentials or key material that reach logs, tool output or error messages
+- A way around the protections of the HTTP transports (the IP allowlist, the `Host` and origin checks)
+- Unsafe handling of SSH credentials
+
+Out of scope are vulnerabilities in RouterOS itself (report those to MikroTik), the behavior of the AI assistant or MCP client that calls the tools, and deployments that ignore the guidance below, such as a RouterOS account with more permissions than needed. The limitations listed under [Known Security Considerations](#known-security-considerations) are documented behavior; a report that adds something new to them is still welcome.
 
 ## Security Considerations
 
@@ -53,7 +84,8 @@ MikroTik MCP uses SSH to connect to RouterOS devices. Be aware of the following:
 
 - **MCP Server Access**: Ensure that access to the MCP server is restricted to authorized users only
 - **Network Segmentation**: Run the MCP server in a secure network segment
-- **Authentication**: When exposing the MCP server via MCPO or other REST APIs, always use strong authentication (API keys, OAuth, etc.)
+- **Authentication**: The native HTTP transports (`sse` and `streamable-http`) have **no built-in caller authentication**, and they listen on `0.0.0.0` by default. Anyone who can reach the port can use every tool with the server's RouterOS credentials. Do not expose the port to the internet or to untrusted networks: set `MIKROTIK_MCP__HOST=127.0.0.1` when only local clients need it (in a container keep it at `0.0.0.0` and publish the port as `-p 127.0.0.1:8000:8000` instead), restrict clients with `MIKROTIK_MCP__ALLOWED_IPS`, and put an authenticating reverse proxy or a VPN in front of it for any remote use. When exposing the server through MCPO or another REST gateway, always enable that gateway's authentication (API keys, OAuth, etc.)
+- **Read-only Mode**: `--read-only` (`MIKROTIK_READ_ONLY=true`) only removes the modifying tools from the catalogue. It does not limit what the RouterOS account can do, so give that account only the permissions the server needs (for example the `read` policy)
 - **Firewall Rules**: Implement appropriate firewall rules to restrict access to both the MCP server and MikroTik devices
 - **HTTP IP Allowlist**: Set `MIKROTIK_MCP__ALLOWED_IPS` to restrict the native HTTP transports to trusted client addresses or networks; treat it as defense in depth, not authentication
 
@@ -166,6 +198,8 @@ When exposing MikroTik MCP via REST API (using MCPO):
 
 3. **Command Execution**: Direct command execution on RouterOS requires careful input validation at the application level.
 
+4. **HTTP Transports Have No Authentication**: See [Access Control](#3-access-control). Keep them on a trusted network or behind your own authentication.
+
 ## Compliance and Standards
 
 This project aims to align with:
@@ -182,7 +216,7 @@ This project aims to align with:
 
 ## Contact
 
-For security-related questions or concerns, please open an issue at:
+Report vulnerabilities privately, as described under [Reporting a Vulnerability](#reporting-a-vulnerability). For general security questions that do not disclose a vulnerability, please open an issue at:
 https://github.com/wiresage/mikrotik-mcp/issues
 
 ---
