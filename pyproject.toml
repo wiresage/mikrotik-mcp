@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "mcp-server-mikrotik"
@@ -42,5 +42,18 @@ Repository = "https://github.com/wiresage/mikrotik-mcp"
 [project.scripts]
 mcp-server-mikrotik = "mcp_mikrotik.server:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_mikrotik"]
+
+# Hatchling puts every tracked file in the sdist by default (docs, tests, CI, the
+# lockfile, about 1.2 MB). The setuptools sdist this replaces held only these.
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/LICENSE", "/README.md", "/pyproject.toml"]
+
+# Test tooling only: installed by `uv sync` / `uv run`, never shipped in the
+# wheel or the Docker image. PyYAML is a runtime dependency above.
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "testcontainers>=4.0.0",
+]

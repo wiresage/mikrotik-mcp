@@ -39,8 +39,9 @@ on:
     branches:
       - master
     # Deployment guard: a push releases only when it changes something that is
-    # shipped -- the package (src, pyproject.toml, requirements.txt), the Docker
-    # image (Dockerfile, .dockerignore, docker-entrypoint.sh) or the MCP
+    # shipped -- the package (src, pyproject.toml), the Docker image (Dockerfile,
+    # .dockerignore, docker-entrypoint.sh, and uv.lock, which pins what the image
+    # installs) or the MCP
     # registry listing (server.json). A push touching only docs, README, tests,
     # examples or CI config is skipped entirely, so no version, tag, PyPI
     # upload or image is produced for it.
@@ -50,7 +51,7 @@ on:
     paths:
       - 'src/**'
       - 'pyproject.toml'
-      - 'requirements.txt'
+      - 'uv.lock'
       - 'Dockerfile'
       - '.dockerignore'
       - 'docker-entrypoint.sh'
@@ -81,7 +82,7 @@ jobs:
       should_publish: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -122,27 +123,35 @@ jobs:
     needs: version
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
-          python-version: '3.11'
+          version: "0.11.x"
 
-      - name: Install build dependencies
+      - name: Verify uv.lock is up to date
+        # Release only from a tree whose uv.lock matches pyproject.toml, so the
+        # `test` job (which installs with `uv sync --frozen`) ran against the
+        # dependency set the lock describes. This must run before the version
+        # is written into pyproject.toml below, because the lock records the
+        # project's own version. The wheel itself declares dependency ranges,
+        # not the locked versions.
         run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+          uv lock --check || {
+            echo "::error::uv.lock is out of date with pyproject.toml. Run 'uv lock' and commit the updated uv.lock before releasing."
+            exit 1
+          }
 
       - name: Update version in pyproject.toml
         run: |
           sed -i 's/version = ".*"/version = "${{ needs.version.outputs.version }}"/' pyproject.toml
 
       - name: Build package
-        run: python -m build
+        run: uv build
 
       - name: Check distribution
-        run: twine check dist/*
+        run: uvx twine@6 check dist/*
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -159,21 +168,19 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
+          version: "0.11.x"
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: uv sync --frozen
 
-      - name: Run unit tests
-        run: |
-          python -m pytest -m "not integration" -v
+      - name: Run tests
+        run: uv run pytest -m "not integration"
 
   publish:
     runs-on: ubuntu-latest
@@ -211,10 +218,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download mcp-publisher
+      - name: Download mcp-publisher (pinned + checksum-verified)
+        env:
+          # Pin the release and verify its SHA-256 so a compromised or moved
+          # `latest` asset cannot be silently substituted at publish time.
+          MCP_PUBLISHER_VERSION: "v1.8.1"
+          MCP_PUBLISHER_SHA256: "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc"
         run: |
           curl -fsSL -o mcp-publisher.tar.gz \
-            "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz"
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  mcp-publisher.tar.gz" | sha256sum -c -
           tar xf mcp-publisher.tar.gz mcp-publisher
           chmod +x mcp-publisher
 
@@ -255,7 +268,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Create and Push Git Tag
         run: |

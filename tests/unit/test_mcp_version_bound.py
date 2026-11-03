@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+UV_LOCK = ROOT / "uv.lock"
 
 
 def _find_mcp_spec(text: str):
@@ -43,12 +44,29 @@ def test_pyproject_mcp_has_an_upper_bound():
     )
 
 
-def test_requirements_mcp_has_an_upper_bound():
-    spec = _find_mcp_spec((ROOT / "requirements.txt").read_text(encoding="utf-8"))
-    assert spec is not None, "no mcp dependency found in requirements.txt"
-    assert _upper_bound_major(spec) is not None, (
-        f"mcp must carry an upper bound (got {spec!r}); issue #98."
-    )
+def _locked_mcp_version() -> tuple:
+    """The `mcp` version uv.lock pins, as a tuple of ints."""
+    text = UV_LOCK.read_text(encoding="utf-8")
+    m = re.search(r'^\[\[package\]\]\nname = "mcp"\nversion = "([0-9][0-9.]*)"', text, re.MULTILINE)
+    assert m, "uv.lock does not pin an `mcp` package"
+    return tuple(int(part) for part in m.group(1).split("."))
+
+
+def _lock_declared_mcp_spec() -> str:
+    """The `mcp` specifier uv.lock recorded from pyproject.toml, e.g. '>=2.0.0,<3.0.0'."""
+    text = UV_LOCK.read_text(encoding="utf-8")
+    m = re.search(r'\{ name = "mcp", specifier = "([^"]+)" \}', text)
+    assert m, "uv.lock does not record the mcp requirement from pyproject.toml"
+    return m.group(1)
+
+
+def test_locked_mcp_stays_inside_the_declared_bound():
+    """The lockfile (which CI, the Docker image and contributors install from) must not pin an mcp outside the bound."""
+    spec = _find_mcp_spec((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    lower, upper = _lower_bound(spec), _upper_bound_major(spec)
+    locked = _locked_mcp_version()
+    assert (locked[0], locked[1]) >= lower, f"uv.lock pins mcp {locked}, below the floor of {spec!r} (issue #100)"
+    assert locked[0] < upper, f"uv.lock pins mcp {locked}, which the upper bound of {spec!r} excludes (issue #98)"
 
 
 def test_mcp_floor_is_2x_for_mcpserver_api():
@@ -70,10 +88,14 @@ def test_upper_bound_excludes_next_major():
     )
 
 
-def test_pyproject_and_requirements_agree_on_mcp():
+def test_pyproject_and_lock_agree_on_mcp():
     p = _find_mcp_spec((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    r = _find_mcp_spec((ROOT / "requirements.txt").read_text(encoding="utf-8"))
-    assert p == r, f"mcp constraint drift: pyproject={p!r} vs requirements={r!r}"
+    assert p is not None, "no mcp dependency found in pyproject.toml"
+    declared = p[len("mcp"):].replace(" ", "")
+    recorded = _lock_declared_mcp_spec().replace(" ", "")
+    assert declared == recorded, (
+        f"mcp constraint drift: pyproject={declared!r} vs uv.lock={recorded!r}; run `uv lock` and commit uv.lock"
+    )
 
 
 def test_codebase_uses_the_mcp_2x_import_path():

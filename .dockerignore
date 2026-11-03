@@ -66,6 +66,7 @@ docker-compose*
 
 # Documentation
 *.md
+!README.md
 docs/
 
 # CI/CD

@@ -22,6 +22,58 @@ tests/
 └── unit/          # Unit tests
 ```
 
+## Development Setup
+
+The project uses [uv](https://docs.astral.sh/uv/) as its single Python toolchain;
+[install uv](https://docs.astral.sh/uv/getting-started/installation/) first. After
+that, provisioning a working environment is **two commands**:
+
+```bash
+git clone https://github.com/wiresage/mikrotik-mcp.git
+cd mikrotik-mcp
+uv sync --frozen
+```
+
+`uv sync --frozen` installs the exact versions pinned in `uv.lock` (including the
+`dev` dependency group) without re-resolving, so a clean checkout gets the same
+environment CI uses. `uv` creates and manages the `.venv` for you.
+
+### Running the tests
+
+```bash
+uv run pytest                        # full suite
+uv run pytest -m "not integration"   # unit tests only (no Docker needed)
+uv run pytest -m integration         # integration tests (needs Docker)
+```
+
+No manual dependency install is needed — `uv run` executes against the locked
+environment.
+
+### Changing dependencies (regenerating the lockfile)
+
+When you add, remove, or change a dependency in `pyproject.toml`, regenerate and
+commit the lockfile **in the same PR**:
+
+```bash
+uv lock    # update uv.lock to match pyproject.toml
+uv sync    # apply it to your environment
+```
+
+CI runs a **lockfile-drift gate** (`uv lock --check`): a PR that changed
+`pyproject.toml` without a matching `uv.lock` fails with a plain-language message
+saying the lockfile is out of date. Commit the updated `uv.lock` and the gate passes.
+
+Keep these in mind when you touch dependencies:
+
+- `pyproject.toml` declares the version **ranges** users get (`pip`, `uvx`); `uv.lock`
+  pins the exact versions used by CI, the release build's tests and the Docker image.
+  Never edit `uv.lock` by hand.
+- Test tooling (`pytest`, `testcontainers`) lives in the `dev` dependency group, not in
+  `dependencies`, so it is not shipped in the wheel or the Docker image.
+- `uv.lock` counts as a shipped file: a merged change to it releases a new version,
+  because the Docker image installs from it.
+- Do not edit the `version` line in `pyproject.toml`; the release workflow writes it.
+
 ## Contributing New Features
 
 To add a new MikroTik feature/scope to the project, follow these steps:
@@ -136,14 +188,11 @@ class TestMikroTikMyFeatureIntegration:
 
 Before submitting, ensure your implementation works:
 
-1. **Run integration tests**: `pytest tests/integration/test_my_feature_integration.py -v`
+1. **Run integration tests**: `uv run pytest tests/integration/test_my_feature_integration.py -v`
 2. **Use MCP Inspector**: Test your tools interactively using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
    ```bash
-   # Install MCP Inspector
-   npm install -g @modelcontextprotocol/inspector
-
    # Test your MCP server (stdio transport)
-   mcp-inspector python -m mcp_mikrotik.server
+   npx @modelcontextprotocol/inspector uv run mcp-server-mikrotik
    ```
 3. **Manual testing**: Test with a real MikroTik device to ensure commands work correctly
 

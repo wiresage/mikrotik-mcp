@@ -210,7 +210,6 @@ Desktop.ini
 
 # UV package manager
 .uv/
-uv.lock
 
 # Logs
 logs/

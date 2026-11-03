@@ -10,14 +10,13 @@ This guide shows how to expose your MikroTik MCP server as a RESTful API using M
 
 ## Installation
 
-Install MCPO using one of these methods:
-
 ```bash
-# Option 1: Using uvx (recommended - no installation needed)
+# Using uvx (no installation needed)
 uvx mcpo --help
 
-# Option 2: Using pip
+# Or using pip
 pip install mcpo
+mcpo --help
 ```
 
 ## Configuration
@@ -28,11 +27,11 @@ Create a `mcp-config.json` file in your project directory:
 {
   "mcpServers": {
     "mikrotik-mcp-server": {
-      "command": "python",
+      "command": "uvx",
       "args": [
-        "src/mcp_mikrotik/server.py",
+        "mcp-server-mikrotik",
         "--password", "admin",
-        "--host", "192.168.1.1",
+        "--host", "192.168.88.1",
         "--port", "22",
         "--username", "admin"
       ],
@@ -44,6 +43,31 @@ Create a `mcp-config.json` file in your project directory:
 
 **Note:** Adjust the MikroTik connection parameters (`host`, `username`, `password`, `port`) according to your setup.
 
+<details>
+<summary>Alternative: using pip/python</summary>
+
+If you installed `mcp-server-mikrotik` with pip instead of uv, use `python -m` in the config:
+
+```json
+{
+  "mcpServers": {
+    "mikrotik-mcp-server": {
+      "command": "python",
+      "args": [
+        "-m", "mcp_mikrotik",
+        "--password", "admin",
+        "--host", "192.168.88.1",
+        "--port", "22",
+        "--username", "admin"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+</details>
+
 ## Starting the MCPO Server
 
 ```bash
@@ -52,6 +76,9 @@ uvx mcpo --port 8000 --api-key "your-secret-key" --config ./mcp-config.json
 
 # Or without authentication (not recommended for production)
 uvx mcpo --port 8000 --config ./mcp-config.json
+
+# Using pip-installed mcpo
+mcpo --port 8000 --api-key "your-secret-key" --config ./mcp-config.json
 ```
 
 The server will start and display:

@@ -15,33 +15,74 @@ The client fetches the server metadata from the registry, installs `mcp-server-m
 ---
 
 ## Prerequisites
-- Python 3.10+
-- MikroTik RouterOS device with API access enabled
-- Python dependencies (routeros-api or similar)
+- Python 3.10 or newer
+- A MikroTik RouterOS device reachable over SSH (RouterOS 7 is the tested version)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) for the `uvx` install and for
+  running from source; the `pip` and Docker installs do not need it
 
-## Manual Installation
+## Install from PyPI
+
+### uvx (recommended)
+
+Run the published package directly — `uvx` fetches `mcp-server-mikrotik` and its
+dependencies into an isolated, cached environment, so there is nothing to install
+into your system Python or clean up afterwards:
+
+```bash
+# Run the server (stdio, default)
+uvx mcp-server-mikrotik
+
+# Run with SSE transport
+uvx mcp-server-mikrotik --mcp.transport sse
+
+# Run with streamable HTTP transport
+uvx mcp-server-mikrotik --mcp.transport streamable-http
+```
+
+<details>
+<summary>Alternative: using pip</summary>
+
+For a persistent install, install the published package from PyPI and launch it
+as a module:
+
+```bash
+# Create a virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate    # Linux/macOS
+# .venv\Scripts\activate     # Windows
+
+# Install the published package
+pip install mcp-server-mikrotik
+
+# Run the server (stdio, default)
+python -m mcp_mikrotik
+
+# Run with SSE transport
+python -m mcp_mikrotik --mcp.transport sse
+
+# Run with streamable HTTP transport
+python -m mcp_mikrotik --mcp.transport streamable-http
+```
+
+</details>
+
+## Run from source (contributors)
 
 ```bash
 # Clone the repository
 git clone https://github.com/wiresage/mikrotik-mcp.git
 cd mikrotik-mcp
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Provision the exact locked environment (creates .venv automatically)
+uv sync --frozen
 
-# Install dependencies
-pip install -e .
-
-# Run the server (stdio, default)
-mcp-server-mikrotik
-
-# Run with SSE transport
-mcp-server-mikrotik --mcp.transport sse
-
-# Run with streamable HTTP transport
-mcp-server-mikrotik --mcp.transport streamable-http
+# Run the server
+uv run mcp-server-mikrotik
 ```
+
+`uv sync --frozen` installs the versions pinned in `uv.lock`, plus the test tooling.
+See the [Contributing Guide](../contributing.md#development-setup) for running the
+tests and changing dependencies.
 
 ### CLI Options
 
@@ -115,6 +156,9 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    ```bash
    docker build -t mikrotik-mcp .
    ```
+
+   The image installs the runtime dependencies from `uv.lock` (no test tooling), so a
+   rebuild gives the same versions every time.
 
 3. **Run with stdio (default, for IDE integration):**
 
