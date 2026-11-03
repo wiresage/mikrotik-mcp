@@ -89,3 +89,9 @@ welcome, whether you're connecting your first router or working on a PR.
 ## License
 
 This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+
+## Presentations
+
+Prefer to watch instead of read? The official MikroTik MCP presentations,
+including walkthroughs of new features and pull requests, live on Bisque:
+[bisque.today/p/wiresage/mikrotik-mcp](https://bisque.today/p/wiresage/mikrotik-mcp).
