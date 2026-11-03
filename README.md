@@ -95,3 +95,10 @@ This MCP server is licensed under the MIT License. This means you are free to us
 Prefer to watch instead of read? The official MikroTik MCP presentations,
 including walkthroughs of new features and pull requests, live on Bisque:
 [bisque.today/p/wiresage/mikrotik-mcp](https://bisque.today/p/wiresage/mikrotik-mcp).
+
+[![Watch the MikroTik MCP presentations on Bisque](https://bisque.today/poster/github-repo-982172059/v0-26-0-eec602/og-slide.png)](https://bisque.today/p/wiresage/mikrotik-mcp)
+
+> [!NOTE]
+> The Presentations section was added on 3 November 2026, after release
+> `v0.26.2`. Releases up to `v0.26.2` don't have it, and it ships with the
+> next release.
