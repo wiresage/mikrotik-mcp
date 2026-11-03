@@ -1018,6 +1018,14 @@ def _render_header(lock: ManualLock, counts: _CoverageCounts) -> list[str]:
         ),
         "",
         (
+            "Scope: the counts cover only the menus declared in "
+            "`docs/api-coverage.yml`. A RouterOS menu that is neither declared nor "
+            "listed under `excluded` is not counted, and the manual check only "
+            "reports new direct submenus of menus that already have an "
+            "implemented or partial command."
+        ),
+        "",
+        (
             "Legend: `[x]` implemented/mapped or not applicable · `[ ]` not "
             "implemented, partial or legacy."
         ),

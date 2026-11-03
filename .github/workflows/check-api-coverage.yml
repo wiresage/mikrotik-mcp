@@ -33,18 +33,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
+          version: "0.11.x"
           python-version: "3.12"
-          cache: pip
 
-      - name: Install package
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Download manual into the runner
         env:
@@ -83,11 +81,11 @@ jobs:
           if [ "${{ inputs.strict }}" = "true" ]; then
             args+=(--strict)
           fi
-          python scripts/api_coverage.py "${args[@]}"
+          uv run python scripts/api_coverage.py "${args[@]}"
 
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: api-coverage-report
           path: |

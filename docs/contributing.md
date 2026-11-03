@@ -246,9 +246,9 @@ When adding or changing a tool:
    - `allow_missing_manual`: only for commands with no standalone manual page.
    - `server_tools`: tools that do not map to one menu command (`kind` + note).
    - top-level `excluded`: out-of-scope menus, with a reason.
-2. Run `python scripts/api_coverage.py --write`.
-3. Run `python scripts/api_coverage.py --check`; CI runs the same check.
-4. Run `python -m pytest -m "not integration"`.
+2. Run `uv run python scripts/api_coverage.py --write`.
+3. Run `uv run python scripts/api_coverage.py --check`; CI runs the same check.
+4. Run `uv run pytest -m "not integration"`.
 5. Commit `docs/api-coverage.yml`, the regenerated `docs/api-coverage.md`, and the tool code/tests/docs.
 
 If the tool's parameters change, update its page under `docs/reference/<area>/`.

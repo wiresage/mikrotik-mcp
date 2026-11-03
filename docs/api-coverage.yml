@@ -14,6 +14,12 @@
 # another menu. Read-only output fields and flags are excluded from the
 # unmapped-argument check automatically.
 #
+# Scope: the progress numbers only count the menus declared here. A RouterOS
+# menu that is neither declared nor listed under `excluded` is invisible to
+# them, and the manual drift check only reports new direct submenus of menus
+# that already have an implemented or partial command. Add a new area here
+# (as `planned`) instead of waiting for the drift report to mention it.
+#
 # Keep this file in sync with the tool catalogue and with docs/api-coverage.md.
 # Run `python scripts/api_coverage.py --write` after editing.
 
