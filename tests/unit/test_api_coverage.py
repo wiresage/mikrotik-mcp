@@ -855,16 +855,13 @@ def test_check_handles_invalid_utf8_checklist(tmp_path):
     assert api_coverage.main(["--check", "--output", str(output)]) == 1
 
 
-def test_check_tool_contract_names_the_custom_manifest():
+def test_check_tool_contract_names_the_custom_manifest(tmp_path):
     manifest = _manifest_with(
         {"/x": _menu("X", "Test", {"add": _command(tools=["missing_tool"])})},
     )
-    errors = api_coverage.check_tool_contract(
-        manifest,
-        {"live_tool"},
-        Path("/tmp/custom-manifest.yml"),
-    )
-    assert any("/tmp/custom-manifest.yml" in error for error in errors)
+    custom = tmp_path / "custom-manifest.yml"
+    errors = api_coverage.check_tool_contract(manifest, {"live_tool"}, custom)
+    assert any(str(custom) in error for error in errors)
 
 
 # ---------------------------------------------------------------------------

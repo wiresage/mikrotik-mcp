@@ -78,9 +78,9 @@ Never mark a tool `READ` if it writes anything, including a file: `/export file=
 Then run:
 
 ```bash
-python scripts/api_coverage.py --write
-python scripts/api_coverage.py --check
-python -m pytest -m "not integration"
+uv run python scripts/api_coverage.py --write
+uv run python scripts/api_coverage.py --check
+uv run pytest -m "not integration"
 ```
 
 CI fails if the generated checklist is stale, a registered tool is missing from the manifest, a manifest tool does not exist, or the manifest is structurally invalid. `docs/manual.lock.yml` is updated only after reviewing a drift report (from the manual-only **Check API coverage** workflow or a local `--manual` run); the manual corpus is never committed.
