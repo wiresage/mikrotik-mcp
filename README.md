@@ -96,7 +96,7 @@ Prefer to watch instead of read? The official MikroTik MCP presentations,
 including walkthroughs of new features and pull requests, live on Bisque:
 [bisque.today/p/wiresage/mikrotik-mcp](https://bisque.today/p/wiresage/mikrotik-mcp).
 
-[![Watch the MikroTik MCP presentations on Bisque](https://bisque.today/poster/github-repo-982172059/v0-26-0-eec602/og-slide.png)](https://bisque.today/p/wiresage/mikrotik-mcp)
+<a href="https://bisque.today/p/wiresage/mikrotik-mcp"><img src="https://bisque.cloud/poster/AlY6OT2Cd1YpfqlZ5jsfdWcae933/landing-demo/og-slide.png" alt="Watch the MikroTik MCP presentations on Bisque" width="600" /></a>
 
 > [!NOTE]
 > The Presentations section was added on 3 November 2026, after release
