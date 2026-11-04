@@ -25,6 +25,7 @@ SCOPE_MODULES = [
     "neighbors",
     "netwatch",
     "poe",
+    "ppp",
     "queue",
     "routes",
     "scheduler",
