@@ -31,4 +31,5 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
 - **[Queue](queue/README.md)** - Queue Types, Trees, and Simple Queues
 - **[Scripts & Schedulers](scripts-and-scheduler/README.md)** - Stored Scripts, Script Jobs, Environment Variables, and Scheduled Tasks
+- **[NTP & System Clock](ntp/README.md)** - NTP Client Synchronization, Upstream Servers, Local NTP Server, and System Timezone
 - **[Safe Mode](safe-mode/README.md)** - Safe Mode Session Management
