@@ -17,6 +17,7 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[NAT](nat/README.md)** - NAT Rules Management
 - **[IP Pool](ip-pool/README.md)** - IP Pool Management
 - **[Backup](backup/README.md)** - Backup and Export Management
+- **[Certificates](certificates/README.md)** - SSL/TLS Certificates, CA Authority, and ACME (Let's Encrypt)
 - **[Logs](logs/README.md)** - Log Management
 - **[Firewall](firewall/README.md)** - Firewall Filter Rules Management
 - **[IPv6 Firewall](ipv6-firewall/README.md)** - IPv6 Firewall Filter Rules Management
