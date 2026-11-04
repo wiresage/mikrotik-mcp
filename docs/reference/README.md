@@ -28,4 +28,5 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[Users](users/README.md)** - User Management
 - **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
 - **[Queue](queue/README.md)** - Queue Types, Trees, and Simple Queues
+- **[Scripts & Schedulers](scripts-and-scheduler/README.md)** - Stored Scripts, Script Jobs, Environment Variables, and Scheduled Tasks
 - **[Safe Mode](safe-mode/README.md)** - Safe Mode Session Management
