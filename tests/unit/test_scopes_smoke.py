@@ -13,6 +13,7 @@ SCOPE_MODULES = [
     "diagnostics",
     "dns",
     "firewall_address_list",
+    "firewall_connection",
     "firewall_filter",
     "firewall_nat",
     "ip_address",
