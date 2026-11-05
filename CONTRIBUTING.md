@@ -392,6 +392,10 @@ You never need to manually bump version numbers or create tags.
    - Screenshots or examples if applicable
    - Confirmation that tests pass
    - Indication of version bump impact (minor, major, patch, or none)
+7. **Assign the pull request to yourself.** Use *Assignees* in the sidebar, or open it with
+   `gh pr create --assignee @me`. GitHub only lets people with write access set assignees; if you
+   cannot, a maintainer assigns the pull request to you, so every contribution is listed under the
+   contributor's name.
 
 ## Getting Help
 
