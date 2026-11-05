@@ -45,7 +45,7 @@ https://github.com/user-attachments/assets/185b2c39-8f55-4f26-a74c-2ac459ad38f5
 - **[Testing Guide](docs/getting-started/testing.md)** - Run integration tests
 - **[Claude Desktop Integration](docs/integrations/claude-desktop.md)** - Configure for Claude Desktop
 - **[MCP Inspector](docs/integrations/inspector.md)** - Interactive testing tool
-- **[Contributing Guide](docs/contributing.md)** - Help improve MikroTik MCP
+- **[Contributing Guide](CONTRIBUTING.md)** - Help improve MikroTik MCP
 - **[Articles](docs/articles/README.md)** - Learning resources and tutorials
 - **[Diagrams](docs/diagrams/README.md)** - Architecture and design diagrams (draw.io)
 
@@ -80,7 +80,7 @@ review and idea.
 
 Contributions of every kind are welcome: code, bug reports, documentation and
 reviews all move the project forward. Start with the
-[Contributing Guide](docs/contributing.md).
+[Contributing Guide](CONTRIBUTING.md).
 
 ## Community
 
