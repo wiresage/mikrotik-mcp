@@ -637,28 +637,43 @@ menus:
   /interface/bridge/vlan:
     title: Bridge VLAN table
     section: Interfaces
-    notes: Not implemented. This is required for VLAN filtering on a bridge.
+    notes: >-
+      Entries are selected by bridge and vlan-ids rather than by id.
     commands:
       add:
-        status: planned
+        status: implemented
+        tools: [add_bridge_vlan]
+        params: [bridge, vlan-ids, tagged, untagged, comment, disabled]
       print:
-        status: planned
+        status: implemented
+        tools: [list_bridge_vlans]
+        params: [bridge, vlan-ids, dynamic]
       set:
-        status: planned
+        status: implemented
+        tools: [update_bridge_vlan]
+        params: [bridge, vlan-ids, tagged, untagged, comment, disabled]
       remove:
-        status: planned
+        status: implemented
+        tools: [remove_bridge_vlan]
+        params: [bridge, vlan-ids]
 
   /interface/bridge/port:
     title: Bridge ports
     section: Interfaces
-    notes: Not implemented. PVID and tagged/untagged membership are not exposed.
+    notes: >-
+      Listing and the VLAN settings (pvid, frame-types, ingress-filtering) are
+      exposed; adding and removing ports is not.
     commands:
       add:
         status: planned
       print:
-        status: planned
+        status: implemented
+        tools: [list_bridge_ports]
+        params: [bridge, interface]
       set:
-        status: planned
+        status: implemented
+        tools: [update_bridge_port]
+        params: [pvid, frame-types, ingress-filtering]
       remove:
         status: planned
 
