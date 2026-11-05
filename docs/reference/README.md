@@ -21,6 +21,7 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[IPv6 Firewall](ipv6-firewall/README.md)** - IPv6 Firewall Filter Rules Management
 - **[Address Lists](address-list/README.md)** - IPv4 and IPv6 Firewall Address Lists
 - **[Routes](routes/README.md)** - Route Management
+- **[Diagnostics](diagnostics/README.md)** - Ping, Traceroute, Torch, Quick Packet Capture, CPU Profile
 - **[DNS](dns/README.md)** - DNS Management
 - **[Users](users/README.md)** - User Management
 - **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
