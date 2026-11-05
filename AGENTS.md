@@ -119,6 +119,8 @@ Check these before trusting a new command, and verify on a real device (a 7.21 c
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`, with an optional scope, for example `fix(firewall): quote protocol_filter`.
 - Branches are named `<type>/issue-<number>-<short-description>`, with a literal `#` in place of the number when there is no issue (`fix/issue-#-typo-in-docs`). Quote such names in the shell.
 - Open pull requests against `master`. Keep each PR to one concern. Reference the issue with `Closes #N`.
+- Assign the pull request to the contributor it is for, not to yourself (`gh pr create --assignee <login>`, or
+  `gh pr edit --add-assignee <login>`). If you do not know their login, leave it unassigned and say so in the description.
 - Do not merge, and do not push to `master`. A merge can publish a release (below), so leave it to a maintainer.
 
 ## What a merge to master does
