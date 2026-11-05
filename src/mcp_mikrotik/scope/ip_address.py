@@ -1,6 +1,7 @@
 from typing import Optional
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 from ._selectors import has_item_rows
@@ -30,7 +31,7 @@ async def mikrotik_add_ip_address(
         cmd += f" broadcast={broadcast}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     if disabled:
         cmd += " disabled=yes"

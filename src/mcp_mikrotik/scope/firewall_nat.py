@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 from mcp.server.mcpserver import Context
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ._selectors import resolve_item_id, item_count, item_at_position, move_to_position, has_item_rows
 
@@ -75,7 +76,7 @@ async def mikrotik_create_nat_rule(
         cmd += f" to-ports={to_ports}"
 
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
     if disabled:
         cmd += " disabled=yes"
@@ -83,7 +84,7 @@ async def mikrotik_create_nat_rule(
     if log:
         cmd += " log=yes"
         if log_prefix:
-            cmd += f' log-prefix="{log_prefix}"'
+            cmd += f' log-prefix="{ros_quoted(log_prefix)}"'
 
     if place_before:
         cmd += f" place-before={place_before}"
@@ -271,13 +272,13 @@ async def mikrotik_update_nat_rule(
         else:
             updates.append(f"to-ports={to_ports}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
     if log is not None:
         updates.append(f'log={"yes" if log else "no"}')
         if log and log_prefix:
-            updates.append(f'log-prefix="{log_prefix}"')
+            updates.append(f'log-prefix="{ros_quoted(log_prefix)}"')
 
     if not updates:
         return "No updates specified."
