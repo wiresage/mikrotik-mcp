@@ -6,7 +6,7 @@ Built: 2026-10-22
 Source ETag: `"6ad9bd36-641a92"`
 SHA-256: `8d4302c69ff669f18a7313a42a3091dd11c061b266aa95ac3846be47fadfeda8`
 
-**Progress:** 145/334 in-scope commands implemented (43%) · **Partial:** 3 · **Planned:** 171 · **Legacy:** 15 · **Not applicable:** 3
+**Progress:** 151/334 in-scope commands implemented (45%) · **Partial:** 3 · **Planned:** 165 · **Legacy:** 15 · **Not applicable:** 3
 
 Scope: the counts cover only the menus declared in `docs/api-coverage.yml`. A RouterOS menu that is neither declared nor listed under `excluded` is not counted, and the manual check only reports new direct submenus of menus that already have an implemented or partial command.
 
@@ -104,17 +104,17 @@ it does not prove runtime correctness on every RouterOS version.
   - [ ] `print` — not implemented
   - [ ] `set` — not implemented
   - [ ] `remove` — not implemented
-- [ ] **Bridge VLAN table** (`/interface/bridge/vlan`)
-  - Not implemented. This is required for VLAN filtering on a bridge.
-  - [ ] `add` — not implemented
-  - [ ] `print` — not implemented
-  - [ ] `set` — not implemented
-  - [ ] `remove` — not implemented
+- [x] **Bridge VLAN table** (`/interface/bridge/vlan`)
+  - Entries are selected by bridge and vlan-ids rather than by id.
+  - [x] `add` — `add_bridge_vlan`
+  - [x] `print` — `list_bridge_vlans`
+  - [x] `set` — `update_bridge_vlan`
+  - [x] `remove` — `remove_bridge_vlan`
 - [ ] **Bridge ports** (`/interface/bridge/port`)
-  - Not implemented. PVID and tagged/untagged membership are not exposed.
+  - Listing and the VLAN settings (pvid, frame-types, ingress-filtering) are exposed; adding and removing ports is not.
   - [ ] `add` — not implemented
-  - [ ] `print` — not implemented
-  - [ ] `set` — not implemented
+  - [x] `print` — `list_bridge_ports`
+  - [x] `set` — `update_bridge_port`
   - [ ] `remove` — not implemented
 - [ ] **MACsec** (`/interface/macsec`)
   - Not implemented. MACsec link security is not exposed.
