@@ -223,6 +223,8 @@ python tests/smoke_multi_device.py
 
 > Both routers boot inside QEMU and need roughly two minutes before SSH answers.
 
+The routers run whatever RouterOS release their image holds, and `up -d` does not move them to a newer one. To test on the newest release see [routeros-docker/README.md](../../../routeros-docker/README.md).
+
 ## Security
 
 Credentials live in the inventory, so the whole inventory is a secret. Prefer
