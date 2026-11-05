@@ -81,7 +81,7 @@ uv run mcp-server-mikrotik
 ```
 
 `uv sync --frozen` installs the versions pinned in `uv.lock`, plus the test tooling.
-See the [Contributing Guide](../contributing.md#development-setup) for running the
+See the [Contributing Guide](../../CONTRIBUTING.md#development-setup) for running the
 tests and changing dependencies.
 
 ### CLI Options
