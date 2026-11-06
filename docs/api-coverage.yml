@@ -2601,6 +2601,54 @@ server_tools:
     kind: command
     note: Runs /tool profile for a few seconds.
 
+  create_ppp_secret:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  create_vpn_client:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  disconnect_ppp_session:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  get_ppp_active:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  get_ppp_secret:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  get_vpn_server_settings:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  list_ppp_active:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  list_ppp_profiles:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  list_ppp_secrets:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  list_vpn_clients:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  monitor_vpn_client:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  remove_ppp_secret:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  remove_vpn_client:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  update_ppp_secret:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  update_vpn_client:
+    kind: command
+    note: Manages /ppp and VPN entries.
+  update_vpn_server_settings:
+    kind: command
+    note: Manages /ppp and VPN entries.
 excluded:
   - menu: /container
     reason: Container management is out of scope.

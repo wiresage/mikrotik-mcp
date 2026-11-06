@@ -615,6 +615,22 @@ These tools do not map to a single RouterOS menu command.
 - [x] `torch` — command — Runs /tool torch for a few seconds; needs the sniff policy.
 - [x] `sniff_packets` — command — Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
+- [x] `create_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `create_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `disconnect_ppp_session` — command — Manages /ppp and VPN entries.
+- [x] `get_ppp_active` — command — Manages /ppp and VPN entries.
+- [x] `get_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `get_vpn_server_settings` — command — Manages /ppp and VPN entries.
+- [x] `list_ppp_active` — command — Manages /ppp and VPN entries.
+- [x] `list_ppp_profiles` — command — Manages /ppp and VPN entries.
+- [x] `list_ppp_secrets` — command — Manages /ppp and VPN entries.
+- [x] `list_vpn_clients` — command — Manages /ppp and VPN entries.
+- [x] `monitor_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `remove_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `remove_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `update_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `update_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `update_vpn_server_settings` — command — Manages /ppp and VPN entries.
 
 ## Excluded / out of scope
 
