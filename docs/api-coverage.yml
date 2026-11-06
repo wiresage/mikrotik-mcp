@@ -3603,6 +3603,33 @@ server_tools:
   update_neighbor_discovery_settings:
     kind: command
     note: Configures neighbor discovery settings.
+  get_ntp_status:
+    kind: command
+    note: Reads current NTP status.
+  check_clock_sync:
+    kind: command
+    note: Checks system clock synchronization against NTP.
+  get_ntp_client_settings:
+    kind: command
+    note: Reads /system/ntp/client settings.
+  update_ntp_client:
+    kind: command
+    note: Configures /system/ntp/client settings.
+  add_ntp_server:
+    kind: command
+    note: Adds NTP server to client configuration.
+  remove_ntp_server:
+    kind: command
+    note: Removes NTP server from client configuration.
+  get_ntp_server_settings:
+    kind: command
+    note: Reads /system/ntp/server daemon settings.
+  update_ntp_server:
+    kind: command
+    note: Configures /system/ntp/server daemon settings.
+  update_system_clock:
+    kind: command
+    note: Configures system clock and timezone.
 excluded:
 - menu: /container
   reason: Container management is out of scope.

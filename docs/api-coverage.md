@@ -658,6 +658,15 @@ These tools do not map to a single RouterOS menu command.
 - [x] `get_discovered_neighbor` — command — Reads discovered neighbor device details.
 - [x] `get_neighbor_discovery_settings` — command — Reads neighbor discovery settings.
 - [x] `update_neighbor_discovery_settings` — command — Configures neighbor discovery settings.
+- [x] `get_ntp_status` — command — Reads current NTP status.
+- [x] `check_clock_sync` — command — Checks system clock synchronization against NTP.
+- [x] `get_ntp_client_settings` — command — Reads /system/ntp/client settings.
+- [x] `update_ntp_client` — command — Configures /system/ntp/client settings.
+- [x] `add_ntp_server` — command — Adds NTP server to client configuration.
+- [x] `remove_ntp_server` — command — Removes NTP server from client configuration.
+- [x] `get_ntp_server_settings` — command — Reads /system/ntp/server daemon settings.
+- [x] `update_ntp_server` — command — Configures /system/ntp/server daemon settings.
+- [x] `update_system_clock` — command — Configures system clock and timezone.
 
 ## Excluded / out of scope
 
