@@ -519,3 +519,45 @@ def test_update_requires_real_content_before_claiming_success(ctx, monkeypatch):
 
     out = _run(m.mikrotik_update_ipv6_filter_rule(ctx, rule_id="*1", disabled=True))
     assert out.startswith("Failed to update IPv6 firewall filter rule:")
+
+
+def test_create_ipv6_reject_carries_reject_with(ctx, monkeypatch):
+    from mcp_mikrotik.scope import ipv6_firewall_filter as m
+
+    fake = FakeExecutor()
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    _run(m.mikrotik_create_ipv6_filter_rule(ctx, chain="forward", action="reject", reject_with="icmp-admin-prohibited"))
+    assert any("action=reject reject-with=icmp-admin-prohibited" in c for c in fake.commands)
+
+
+def test_create_ipv6_reject_invalid_chars(ctx, monkeypatch):
+    from mcp_mikrotik.scope import ipv6_firewall_filter as m
+
+    fake = FakeExecutor()
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    res = _run(m.mikrotik_create_ipv6_filter_rule(ctx, chain="forward", action="reject", reject_with='icmp"inject'))
+    assert "contains invalid characters" in res
+    assert not fake.commands
+
+
+def test_update_ipv6_reject_with(ctx, monkeypatch):
+    from mcp_mikrotik.scope import ipv6_firewall_filter as m
+
+    fake = FakeExecutor()
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    _run(m.mikrotik_update_ipv6_filter_rule(ctx, rule_id="*1", action="reject", reject_with="tcp-reset"))
+    assert any("/ipv6 firewall filter set *1" in c and "reject-with=tcp-reset" in c for c in fake.commands)
+
+
+def test_update_ipv6_reject_with_clear(ctx, monkeypatch):
+    from mcp_mikrotik.scope import ipv6_firewall_filter as m
+
+    fake = FakeExecutor()
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    _run(m.mikrotik_update_ipv6_filter_rule(ctx, rule_id="*1", reject_with=""))
+    assert any("/ipv6 firewall filter set *1" in c and "!reject-with" in c for c in fake.commands)
+
