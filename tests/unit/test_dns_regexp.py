@@ -121,3 +121,30 @@ def test_update_dns_static_can_still_clear_the_regexp(ctx, monkeypatch):
     run(dns_mod.mikrotik_update_dns_static(ctx, "*7", regexp=""))
 
     assert any("!regexp" in c for c in execute.seen)
+
+
+# ----------------------------------------------------------------------------------------- list_dns_static
+def test_list_dns_static_uses_print_detail(ctx, monkeypatch):
+    """list_dns_static uses 'print detail' so all columns are included over SSH (issue #205)."""
+    execute = executor([("/ip dns static print detail", "Flags: X - disabled\n 0    name=router.lan address=192.168.1.1 ttl=1d")])
+    monkeypatch.setattr(dns_mod, "execute_mikrotik_command", execute)
+
+    result = run(dns_mod.mikrotik_list_dns_static(ctx))
+    assert execute.seen[0] == "/ip dns static print detail"
+    assert "router.lan" in result
+
+
+def test_list_dns_static_with_filters(ctx, monkeypatch):
+    execute = executor([("/ip dns static print detail", " 0    name=test.lan address=10.0.0.1")])
+    monkeypatch.setattr(dns_mod, "execute_mikrotik_command", execute)
+
+    run(dns_mod.mikrotik_list_dns_static(ctx, name_filter="test", address_filter="10.0"))
+    assert execute.seen[0] == '/ip dns static print detail where name~"test" address~"10.0"'
+
+
+def test_list_dns_static_empty_legend_reported_as_no_entries(ctx, monkeypatch):
+    execute = executor([("/ip dns static print detail", "Flags: X - disabled, A - active\n")])
+    monkeypatch.setattr(dns_mod, "execute_mikrotik_command", execute)
+
+    result = run(dns_mod.mikrotik_list_dns_static(ctx))
+    assert "No static DNS entries found" in result
