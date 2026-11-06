@@ -3504,6 +3504,54 @@ server_tools:
   remove_script_environment:
     kind: command
     note: Removes /system/script/environment variable.
+  list_ppp_active:
+    kind: command
+    note: Lists active PPP connections.
+  get_ppp_active:
+    kind: command
+    note: Reads active PPP connection details.
+  disconnect_ppp_session:
+    kind: command
+    note: Terminates active PPP connection.
+  list_ppp_secrets:
+    kind: command
+    note: Lists /ppp/secret entries.
+  get_ppp_secret:
+    kind: command
+    note: Reads /ppp/secret entry.
+  create_ppp_secret:
+    kind: command
+    note: Creates /ppp/secret entry.
+  update_ppp_secret:
+    kind: command
+    note: Updates /ppp/secret entry.
+  remove_ppp_secret:
+    kind: command
+    note: Deletes /ppp/secret entry.
+  list_ppp_profiles:
+    kind: command
+    note: Lists /ppp/profile entries.
+  list_vpn_clients:
+    kind: command
+    note: Lists configured VPN client interfaces.
+  monitor_vpn_client:
+    kind: command
+    note: Monitors VPN client interface status.
+  create_vpn_client:
+    kind: command
+    note: Creates VPN client interface.
+  update_vpn_client:
+    kind: command
+    note: Updates VPN client interface.
+  remove_vpn_client:
+    kind: command
+    note: Deletes VPN client interface.
+  get_vpn_server_settings:
+    kind: command
+    note: Reads VPN server settings.
+  update_vpn_server_settings:
+    kind: command
+    note: Configures VPN server settings.
 excluded:
 - menu: /container
   reason: Container management is out of scope.

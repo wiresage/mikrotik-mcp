@@ -625,6 +625,22 @@ These tools do not map to a single RouterOS menu command.
 - [x] `remove_script_job` — command — Terminates /system/script/job entry.
 - [x] `list_script_environment` — command — Lists /system/script/environment variables.
 - [x] `remove_script_environment` — command — Removes /system/script/environment variable.
+- [x] `list_ppp_active` — command — Lists active PPP connections.
+- [x] `get_ppp_active` — command — Reads active PPP connection details.
+- [x] `disconnect_ppp_session` — command — Terminates active PPP connection.
+- [x] `list_ppp_secrets` — command — Lists /ppp/secret entries.
+- [x] `get_ppp_secret` — command — Reads /ppp/secret entry.
+- [x] `create_ppp_secret` — command — Creates /ppp/secret entry.
+- [x] `update_ppp_secret` — command — Updates /ppp/secret entry.
+- [x] `remove_ppp_secret` — command — Deletes /ppp/secret entry.
+- [x] `list_ppp_profiles` — command — Lists /ppp/profile entries.
+- [x] `list_vpn_clients` — command — Lists configured VPN client interfaces.
+- [x] `monitor_vpn_client` — command — Monitors VPN client interface status.
+- [x] `create_vpn_client` — command — Creates VPN client interface.
+- [x] `update_vpn_client` — command — Updates VPN client interface.
+- [x] `remove_vpn_client` — command — Deletes VPN client interface.
+- [x] `get_vpn_server_settings` — command — Reads VPN server settings.
+- [x] `update_vpn_server_settings` — command — Configures VPN server settings.
 
 ## Excluded / out of scope
 
