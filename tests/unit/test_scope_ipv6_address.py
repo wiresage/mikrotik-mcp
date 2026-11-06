@@ -135,7 +135,7 @@ def test_get_by_id_queries_id_first(ctx, monkeypatch):
 
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
     out = _run(m.mikrotik_get_ipv6_address(ctx, address_id="*1"))
-    assert calls[0] == '/ipv6 address print detail where .id="*1"'
+    assert calls[0] == '/ipv6 address print detail where .id=*1'
     assert "IPV6 ADDRESS DETAILS" in out
 
 
@@ -185,7 +185,7 @@ def test_remove_by_id(ctx, monkeypatch):
 
     monkeypatch.setattr(m, "execute_mikrotik_command", tracking, raising=True)
     out = _run(m.mikrotik_remove_ipv6_address(ctx, address_id="*2"))
-    assert '/ipv6 address remove [find .id="*2"]' in seen
+    assert '/ipv6 address remove *2' in seen
     assert "removed successfully" in out
 
 
@@ -274,6 +274,42 @@ def test_add_failure_path(ctx, monkeypatch):
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
     out = _run(m.mikrotik_add_ipv6_address(ctx, address="2001:db8::1/64", interface="ether1"))
     assert "Failed to add IPv6 address" in out
+
+
+def test_remove_by_positional_number(ctx, monkeypatch):
+    from mcp_mikrotik.scope import ipv6_address as m
+
+    seen = []
+
+    async def fake(cmd, _ctx, device=None):
+        seen.append(cmd)
+        if "pick" in cmd:
+            return "*5A"
+        if "count-only where .id=*5A" in cmd:
+            return "1"
+        return ""
+
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+    out = _run(m.mikrotik_remove_ipv6_address(ctx, address_id="0"))
+    assert "/ipv6 address remove *5A" in seen
+    assert "removed successfully" in out.lower()
+
+
+def test_remove_by_internal_id(ctx, monkeypatch):
+    from mcp_mikrotik.scope import ipv6_address as m
+
+    seen = []
+
+    async def fake(cmd, _ctx, device=None):
+        seen.append(cmd)
+        if "count-only where .id=*1" in cmd:
+            return "1"
+        return ""
+
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+    out = _run(m.mikrotik_remove_ipv6_address(ctx, address_id="*1"))
+    assert "/ipv6 address remove *1" in seen
+    assert "removed successfully" in out.lower()
 
 
 def test_remove_failure_path(ctx, monkeypatch):
