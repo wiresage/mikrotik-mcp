@@ -598,6 +598,75 @@ These tools do not map to a single RouterOS menu command.
 - [x] `monitor_logs` — composite — Takes a count snapshot, waits, then reads the new entries.
 - [x] `download_file` — sftp — Transfers raw bytes over the SSH SFTP subsystem.
 - [x] `upload_file` — sftp — Transfers raw bytes over the SSH SFTP subsystem.
+- [x] `ping` — command — Runs /ping on the device.
+- [x] `traceroute` — command — Runs /tool/traceroute on the device.
+- [x] `torch` — command — Runs /tool/torch traffic inspection on the device.
+- [x] `sniff_packets` — command — Runs /tool/sniffer quick packet capture.
+- [x] `profile_cpu` — command — Runs /tool/profile CPU profiling.
+- [x] `monitor_interface_traffic` — command — Runs /interface monitor-traffic on the device.
+- [x] `monitor_ethernet_interface` — command — Runs /interface/ethernet monitor on the device.
+- [x] `get_connection_tracking_settings` — command — Reads /ip/firewall/connection/tracking settings.
+- [x] `update_connection_tracking_settings` — command — Configures /ip/firewall/connection/tracking settings.
+- [x] `get_connection_tracking_count` — command — Reads active connection count.
+- [x] `list_firewall_connections` — command — Lists active /ip/firewall/connection entries.
+- [x] `remove_firewall_connections` — command — Removes active /ip/firewall/connection entries.
+- [x] `create_scheduler` — command — Creates /system/scheduler entry.
+- [x] `update_scheduler` — command — Updates /system/scheduler entry.
+- [x] `remove_scheduler` — command — Deletes /system/scheduler entry.
+- [x] `enable_scheduler` — command — Enables /system/scheduler entry.
+- [x] `disable_scheduler` — command — Disables /system/scheduler entry.
+- [x] `get_scheduler` — command — Reads /system/scheduler details.
+- [x] `create_script` — command — Creates /system/script entry.
+- [x] `update_script` — command — Updates /system/script entry.
+- [x] `remove_script` — command — Deletes /system/script entry.
+- [x] `run_script` — command — Executes /system/script entry.
+- [x] `get_script` — command — Reads /system/script source and properties.
+- [x] `list_script_jobs` — command — Lists running /system/script/job entries.
+- [x] `remove_script_job` — command — Terminates /system/script/job entry.
+- [x] `list_script_environment` — command — Lists /system/script/environment variables.
+- [x] `remove_script_environment` — command — Removes /system/script/environment variable.
+- [x] `list_ppp_active` — command — Lists active PPP connections.
+- [x] `get_ppp_active` — command — Reads active PPP connection details.
+- [x] `disconnect_ppp_session` — command — Terminates active PPP connection.
+- [x] `list_ppp_secrets` — command — Lists /ppp/secret entries.
+- [x] `get_ppp_secret` — command — Reads /ppp/secret entry.
+- [x] `create_ppp_secret` — command — Creates /ppp/secret entry.
+- [x] `update_ppp_secret` — command — Updates /ppp/secret entry.
+- [x] `remove_ppp_secret` — command — Deletes /ppp/secret entry.
+- [x] `list_ppp_profiles` — command — Lists /ppp/profile entries.
+- [x] `list_vpn_clients` — command — Lists configured VPN client interfaces.
+- [x] `monitor_vpn_client` — command — Monitors VPN client interface status.
+- [x] `create_vpn_client` — command — Creates VPN client interface.
+- [x] `update_vpn_client` — command — Updates VPN client interface.
+- [x] `remove_vpn_client` — command — Deletes VPN client interface.
+- [x] `get_vpn_server_settings` — command — Reads VPN server settings.
+- [x] `update_vpn_server_settings` — command — Configures VPN server settings.
+- [x] `list_certificates` — command — Lists /certificate entries.
+- [x] `get_certificate` — command — Reads /certificate details.
+- [x] `check_certificate_expiry` — command — Checks expiry for certificates.
+- [x] `create_certificate` — command — Creates /certificate entry.
+- [x] `sign_certificate` — command — Signs a certificate.
+- [x] `update_certificate` — command — Updates /certificate entry.
+- [x] `remove_certificate` — command — Deletes /certificate entry.
+- [x] `request_acme_certificate` — command — Requests ACME (Let's Encrypt) certificate.
+- [x] `import_certificate` — command — Imports certificate file.
+- [x] `export_certificate` — command — Exports certificate to file.
+- [x] `list_crl` — command — Lists /certificate/crl entries.
+- [x] `get_certificate_settings` — command — Reads certificate settings.
+- [x] `update_certificate_settings` — command — Updates certificate settings.
+- [x] `list_discovered_neighbors` — command — Lists discovered neighbor devices.
+- [x] `get_discovered_neighbor` — command — Reads discovered neighbor device details.
+- [x] `get_neighbor_discovery_settings` — command — Reads neighbor discovery settings.
+- [x] `update_neighbor_discovery_settings` — command — Configures neighbor discovery settings.
+- [x] `get_ntp_status` — command — Reads current NTP status.
+- [x] `check_clock_sync` — command — Checks system clock synchronization against NTP.
+- [x] `get_ntp_client_settings` — command — Reads /system/ntp/client settings.
+- [x] `update_ntp_client` — command — Configures /system/ntp/client settings.
+- [x] `add_ntp_server` — command — Adds NTP server to client configuration.
+- [x] `remove_ntp_server` — command — Removes NTP server from client configuration.
+- [x] `get_ntp_server_settings` — command — Reads /system/ntp/server daemon settings.
+- [x] `update_ntp_server` — command — Configures /system/ntp/server daemon settings.
+- [x] `update_system_clock` — command — Configures system clock and timezone.
 
 ## Excluded / out of scope
 
