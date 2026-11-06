@@ -641,6 +641,19 @@ These tools do not map to a single RouterOS menu command.
 - [x] `remove_vpn_client` — command — Deletes VPN client interface.
 - [x] `get_vpn_server_settings` — command — Reads VPN server settings.
 - [x] `update_vpn_server_settings` — command — Configures VPN server settings.
+- [x] `list_certificates` — command — Lists /certificate entries.
+- [x] `get_certificate` — command — Reads /certificate details.
+- [x] `check_certificate_expiry` — command — Checks expiry for certificates.
+- [x] `create_certificate` — command — Creates /certificate entry.
+- [x] `sign_certificate` — command — Signs a certificate.
+- [x] `update_certificate` — command — Updates /certificate entry.
+- [x] `remove_certificate` — command — Deletes /certificate entry.
+- [x] `request_acme_certificate` — command — Requests ACME (Let's Encrypt) certificate.
+- [x] `import_certificate` — command — Imports certificate file.
+- [x] `export_certificate` — command — Exports certificate to file.
+- [x] `list_crl` — command — Lists /certificate/crl entries.
+- [x] `get_certificate_settings` — command — Reads certificate settings.
+- [x] `update_certificate_settings` — command — Updates certificate settings.
 
 ## Excluded / out of scope
 

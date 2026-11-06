@@ -3552,6 +3552,45 @@ server_tools:
   update_vpn_server_settings:
     kind: command
     note: Configures VPN server settings.
+  list_certificates:
+    kind: command
+    note: Lists /certificate entries.
+  get_certificate:
+    kind: command
+    note: Reads /certificate details.
+  check_certificate_expiry:
+    kind: command
+    note: Checks expiry for certificates.
+  create_certificate:
+    kind: command
+    note: Creates /certificate entry.
+  sign_certificate:
+    kind: command
+    note: Signs a certificate.
+  update_certificate:
+    kind: command
+    note: Updates /certificate entry.
+  remove_certificate:
+    kind: command
+    note: Deletes /certificate entry.
+  request_acme_certificate:
+    kind: command
+    note: Requests ACME (Let's Encrypt) certificate.
+  import_certificate:
+    kind: command
+    note: Imports certificate file.
+  export_certificate:
+    kind: command
+    note: Exports certificate to file.
+  list_crl:
+    kind: command
+    note: Lists /certificate/crl entries.
+  get_certificate_settings:
+    kind: command
+    note: Reads certificate settings.
+  update_certificate_settings:
+    kind: command
+    note: Updates certificate settings.
 excluded:
 - menu: /container
   reason: Container management is out of scope.
