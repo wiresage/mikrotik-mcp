@@ -3444,6 +3444,21 @@ server_tools:
   monitor_ethernet_interface:
     kind: command
     note: Runs /interface/ethernet monitor on the device.
+  get_connection_tracking_settings:
+    kind: command
+    note: Reads /ip/firewall/connection/tracking settings.
+  update_connection_tracking_settings:
+    kind: command
+    note: Configures /ip/firewall/connection/tracking settings.
+  get_connection_tracking_count:
+    kind: command
+    note: Reads active connection count.
+  list_firewall_connections:
+    kind: command
+    note: Lists active /ip/firewall/connection entries.
+  remove_firewall_connections:
+    kind: command
+    note: Removes active /ip/firewall/connection entries.
 excluded:
 - menu: /container
   reason: Container management is out of scope.
