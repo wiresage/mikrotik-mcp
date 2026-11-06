@@ -33,7 +33,7 @@ def ctx():
 
 
 def test_scheduler_crud(ctx, monkeypatch):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fake = FakeExecutor({
         "/system scheduler print detail where name=\"backup-task\"": " 0   name=\"backup-task\" interval=1d next-run=nov/05/2026 on-event=\"do-backup\"\n",
@@ -104,7 +104,7 @@ def test_scheduler_crud(ctx, monkeypatch):
 
 
 def test_script_crud_and_execution(ctx, monkeypatch):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fake = FakeExecutor({
         "/system script print detail where name=\"my-script\"": " 0   name=\"my-script\" owner=\"admin\" run-count=5 source=\":put hello\"\n",
@@ -170,7 +170,7 @@ def test_script_crud_and_execution(ctx, monkeypatch):
 
 
 def test_script_jobs_and_environment(ctx, monkeypatch):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fake = FakeExecutor({
         "/system script job print detail": " 0   owner=\"admin\" started=2026-11-04 20:00:00\n",
@@ -202,7 +202,7 @@ def test_script_jobs_and_environment(ctx, monkeypatch):
 
 
 def test_invalid_names_are_rejected(ctx):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     assert "Invalid script name" in _run(scheduler.mikrotik_get_script(ctx, name="bad name with spaces!"))
     assert "Invalid scheduler name" in _run(scheduler.mikrotik_get_scheduler(ctx, name="bad;name"))

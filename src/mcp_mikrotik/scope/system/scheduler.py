@@ -1,3 +1,4 @@
+from .._shared.selectors import has_item_rows
 """Management and inspection tools for `/system scheduler` and `/system script`.
 
 Script bodies and scheduler event commands are withheld by default in list
