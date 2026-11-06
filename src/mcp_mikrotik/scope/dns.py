@@ -153,7 +153,7 @@ async def mikrotik_list_dns_static(
     """Lists static DNS entries."""
     await ctx.info(f"Listing static DNS entries with filters: name={name_filter}")
 
-    cmd = "/ip dns static print"
+    cmd = "/ip dns static print detail"
 
     filters = []
     if name_filter:
@@ -172,7 +172,7 @@ async def mikrotik_list_dns_static(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result or result.strip() == "" or result.strip() == "no such item":
+    if not has_item_rows(result):
         return "No static DNS entries found matching the criteria."
 
     return f"STATIC DNS ENTRIES:\n\n{result}"
