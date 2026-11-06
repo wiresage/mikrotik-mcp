@@ -3,7 +3,7 @@ from typing import Optional
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
-from ._selectors import has_item_rows
+from ._selectors import has_item_rows, resolve_item_id, item_count
 
 @mcp.tool(name="add_ip_address", annotations=annotate(WRITE, "Add IP Address"))
 async def mikrotik_add_ip_address(
@@ -109,23 +109,18 @@ async def mikrotik_remove_ip_address(ctx: Context, address_id: str, device: Opti
     """Removes an IP address from the MikroTik device by ID or address value."""
     await ctx.info(f"Removing IP address: address_id={address_id}")
 
-    # Try to find by ID first
-    check_cmd = f'/ip address print count-only where .id="{address_id}"'
-    count = await execute_mikrotik_command(check_cmd, ctx, device=device)
-
-    if count.strip() == "0":
-        # Try finding by address value
-        check_cmd = f'/ip address print count-only where address="{address_id}"'
+    menu = "/ip address"
+    resolved = await resolve_item_id(menu, address_id, ctx, device, execute_mikrotik_command)
+    if resolved:
+        if await item_count(menu, resolved, ctx, device, execute_mikrotik_command) != "1":
+            return f"IP address '{address_id}' not found."
+        cmd = f"{menu} remove {resolved}"
+    else:
+        check_cmd = f'{menu} print count-only where address="{address_id}"'
         count = await execute_mikrotik_command(check_cmd, ctx, device=device)
-
         if count.strip() == "0":
             return f"IP address '{address_id}' not found."
-
-        # Remove by address value
-        cmd = f'/ip address remove [find address="{address_id}"]'
-    else:
-        # Remove by ID
-        cmd = f'/ip address remove [find .id="{address_id}"]'
+        cmd = f'{menu} remove [find address="{address_id}"]'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
