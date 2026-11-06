@@ -598,6 +598,18 @@ These tools do not map to a single RouterOS menu command.
 - [x] `monitor_logs` — composite — Takes a count snapshot, waits, then reads the new entries.
 - [x] `download_file` — sftp — Transfers raw bytes over the SSH SFTP subsystem.
 - [x] `upload_file` — sftp — Transfers raw bytes over the SSH SFTP subsystem.
+- [x] `ping` — command — Runs /ping on the device.
+- [x] `traceroute` — command — Runs /tool/traceroute on the device.
+- [x] `torch` — command — Runs /tool/torch traffic inspection on the device.
+- [x] `sniff_packets` — command — Runs /tool/sniffer quick packet capture.
+- [x] `profile_cpu` — command — Runs /tool/profile CPU profiling.
+- [x] `monitor_interface_traffic` — command — Runs /interface monitor-traffic on the device.
+- [x] `monitor_ethernet_interface` — command — Runs /interface/ethernet monitor on the device.
+- [x] `get_connection_tracking_settings` — command — Reads /ip/firewall/connection/tracking settings.
+- [x] `update_connection_tracking_settings` — command — Configures /ip/firewall/connection/tracking settings.
+- [x] `get_connection_tracking_count` — command — Reads active connection count.
+- [x] `list_firewall_connections` — command — Lists active /ip/firewall/connection entries.
+- [x] `remove_firewall_connections` — command — Removes active /ip/firewall/connection entries.
 
 ## Excluded / out of scope
 

@@ -39,7 +39,7 @@ class FakeExecutor:
         self.devices: list[Any] = []
 
     async def __call__(self, command: str, _ctx: Any, device: Any = None,
-                       redact: Any = None) -> str:
+                       redact: Any = None, terminal_width: Any = None) -> str:
         self.commands.append(command)
         self.devices.append(device)
 

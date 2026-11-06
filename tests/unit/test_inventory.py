@@ -422,3 +422,34 @@ def test_falls_back_to_single_device_config(monkeypatch):
     assert devices[0].host == "192.168.88.1"
     assert devices[0].port == 2022
     assert devices[0].username == "u"
+
+
+def test_connect_appends_terminal_width_login_option(monkeypatch):
+    """RouterOS reads `<user>+<n>w` as "console width n"; only requested connections get it."""
+    from mcp_mikrotik import inventory as inv_mod
+    from mcp_mikrotik.config import DeviceConfig
+
+    seen = []
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            seen.append(kwargs["username"])
+
+        def connect(self):
+            return True
+
+    monkeypatch.setattr(inv_mod, "MikroTikSSHClient", FakeClient)
+    inv = inv_mod.Inventory([DeviceConfig(title="R", host="192.0.2.1", username="mcp")])
+    inv.connect("R")
+    inv.connect("R", terminal_width=250)
+    assert seen == ["mcp", "mcp+250w"]
+
+
+def test_connect_rejects_absurd_terminal_width(monkeypatch):
+    import pytest
+    from mcp_mikrotik import inventory as inv_mod
+    from mcp_mikrotik.config import DeviceConfig
+
+    inv = inv_mod.Inventory([DeviceConfig(title="R", host="192.0.2.1")])
+    with pytest.raises(ValueError):
+        inv.connect("R", terminal_width=5)
