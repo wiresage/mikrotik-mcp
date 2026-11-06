@@ -617,6 +617,8 @@ These tools do not map to a single RouterOS menu command.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 - [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
+- [x] `monitor_ethernet_interface` — command — Monitors /interface traffic and ethernet status.
+- [x] `monitor_interface_traffic` — command — Monitors /interface traffic and ethernet status.
 
 ## Excluded / out of scope
 

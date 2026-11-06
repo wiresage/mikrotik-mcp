@@ -2607,6 +2607,12 @@ server_tools:
     kind: command
     note: Monitors real-time wireless interface status.
 
+  monitor_ethernet_interface:
+    kind: command
+    note: Monitors /interface traffic and ethernet status.
+  monitor_interface_traffic:
+    kind: command
+    note: Monitors /interface traffic and ethernet status.
 excluded:
   - menu: /container
     reason: Container management is out of scope.
