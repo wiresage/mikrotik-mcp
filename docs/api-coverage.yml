@@ -2601,6 +2601,45 @@ server_tools:
     kind: command
     note: Runs /tool profile for a few seconds.
 
+  check_certificate_expiry:
+    kind: command
+    note: Manages /certificate entries.
+  create_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  export_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  get_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  get_certificate_settings:
+    kind: command
+    note: Manages /certificate entries.
+  import_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  list_certificates:
+    kind: command
+    note: Manages /certificate entries.
+  list_crl:
+    kind: command
+    note: Manages /certificate entries.
+  remove_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  request_acme_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  sign_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  update_certificate:
+    kind: command
+    note: Manages /certificate entries.
+  update_certificate_settings:
+    kind: command
+    note: Manages /certificate entries.
 excluded:
   - menu: /container
     reason: Container management is out of scope.

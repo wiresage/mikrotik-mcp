@@ -615,6 +615,19 @@ These tools do not map to a single RouterOS menu command.
 - [x] `torch` — command — Runs /tool torch for a few seconds; needs the sniff policy.
 - [x] `sniff_packets` — command — Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
+- [x] `check_certificate_expiry` — command — Manages /certificate entries.
+- [x] `create_certificate` — command — Manages /certificate entries.
+- [x] `export_certificate` — command — Manages /certificate entries.
+- [x] `get_certificate` — command — Manages /certificate entries.
+- [x] `get_certificate_settings` — command — Manages /certificate entries.
+- [x] `import_certificate` — command — Manages /certificate entries.
+- [x] `list_certificates` — command — Manages /certificate entries.
+- [x] `list_crl` — command — Manages /certificate entries.
+- [x] `remove_certificate` — command — Manages /certificate entries.
+- [x] `request_acme_certificate` — command — Manages /certificate entries.
+- [x] `sign_certificate` — command — Manages /certificate entries.
+- [x] `update_certificate` — command — Manages /certificate entries.
+- [x] `update_certificate_settings` — command — Manages /certificate entries.
 
 ## Excluded / out of scope
 
