@@ -218,8 +218,7 @@ async def mikrotik_get_filter_rule(ctx: Context, rule_id: str, device: Optional[
 
     return f"FIREWALL FILTER RULE DETAILS:\n\n{result}"
 
-@mcp.tool(name="update_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Update Firewall Filter Rule"))
-async def mikrotik_update_filter_rule(
+async def _update_filter_rule(
     ctx: Context,
     rule_id: str,
     chain: Optional[str] = None,
@@ -370,6 +369,70 @@ async def mikrotik_update_filter_rule(
 
     return f"Firewall filter rule updated successfully:\n\n{details}"
 
+
+@mcp.tool(name="update_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Update Firewall Filter Rule"))
+async def mikrotik_update_filter_rule(
+    ctx: Context,
+    rule_id: str,
+    chain: Optional[str] = None,
+    action: Optional[str] = None,
+    src_address: Optional[str] = None,
+    dst_address: Optional[str] = None,
+    src_port: Optional[str] = None,
+    dst_port: Optional[str] = None,
+    protocol: Optional[str] = None,
+    in_interface: Optional[str] = None,
+    out_interface: Optional[str] = None,
+    in_interface_list: Optional[str] = None,
+    out_interface_list: Optional[str] = None,
+    connection_state: Optional[str] = None,
+    connection_nat_state: Optional[str] = None,
+    src_address_list: Optional[str] = None,
+    dst_address_list: Optional[str] = None,
+    limit: Optional[str] = None,
+    tcp_flags: Optional[str] = None,
+    comment: Optional[str] = None,
+    disabled: Optional[bool] = None,
+    log: Optional[bool] = None,
+    log_prefix: Optional[str] = None,
+    device: Optional[str] = None
+) -> str:
+    """Updates an existing firewall filter rule on the MikroTik device.
+
+    Notes:
+        rule_id: positional number from list output (e.g. "12") or internal ID (e.g. "*1A")
+        connection_state: comma-separated e.g. "established,related"
+        limit: RouterOS rate string e.g. "10,5:packet"
+        tcp_flags: RouterOS flag expression e.g. "syn,!ack"
+        Pass "" to clear an optional field (e.g. src_address="").
+    """
+    return await _update_filter_rule(
+        ctx=ctx,
+        rule_id=rule_id,
+        chain=chain,
+        action=action,
+        src_address=src_address,
+        dst_address=dst_address,
+        src_port=src_port,
+        dst_port=dst_port,
+        protocol=protocol,
+        in_interface=in_interface,
+        out_interface=out_interface,
+        in_interface_list=in_interface_list,
+        out_interface_list=out_interface_list,
+        connection_state=connection_state,
+        connection_nat_state=connection_nat_state,
+        src_address_list=src_address_list,
+        dst_address_list=dst_address_list,
+        limit=limit,
+        tcp_flags=tcp_flags,
+        comment=comment,
+        disabled=disabled,
+        log=log,
+        log_prefix=log_prefix,
+        device=device,
+    )
+
 @mcp.tool(name="remove_filter_rule", annotations=annotate(DESTRUCTIVE, "Remove Firewall Filter Rule"))
 async def mikrotik_remove_filter_rule(ctx: Context, rule_id: str, device: Optional[str] = None) -> str:
     """Removes a firewall filter rule from the MikroTik device.
@@ -436,12 +499,12 @@ async def mikrotik_move_filter_rule(ctx: Context, rule_id: str, destination: int
 @mcp.tool(name="enable_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Enable Filter Rule"))
 async def mikrotik_enable_filter_rule(ctx: Context, rule_id: str, device: Optional[str] = None) -> str:
     """Enables a firewall filter rule."""
-    return await mikrotik_update_filter_rule(ctx, rule_id, disabled=False, device=device)
+    return await _update_filter_rule(ctx=ctx, rule_id=rule_id, disabled=False, device=device)
 
 @mcp.tool(name="disable_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Disable Filter Rule"))
 async def mikrotik_disable_filter_rule(ctx: Context, rule_id: str, device: Optional[str] = None) -> str:
     """Disables a firewall filter rule."""
-    return await mikrotik_update_filter_rule(ctx, rule_id, disabled=True, device=device)
+    return await _update_filter_rule(ctx=ctx, rule_id=rule_id, disabled=True, device=device)
 
 @mcp.tool(name="create_basic_firewall_setup", annotations=annotate(DANGEROUS, "Create Basic Firewall Setup"))
 async def mikrotik_create_basic_firewall_setup(ctx: Context, device: Optional[str] = None) -> str:
