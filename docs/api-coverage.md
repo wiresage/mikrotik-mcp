@@ -654,6 +654,10 @@ These tools do not map to a single RouterOS menu command.
 - [x] `list_crl` — command — Lists /certificate/crl entries.
 - [x] `get_certificate_settings` — command — Reads certificate settings.
 - [x] `update_certificate_settings` — command — Updates certificate settings.
+- [x] `list_discovered_neighbors` — command — Lists discovered neighbor devices.
+- [x] `get_discovered_neighbor` — command — Reads discovered neighbor device details.
+- [x] `get_neighbor_discovery_settings` — command — Reads neighbor discovery settings.
+- [x] `update_neighbor_discovery_settings` — command — Configures neighbor discovery settings.
 
 ## Excluded / out of scope
 

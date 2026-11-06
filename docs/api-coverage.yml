@@ -3591,6 +3591,18 @@ server_tools:
   update_certificate_settings:
     kind: command
     note: Updates certificate settings.
+  list_discovered_neighbors:
+    kind: command
+    note: Lists discovered neighbor devices.
+  get_discovered_neighbor:
+    kind: command
+    note: Reads discovered neighbor device details.
+  get_neighbor_discovery_settings:
+    kind: command
+    note: Reads neighbor discovery settings.
+  update_neighbor_discovery_settings:
+    kind: command
+    note: Configures neighbor discovery settings.
 excluded:
 - menu: /container
   reason: Container management is out of scope.
