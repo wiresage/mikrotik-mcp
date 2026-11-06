@@ -13,6 +13,7 @@ async def mikrotik_create_filter_rule(
     ctx: Context,
     chain: Literal["input", "forward", "output"],
     action: Literal["accept", "drop", "reject", "jump", "log", "passthrough", "return", "tarpit", "fasttrack-connection"],
+    reject_with: Optional[str] = None,
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -60,6 +61,11 @@ async def mikrotik_create_filter_rule(
 
     # Build the command
     cmd = f"/ip firewall filter add chain={chain} action={action}"
+
+    if reject_with:
+        if any(c in reject_with for c in ('"', "'", '\n', '\r', ' ', '\t', ';', '$')):
+            return "Failed to create firewall filter rule: reject_with contains invalid characters."
+        cmd += f" reject-with={reject_with}"
 
     # Add optional parameters
     if src_address:
@@ -224,6 +230,7 @@ async def mikrotik_update_filter_rule(
     rule_id: str,
     chain: Optional[str] = None,
     action: Optional[str] = None,
+    reject_with: Optional[str] = None,
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -269,6 +276,13 @@ async def mikrotik_update_filter_rule(
         updates.append(f"chain={chain}")
     if action:
         updates.append(f"action={action}")
+    if reject_with is not None:
+        if reject_with == "":
+            updates.append("!reject-with")
+        else:
+            if any(c in reject_with for c in ('"', "'", '\n', '\r', ' ', '\t', ';', '$')):
+                return "Failed to update firewall filter rule: reject_with contains invalid characters."
+            updates.append(f"reject-with={reject_with}")
     if src_address is not None:
         if src_address == "":
             updates.append("!src-address")
