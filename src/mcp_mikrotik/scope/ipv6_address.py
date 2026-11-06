@@ -4,6 +4,7 @@ from typing import Optional
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
+from ._selectors import resolve_item_id, item_count
 
 
 def _canonical_ipv6(value: str) -> str:
@@ -150,14 +151,19 @@ async def mikrotik_get_ipv6_address(
     # because `print detail` returns the Flags legend (non-empty) even when no
     # row matches — so an emptiness check would yield a header with no entry.
     addr = _canonical_ipv6(address_id)
-    if ":" in address_id:
+    menu = "/ipv6 address"
+    resolved = await resolve_item_id(menu, address_id, ctx, device, execute_mikrotik_command)
+
+    if resolved:
+        queries = [f".id={resolved}"]
+    elif ":" in address_id:
         queries = [f'address="{addr}"', f'.id="{address_id}"']
     else:
         queries = [f'.id="{address_id}"', f'address="{addr}"']
 
     for where in queries:
         result = await execute_mikrotik_command(
-            f"/ipv6 address print detail where {where}", ctx, device=device
+            f"{menu} print detail where {where}", ctx, device=device
         )
         if result and "address=" in result:
             return f"IPV6 ADDRESS DETAILS:\n\n{result}"
@@ -172,28 +178,24 @@ async def mikrotik_remove_ipv6_address(
     """Removes an IPv6 address from the MikroTik device by ID or address value.
 
     Notes:
-        address_id: a RouterOS internal id (e.g. "*1") or the address value
-            (e.g. "2001:db8::1/64").
+        address_id: a RouterOS internal id (e.g. "*1"), print position ("0"),
+            or the address value (e.g. "2001:db8::1/64").
     """
     await ctx.info(f"Removing IPv6 address: address_id={address_id}")
 
-    addr = _canonical_ipv6(address_id)
-
-    # Try to find by ID first
-    check_cmd = f'/ipv6 address print count-only where .id="{address_id}"'
-    count = await execute_mikrotik_command(check_cmd, ctx, device=device)
-
-    if count.strip() == "0":
-        # Try finding by (canonicalized) address value
-        check_cmd = f'/ipv6 address print count-only where address="{addr}"'
+    menu = "/ipv6 address"
+    resolved = await resolve_item_id(menu, address_id, ctx, device, execute_mikrotik_command)
+    if resolved:
+        if await item_count(menu, resolved, ctx, device, execute_mikrotik_command) != "1":
+            return f"IPv6 address '{address_id}' not found."
+        cmd = f"{menu} remove {resolved}"
+    else:
+        addr = _canonical_ipv6(address_id)
+        check_cmd = f'{menu} print count-only where address="{addr}"'
         count = await execute_mikrotik_command(check_cmd, ctx, device=device)
-
         if count.strip() == "0":
             return f"IPv6 address '{address_id}' not found."
-
-        cmd = f'/ipv6 address remove [find address="{addr}"]'
-    else:
-        cmd = f'/ipv6 address remove [find .id="{address_id}"]'
+        cmd = f'{menu} remove [find address="{addr}"]'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
