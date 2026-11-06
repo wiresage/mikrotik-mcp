@@ -6,7 +6,7 @@ Built: 2026-10-22
 Source ETag: `"6ad9bd36-641a92"`
 SHA-256: `8d4302c69ff669f18a7313a42a3091dd11c061b266aa95ac3846be47fadfeda8`
 
-**Progress:** 151/334 in-scope commands implemented (45%) · **Partial:** 3 · **Planned:** 165 · **Legacy:** 15 · **Not applicable:** 3
+**Progress:** 152/334 in-scope commands implemented (46%) · **Partial:** 2 · **Planned:** 165 · **Legacy:** 15 · **Not applicable:** 3
 
 Scope: the counts cover only the menus declared in `docs/api-coverage.yml`. A RouterOS menu that is neither declared nor listed under `excluded` is not counted, and the manual check only reports new direct submenus of menus that already have an implemented or partial command.
 
@@ -281,9 +281,9 @@ it does not prove runtime correctness on every RouterOS version.
 - [x] **DNS cache** (`/ip/dns/cache`)
   - [x] `print` — `get_dns_cache`
   - [x] `flush` — `flush_dns_cache`
-- [ ] **IPv4 firewall filter** (`/ip/firewall/filter`)
-  - The IPv4 create_filter_rule action list includes jump but the tool has no jump_target parameter; the IPv6 tool does. Action is otherwise covered. Advanced matchers and action options not exposed by the tools are recorded in accepted_gaps.
-  - [ ] `add` — `create_filter_rule` — partial — jump_target is missing for action="jump".
+- [x] **IPv4 firewall filter** (`/ip/firewall/filter`)
+  - Action is covered including jump-target. Advanced matchers and action options not exposed by the tools are recorded in accepted_gaps.
+  - [x] `add` — `create_filter_rule`
   - [x] `print` — `list_filter_rules`, `get_filter_rule`
   - [x] `set` — `update_filter_rule`
   - [x] `remove` — `remove_filter_rule`
