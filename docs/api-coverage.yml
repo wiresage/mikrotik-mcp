@@ -2601,6 +2601,21 @@ server_tools:
     kind: command
     note: Runs /tool profile for a few seconds.
 
+  get_connection_tracking_count:
+    kind: command
+    note: Manages /ip/firewall/connection.
+  get_connection_tracking_settings:
+    kind: command
+    note: Manages /ip/firewall/connection.
+  list_firewall_connections:
+    kind: command
+    note: Manages /ip/firewall/connection.
+  remove_firewall_connections:
+    kind: command
+    note: Manages /ip/firewall/connection.
+  update_connection_tracking_settings:
+    kind: command
+    note: Manages /ip/firewall/connection.
 excluded:
   - menu: /container
     reason: Container management is out of scope.

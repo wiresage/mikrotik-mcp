@@ -615,6 +615,11 @@ These tools do not map to a single RouterOS menu command.
 - [x] `torch` — command — Runs /tool torch for a few seconds; needs the sniff policy.
 - [x] `sniff_packets` — command — Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
+- [x] `get_connection_tracking_count` — command — Manages /ip/firewall/connection.
+- [x] `get_connection_tracking_settings` — command — Manages /ip/firewall/connection.
+- [x] `list_firewall_connections` — command — Manages /ip/firewall/connection.
+- [x] `remove_firewall_connections` — command — Manages /ip/firewall/connection.
+- [x] `update_connection_tracking_settings` — command — Manages /ip/firewall/connection.
 
 ## Excluded / out of scope
 
