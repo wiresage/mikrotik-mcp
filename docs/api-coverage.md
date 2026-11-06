@@ -610,6 +610,21 @@ These tools do not map to a single RouterOS menu command.
 - [x] `get_connection_tracking_count` — command — Reads active connection count.
 - [x] `list_firewall_connections` — command — Lists active /ip/firewall/connection entries.
 - [x] `remove_firewall_connections` — command — Removes active /ip/firewall/connection entries.
+- [x] `create_scheduler` — command — Creates /system/scheduler entry.
+- [x] `update_scheduler` — command — Updates /system/scheduler entry.
+- [x] `remove_scheduler` — command — Deletes /system/scheduler entry.
+- [x] `enable_scheduler` — command — Enables /system/scheduler entry.
+- [x] `disable_scheduler` — command — Disables /system/scheduler entry.
+- [x] `get_scheduler` — command — Reads /system/scheduler details.
+- [x] `create_script` — command — Creates /system/script entry.
+- [x] `update_script` — command — Updates /system/script entry.
+- [x] `remove_script` — command — Deletes /system/script entry.
+- [x] `run_script` — command — Executes /system/script entry.
+- [x] `get_script` — command — Reads /system/script source and properties.
+- [x] `list_script_jobs` — command — Lists running /system/script/job entries.
+- [x] `remove_script_job` — command — Terminates /system/script/job entry.
+- [x] `list_script_environment` — command — Lists /system/script/environment variables.
+- [x] `remove_script_environment` — command — Removes /system/script/environment variable.
 
 ## Excluded / out of scope
 

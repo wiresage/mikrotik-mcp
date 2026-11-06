@@ -3459,6 +3459,51 @@ server_tools:
   remove_firewall_connections:
     kind: command
     note: Removes active /ip/firewall/connection entries.
+  create_scheduler:
+    kind: command
+    note: Creates /system/scheduler entry.
+  update_scheduler:
+    kind: command
+    note: Updates /system/scheduler entry.
+  remove_scheduler:
+    kind: command
+    note: Deletes /system/scheduler entry.
+  enable_scheduler:
+    kind: command
+    note: Enables /system/scheduler entry.
+  disable_scheduler:
+    kind: command
+    note: Disables /system/scheduler entry.
+  get_scheduler:
+    kind: command
+    note: Reads /system/scheduler details.
+  create_script:
+    kind: command
+    note: Creates /system/script entry.
+  update_script:
+    kind: command
+    note: Updates /system/script entry.
+  remove_script:
+    kind: command
+    note: Deletes /system/script entry.
+  run_script:
+    kind: command
+    note: Executes /system/script entry.
+  get_script:
+    kind: command
+    note: Reads /system/script source and properties.
+  list_script_jobs:
+    kind: command
+    note: Lists running /system/script/job entries.
+  remove_script_job:
+    kind: command
+    note: Terminates /system/script/job entry.
+  list_script_environment:
+    kind: command
+    note: Lists /system/script/environment variables.
+  remove_script_environment:
+    kind: command
+    note: Removes /system/script/environment variable.
 excluded:
 - menu: /container
   reason: Container management is out of scope.
