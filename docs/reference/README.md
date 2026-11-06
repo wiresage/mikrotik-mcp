@@ -17,13 +17,18 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[NAT](nat/README.md)** - NAT Rules Management
 - **[IP Pool](ip-pool/README.md)** - IP Pool Management
 - **[Backup](backup/README.md)** - Backup and Export Management
+- **[Certificates](certificates/README.md)** - SSL/TLS Certificates, CA Authority, and ACME (Let's Encrypt)
 - **[Logs](logs/README.md)** - Log Management
 - **[Firewall](firewall/README.md)** - Firewall Filter Rules Management
 - **[IPv6 Firewall](ipv6-firewall/README.md)** - IPv6 Firewall Filter Rules Management
 - **[Address Lists](address-list/README.md)** - IPv4 and IPv6 Firewall Address Lists
+- **[Connection Tracking](firewall-connection/README.md)** - Firewall Connection Tracking Table and Settings
 - **[Routes](routes/README.md)** - Route Management
+- **[Diagnostics](diagnostics/README.md)** - Ping, Traceroute, Torch, Quick Packet Capture, CPU Profile
 - **[DNS](dns/README.md)** - DNS Management
 - **[Users](users/README.md)** - User Management
+- **[PPP & VPN Tunnels](ppp/README.md)** - PPP Active Sessions, User Secrets, and SSTP/OpenVPN/L2TP Tunnels
 - **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
 - **[Queue](queue/README.md)** - Queue Types, Trees, and Simple Queues
+- **[Scripts & Schedulers](scripts-and-scheduler/README.md)** - Stored Scripts, Script Jobs, Environment Variables, and Scheduled Tasks
 - **[Safe Mode](safe-mode/README.md)** - Safe Mode Session Management
