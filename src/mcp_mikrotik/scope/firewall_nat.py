@@ -9,6 +9,7 @@ async def mikrotik_create_nat_rule(
     ctx: Context,
     chain: Literal["srcnat", "dstnat"],
     action: str,
+    jump_target: Optional[str] = None,
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -28,6 +29,7 @@ async def mikrotik_create_nat_rule(
     """Creates a NAT rule (srcnat or dstnat) on the MikroTik device.
 
     Notes:
+        jump_target: target chain name when action="jump"
         to_addresses: single IP or range e.g. "10.0.0.1" or "10.0.0.1-10.0.0.10"
         to_ports: single port or range e.g. "8080" or "8080-8090"
         place_before: rule number or ID (*N) to insert before e.g. "0" or "*3"
@@ -43,8 +45,16 @@ async def mikrotik_create_nat_rule(
     elif chain == "dstnat" and action not in dstnat_actions:
         return f"Error: Invalid action '{action}' for dstnat. Must be one of: {', '.join(dstnat_actions)}"
 
+    if action == "jump" and not jump_target:
+        return "Error: jump_target is required when action='jump'"
+    if jump_target and ('"' in jump_target or "\n" in jump_target):
+        return "Error: jump_target contains invalid characters"
+
     # Build the command
     cmd = f"/ip firewall nat add chain={chain} action={action}"
+
+    if jump_target:
+        cmd += f' jump-target="{jump_target}"'
 
     # Add optional parameters
     if src_address:
@@ -191,6 +201,7 @@ async def mikrotik_update_nat_rule(
     rule_id: str,
     chain: Optional[str] = None,
     action: Optional[str] = None,
+    jump_target: Optional[str] = None,
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -225,6 +236,13 @@ async def mikrotik_update_nat_rule(
         updates.append(f"chain={chain}")
     if action:
         updates.append(f"action={action}")
+    if jump_target is not None:
+        if jump_target == "":
+            updates.append("!jump-target")
+        else:
+            if '"' in jump_target or "\n" in jump_target:
+                return "Error: jump_target contains invalid characters"
+            updates.append(f'jump-target="{jump_target}"')
     if src_address is not None:
         if src_address == "":
             updates.append("!src-address")

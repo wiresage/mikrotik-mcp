@@ -13,6 +13,7 @@ async def mikrotik_create_filter_rule(
     ctx: Context,
     chain: Literal["input", "forward", "output"],
     action: Literal["accept", "drop", "reject", "jump", "log", "passthrough", "return", "tarpit", "fasttrack-connection"],
+    jump_target: Optional[str] = None,
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -38,6 +39,7 @@ async def mikrotik_create_filter_rule(
     """Creates a firewall filter rule in the specified chain on the MikroTik device.
 
     Notes:
+        jump_target: target chain name when action="jump"
         connection_state: comma-separated e.g. "established,related,new,invalid"
         limit: RouterOS rate/burst string e.g. "10,5:packet" or "10/1s:packet"
         tcp_flags: RouterOS flag expression e.g. "syn,!ack"
@@ -46,9 +48,15 @@ async def mikrotik_create_filter_rule(
     """
     await ctx.info(f"Creating firewall filter rule: chain={chain}, action={action}")
 
+    if action == "jump" and not jump_target:
+        return "Failed to create firewall filter rule: jump_target is required when action='jump'."
+    if jump_target and ('"' in jump_target or "\n" in jump_target):
+        return "Failed to create firewall filter rule: jump_target contains invalid characters."
+
     has_match = any((
         src_address, dst_address, src_port, dst_port, protocol,
-        in_interface, out_interface, connection_state, connection_nat_state,
+        in_interface, out_interface, in_interface_list, out_interface_list,
+        connection_state, connection_nat_state,
         src_address_list, dst_address_list, limit, tcp_flags
     ))
     warning = "" if has_match else (
@@ -60,6 +68,9 @@ async def mikrotik_create_filter_rule(
 
     # Build the command
     cmd = f"/ip firewall filter add chain={chain} action={action}"
+
+    if jump_target:
+        cmd += f' jump-target="{jump_target}"'
 
     # Add optional parameters
     if src_address:
@@ -224,6 +235,7 @@ async def mikrotik_update_filter_rule(
     rule_id: str,
     chain: Optional[str] = None,
     action: Optional[str] = None,
+    jump_target: Optional[str] = None,
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -269,6 +281,13 @@ async def mikrotik_update_filter_rule(
         updates.append(f"chain={chain}")
     if action:
         updates.append(f"action={action}")
+    if jump_target is not None:
+        if jump_target == "":
+            updates.append("!jump-target")
+        else:
+            if '"' in jump_target or "\n" in jump_target:
+                return "Failed to update firewall filter rule: jump_target contains invalid characters."
+            updates.append(f'jump-target="{jump_target}"')
     if src_address is not None:
         if src_address == "":
             updates.append("!src-address")
