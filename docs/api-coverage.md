@@ -615,6 +615,10 @@ These tools do not map to a single RouterOS menu command.
 - [x] `torch` — command — Runs /tool torch for a few seconds; needs the sniff policy.
 - [x] `sniff_packets` — command — Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
+- [x] `list_discovered_neighbors` — command — Lists /ip/neighbor discovered entries.
+- [x] `get_discovered_neighbor` — command — Gets a single /ip/neighbor entry.
+- [x] `get_neighbor_discovery_settings` — command — Reads /ip/neighbor/discovery-settings.
+- [x] `update_neighbor_discovery_settings` — command — Configures /ip/neighbor/discovery-settings.
 
 ## Excluded / out of scope
 
