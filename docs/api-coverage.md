@@ -6,7 +6,7 @@ Built: 2026-10-22
 Source ETag: `"6ad9bd36-641a92"`
 SHA-256: `8d4302c69ff669f18a7313a42a3091dd11c061b266aa95ac3846be47fadfeda8`
 
-**Progress:** 151/334 in-scope commands implemented (45%) · **Partial:** 3 · **Planned:** 165 · **Legacy:** 15 · **Not applicable:** 3
+**Progress:** 165/344 in-scope commands implemented (48%) · **Partial:** 3 · **Planned:** 161 · **Legacy:** 15 · **Not applicable:** 3
 
 Scope: the counts cover only the menus declared in `docs/api-coverage.yml`. A RouterOS menu that is neither declared nor listed under `excluded` is not counted, and the manual check only reports new direct submenus of menus that already have an implemented or partial command.
 
@@ -309,12 +309,15 @@ it does not prove runtime correctness on every RouterOS version.
   - [ ] `print` — not implemented
   - [ ] `set` — not implemented
   - [ ] `remove` — not implemented
-- [ ] **Raw firewall** (`/ip/firewall/raw`)
-  - Not implemented.
-  - [ ] `add` — not implemented
-  - [ ] `print` — not implemented
-  - [ ] `set` — not implemented
-  - [ ] `remove` — not implemented
+- [x] **Raw firewall** (`/ip/firewall/raw`)
+  - Rules run before connection tracking, so notrack and early drops belong here.
+  - [x] `add` — `create_raw_rule`
+  - [x] `print` — `list_raw_rules`, `get_raw_rule`
+  - [x] `set` — `update_raw_rule`
+  - [x] `remove` — `remove_raw_rule`
+  - [x] `enable` — `enable_raw_rule`
+  - [x] `disable` — `disable_raw_rule`
+  - [x] `move` — `move_raw_rule`
 - [ ] **Connection tracking** (`/ip/firewall/connection`)
   - Not implemented.
   - [ ] `print` — not implemented
@@ -415,6 +418,15 @@ it does not prove runtime correctness on every RouterOS version.
   - [x] `enable` — `enable_ipv6_filter_rule`
   - [x] `disable` — `disable_ipv6_filter_rule`
   - [x] `move` — `move_ipv6_filter_rule`
+- [x] **IPv6 raw firewall** (`/ipv6/firewall/raw`)
+  - Rules run before connection tracking. The IPv4 ttl matcher is hop-limit here.
+  - [x] `add` — `create_ipv6_raw_rule`
+  - [x] `print` — `list_ipv6_raw_rules`, `get_ipv6_raw_rule`
+  - [x] `set` — `update_ipv6_raw_rule`
+  - [x] `remove` — `remove_ipv6_raw_rule`
+  - [x] `enable` — `enable_ipv6_raw_rule`
+  - [x] `disable` — `disable_ipv6_raw_rule`
+  - [x] `move` — `move_ipv6_raw_rule`
 - [x] **IPv6 address list** (`/ipv6/firewall/address-list`)
   - [x] `add` — `create_address_list_entry`
   - [x] `print` — `list_address_list_entries`, `get_address_list_entry`

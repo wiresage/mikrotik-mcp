@@ -108,6 +108,7 @@ sections:
       - /ipv6/address
       - /ipv6/dhcp-server/binding
       - /ipv6/firewall/filter
+      - /ipv6/firewall/raw
       - /ipv6/firewall/address-list
       - /ipv6/neighbor
 
@@ -1227,16 +1228,33 @@ menus:
   /ip/firewall/raw:
     title: Raw firewall
     section: IP
-    notes: Not implemented.
+    notes: >-
+      Rules run before connection tracking, so notrack and early drops belong here.
     commands:
       add:
-        status: planned
+        status: implemented
+        tools: [create_raw_rule]
+        params: [chain, action, jump-target, address-list, address-list-timeout, src-address, dst-address, src-port, dst-port, port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, src-address-list, dst-address-list, src-address-type, dst-address-type, tcp-flags, icmp-options, packet-size, ttl, dscp, limit, comment, disabled, log, log-prefix, place-before]
       print:
-        status: planned
+        status: implemented
+        tools: [list_raw_rules, get_raw_rule]
+        params: [chain, action, src-address, dst-address, protocol, in-interface, out-interface, comment, disabled, invalid, dynamic]
       set:
-        status: planned
+        status: implemented
+        tools: [update_raw_rule]
+        params: [chain, action, jump-target, address-list, address-list-timeout, src-address, dst-address, src-port, dst-port, port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, src-address-list, dst-address-list, src-address-type, dst-address-type, tcp-flags, icmp-options, packet-size, ttl, dscp, limit, comment, disabled, log, log-prefix]
       remove:
-        status: planned
+        status: implemented
+        tools: [remove_raw_rule]
+      move:
+        status: implemented
+        tools: [move_raw_rule]
+      enable:
+        status: implemented
+        tools: [enable_raw_rule]
+      disable:
+        status: implemented
+        tools: [disable_raw_rule]
 
   /ip/firewall/connection:
     title: Connection tracking
@@ -1566,6 +1584,37 @@ menus:
       disable:
         status: implemented
         tools: [disable_ipv6_filter_rule]
+
+  /ipv6/firewall/raw:
+    title: IPv6 raw firewall
+    section: IPv6
+    notes: >-
+      Rules run before connection tracking. The IPv4 ttl matcher is hop-limit here.
+    commands:
+      add:
+        status: implemented
+        tools: [create_ipv6_raw_rule]
+        params: [chain, action, jump-target, address-list, address-list-timeout, src-address, dst-address, src-port, dst-port, port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, src-address-list, dst-address-list, src-address-type, dst-address-type, tcp-flags, icmp-options, packet-size, hop-limit, dscp, limit, comment, disabled, log, log-prefix, place-before]
+      print:
+        status: implemented
+        tools: [list_ipv6_raw_rules, get_ipv6_raw_rule]
+        params: [chain, action, src-address, dst-address, protocol, in-interface, out-interface, comment, disabled, invalid, dynamic]
+      set:
+        status: implemented
+        tools: [update_ipv6_raw_rule]
+        params: [chain, action, jump-target, address-list, address-list-timeout, src-address, dst-address, src-port, dst-port, port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, src-address-list, dst-address-list, src-address-type, dst-address-type, tcp-flags, icmp-options, packet-size, hop-limit, dscp, limit, comment, disabled, log, log-prefix]
+      remove:
+        status: implemented
+        tools: [remove_ipv6_raw_rule]
+      move:
+        status: implemented
+        tools: [move_ipv6_raw_rule]
+      enable:
+        status: implemented
+        tools: [enable_ipv6_raw_rule]
+      disable:
+        status: implemented
+        tools: [disable_ipv6_raw_rule]
 
   /ipv6/firewall/address-list:
     title: IPv6 address list
