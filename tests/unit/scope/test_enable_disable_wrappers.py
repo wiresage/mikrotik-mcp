@@ -14,7 +14,7 @@ import pathlib
 
 import pytest
 
-SCOPE_DIR = pathlib.Path(__file__).resolve().parents[2] / "src" / "mcp_mikrotik" / "scope"
+SCOPE_DIR = pathlib.Path(importlib.import_module("mcp_mikrotik.scope").__file__).resolve().parent
 
 #            module          tool function                    kwargs                                  expected command fragment
 WRAPPERS = [
@@ -77,7 +77,7 @@ def test_the_scan_finds_the_scope_modules():
     assert len(_scope_modules()) >= 30
 
 
-@pytest.mark.parametrize("path", _scope_modules(), ids=lambda p: p.name)
+@pytest.mark.parametrize("path", _scope_modules(), ids=lambda p: p.relative_to(SCOPE_DIR).as_posix())
 def test_no_call_passes_ctx_twice(path):
     """A function whose first parameter is ``ctx`` must get ``ctx`` first, not as a keyword after other arguments.
 
