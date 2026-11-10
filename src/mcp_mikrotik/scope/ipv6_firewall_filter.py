@@ -218,8 +218,7 @@ async def mikrotik_get_ipv6_filter_rule(
     return f"IPV6 FIREWALL FILTER RULE DETAILS:\n\n{result}"
 
 
-@mcp.tool(name="update_ipv6_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Update IPv6 Filter Rule"))
-async def mikrotik_update_ipv6_filter_rule(
+async def _update_ipv6_filter_rule(
     ctx: Context,
     rule_id: str,
     chain: Optional[str] = None,
@@ -325,6 +324,73 @@ async def mikrotik_update_ipv6_filter_rule(
     return f"IPv6 firewall filter rule updated successfully:\n\n{details}"
 
 
+@mcp.tool(name="update_ipv6_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Update IPv6 Filter Rule"))
+async def mikrotik_update_ipv6_filter_rule(
+    ctx: Context,
+    rule_id: str,
+    chain: Optional[str] = None,
+    action: Optional[str] = None,
+    jump_target: Optional[str] = None,
+    src_address: Optional[str] = None,
+    dst_address: Optional[str] = None,
+    src_port: Optional[str] = None,
+    dst_port: Optional[str] = None,
+    protocol: Optional[str] = None,
+    in_interface: Optional[str] = None,
+    out_interface: Optional[str] = None,
+    connection_state: Optional[str] = None,
+    src_address_list: Optional[str] = None,
+    dst_address_list: Optional[str] = None,
+    src_address_type: Optional[str] = None,
+    dst_address_type: Optional[str] = None,
+    icmp_options: Optional[str] = None,
+    hop_limit: Optional[str] = None,
+    headers: Optional[str] = None,
+    limit: Optional[str] = None,
+    tcp_flags: Optional[str] = None,
+    comment: Optional[str] = None,
+    disabled: Optional[bool] = None,
+    log: Optional[bool] = None,
+    log_prefix: Optional[str] = None,
+    device: Optional[str] = None,
+) -> str:
+    """Updates an existing IPv6 firewall filter rule on the MikroTik device.
+
+    Notes:
+        rule_id: a RouterOS internal id ("*1") or a print position ("0").
+        Pass "" to clear an optional field (e.g. src_address="").
+    """
+    return await _update_ipv6_filter_rule(
+        ctx=ctx,
+        rule_id=rule_id,
+        chain=chain,
+        action=action,
+        jump_target=jump_target,
+        src_address=src_address,
+        dst_address=dst_address,
+        src_port=src_port,
+        dst_port=dst_port,
+        protocol=protocol,
+        in_interface=in_interface,
+        out_interface=out_interface,
+        connection_state=connection_state,
+        src_address_list=src_address_list,
+        dst_address_list=dst_address_list,
+        src_address_type=src_address_type,
+        dst_address_type=dst_address_type,
+        icmp_options=icmp_options,
+        hop_limit=hop_limit,
+        headers=headers,
+        limit=limit,
+        tcp_flags=tcp_flags,
+        comment=comment,
+        disabled=disabled,
+        log=log,
+        log_prefix=log_prefix,
+        device=device,
+    )
+
+
 @mcp.tool(name="remove_ipv6_filter_rule", annotations=annotate(DESTRUCTIVE, "Remove IPv6 Filter Rule"))
 async def mikrotik_remove_ipv6_filter_rule(
     ctx: Context, rule_id: str, device: Optional[str] = None
@@ -389,7 +455,7 @@ async def mikrotik_enable_ipv6_filter_rule(
     ctx: Context, rule_id: str, device: Optional[str] = None
 ) -> str:
     """Enables an IPv6 firewall filter rule."""
-    return await mikrotik_update_ipv6_filter_rule(ctx, rule_id, disabled=False, device=device)
+    return await _update_ipv6_filter_rule(ctx=ctx, rule_id=rule_id, disabled=False, device=device)
 
 
 @mcp.tool(name="disable_ipv6_filter_rule", annotations=annotate(WRITE_IDEMPOTENT, "Disable IPv6 Filter Rule"))
@@ -397,4 +463,4 @@ async def mikrotik_disable_ipv6_filter_rule(
     ctx: Context, rule_id: str, device: Optional[str] = None
 ) -> str:
     """Disables an IPv6 firewall filter rule."""
-    return await mikrotik_update_ipv6_filter_rule(ctx, rule_id, disabled=True, device=device)
+    return await _update_ipv6_filter_rule(ctx=ctx, rule_id=rule_id, disabled=True, device=device)
