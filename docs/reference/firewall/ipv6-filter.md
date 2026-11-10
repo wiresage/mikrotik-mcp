@@ -2,7 +2,7 @@
 
 Tools for managing IPv6 firewall filter rules, under the RouterOS
 `/ipv6 firewall filter` command tree. This is the IPv6 counterpart of the
-[Firewall](../firewall/README.md) (IPv4) scope.
+[Firewall](filter.md) (IPv4) scope.
 
 > IPv6 lives in a separate command tree from IPv4 (`/ipv6 …` vs `/ip …`), so
 > the IPv4 firewall tools do not see or touch these rules. Two differences bite

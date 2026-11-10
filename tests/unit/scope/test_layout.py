@@ -141,6 +141,22 @@ def test_shared_helpers_import_no_area():
     assert not violations, f"_shared must not depend on an area: {violations}"
 
 
+REFERENCE_DIR = Path(__file__).resolve().parents[3] / "docs" / "reference"
+
+
+@pytest.mark.parametrize("area", _areas(), ids=lambda p: p.name)
+def test_every_area_has_reference_pages_that_are_listed(area):
+    """docs/reference/<area>/ follows the code: an overview, listed in the index, that links every page of the area."""
+    folder = REFERENCE_DIR / area.name
+    overview = folder / "README.md"
+    assert overview.is_file(), f"docs/reference/{area.name}/README.md is missing: describe the area's modules there"
+    index = (REFERENCE_DIR / "README.md").read_text(encoding="utf-8")
+    assert f"{area.name}/README.md" in index, f"docs/reference/README.md does not list the {area.name} area"
+    text = overview.read_text(encoding="utf-8")
+    unlisted = sorted(p.name for p in folder.glob("*.md") if p.name != "README.md" and p.name not in text)
+    assert not unlisted, f"docs/reference/{area.name}/README.md does not link: {unlisted}"
+
+
 @pytest.mark.parametrize("package", [SCOPE_DIR, *_packages()], ids=lambda p: p.name)
 def test_every_package_has_a_charter(package):
     """The docstring of a package says what belongs in it, so a contributor can decide where a new module goes."""

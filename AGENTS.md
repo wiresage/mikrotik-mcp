@@ -29,26 +29,38 @@ uv run python tests/smoke_multi_device.py           # drives the server over std
 
 ```
 src/mcp_mikrotik/
-  app.py                   MCP server instance, READ/WRITE/... annotation presets, scope imports
+  app.py                   MCP server instance, READ/WRITE/... annotation presets, one import per area package
   server.py                entry point (CLI parsing, transport selection)
   config.py                pydantic-settings: MIKROTIK_* env vars, CLI flags, inventory parsing
   connector.py             execute_mikrotik_command(): one fresh SSH connection per command
   inventory.py             multi-device inventory
   mikrotik_ssh_client.py   low-level SSH client (paramiko)
   configured_mcp_server.py --read-only filtering, sensitive-hiding wrapper, IP allowlist
-  scope/                   one module per feature area, each registers tools with @mcp.tool
+  scope/                   the tools, one package per feature area (below)
+    _shared/               helpers used by several areas: quoting.py, selectors.py
+    <area>/                __init__.py (a charter and `from . import ...`) and one module per RouterOS menu family
 tests/unit/                fast tests, no device needed
+tests/unit/scope/<area>/   tests of one area; tests/unit/scope/ holds the tests that span areas
 tests/integration/         need Docker (testcontainers), marked `integration`
-docs/reference/<area>/     one reference page per scope
+docs/reference/<area>/     reference pages of one area: README.md plus one page per module
 ```
+
+### Where code goes
+
+The areas are `devices`, `dhcp`, `dns`, `firewall`, `interfaces`, `ip`, `monitoring`, `queue`, `routing`, `system`, `users` and `vpn`; the table in [CONTRIBUTING.md](CONTRIBUTING.md#project-structure) says what belongs in each. The rules are checked by `tests/unit/scope/test_layout.py`:
+
+- A module lives in the package of its area, named after the RouterOS menu it manages without repeating the area (`firewall/raw.py`). An area with a single module names it after the area (`dns/dns.py`).
+- A new module is added to the `from . import ...` line in its area's `__init__.py`; a module that is not imported registers no tools. A new area is a new package, added once to the import list in `app.py`.
+- A helper used by one area is a `_name.py` module inside that area; a helper used by several areas goes in `scope/_shared/`. Areas never import each other.
+- Tool modules import `mcp`, the annotation presets and `annotate` from `...app`, `execute_mikrotik_command` from `...connector`, and shared helpers from `.._shared`.
 
 ## Writing tools
 
-- Name the function `mikrotik_<verb>_<resource>` and register it with `@mcp.tool(name="<verb>_<resource>", annotations=annotate(READ, "Title"))`. Import `Context` from `mcp.server.mcpserver` (the snippets in CONTRIBUTING.md still show the old `mcp.server.fastmcp`).
+- Name the function `mikrotik_<verb>_<resource>` and register it with `@mcp.tool(name="<verb>_<resource>", annotations=annotate(READ, "Title"))`. Import `Context` from `mcp.server.mcpserver`.
 - `ctx: Context` is the first parameter, `device: Optional[str] = None` the last, and it is passed on: `execute_mikrotik_command(cmd, ctx, device=device)`. Start with `await ctx.info(...)`. Return strings.
 - Keep the docstring to one sentence. Docstrings are sent to the model on every `tools/list`, so their length is a recurring token cost. Add a `Notes:` block only for something non-obvious, such as which filters are substring matches and which are exact. Do not repeat the `device` explanation; the server sends it once at initialize.
 - Use `Literal` for fixed value sets and `Annotated[int, Field(ge=..., le=...)]` for ranges.
-- A new scope module also needs: an entry in the import list in `app.py`, an entry in `SCOPE_MODULES` in `tests/unit/test_scopes_smoke.py` (so the smoke test exercises its tools), a page at `docs/reference/<area>/README.md` and a link to it in `docs/reference/README.md`.
+- A new tool module also needs: its name in its area's `__init__.py` (a new area also needs one name in the import list in `app.py`), tests in `tests/unit/scope/<area>/test_<module>.py` (the smoke test finds the module itself, there is no list to update), and a reference page `docs/reference/<area>/<module>.md` linked from the area's overview and from `docs/reference/README.md` (in a single-module area the page is the area's `README.md`).
 
 ### Pick the annotation honestly
 
@@ -73,7 +85,7 @@ Never mark a tool `READ` if it writes anything, including a file: `/export file=
 - Add `notes` for `partial`, `legacy` or `not_applicable`, or for a non-obvious caveat. Menu-level `notes` explain the scope. Do not repeat the tool docstring.
 - Use `manual_paths` for menus documented as separate command pages, and include the parent page when it has arguments. Use `allow_missing_manual` only for commands with no standalone manual page.
 - Tools that do not map to one menu command go in `server_tools` (`kind` + note); out-of-scope menus go in the top-level `excluded` list with a reason.
-- A new scope also needs the `app.py` import, the `SCOPE_MODULES` entry in `tests/unit/test_scopes_smoke.py`, and the reference page under `docs/reference/<area>/`.
+- A new module also needs the registration, tests and reference page described under "Writing tools".
 
 Then run:
 
@@ -93,7 +105,7 @@ Check these before trusting a new command, and verify on a real device (a 7.21 c
 - **A `set` or `remove` through `[find ...]` that matches nothing succeeds silently.** Count first and say "not found".
 - **`print detail` prints the Flags legend even when nothing matches.** Decide "no results" by looking for real data (for example `"name=" in result`), not by checking for an empty string.
 - **Quote enum values in `where` clauses:** `protocol="udp"`. An unquoted value can match nothing, with no error (issue #135).
-- **Do not pass print positions as ids.** Numbers come from a per-device map that any `print` rebuilds, and every command here uses its own SSH connection. Use `*hex` ids, or resolve a position with `:pick [<menu> find] N` as `scope/_selectors.py` does. `:put [<menu> add ...]` echoes the new `*id`.
+- **Do not pass print positions as ids.** Numbers come from a per-device map that any `print` rebuilds, and every command here uses its own SSH connection. Use `*hex` ids, or resolve a position with `:pick [<menu> find] N` as `scope/_shared/selectors.py` does. `:put [<menu> add ...]` echoes the new `*id`.
 - **No interactive or streaming commands** (`follow`, `monitor` without `once`, anything that waits). They hang the non-interactive session.
 - **Target RouterOS 7.** Some names changed from v6 (`routing-mark` is now `routing-table`), so do not copy v6 syntax from old forum posts.
 - **`proplist=` works on `print detail`** and is the way to leave a field out of a result.
@@ -102,13 +114,13 @@ Check these before trusting a new command, and verify on a real device (a 7.21 c
 
 - Run `uv run pytest -m "not integration"` before every commit. CI runs it on Python 3.10, 3.11 and 3.12.
 - Scope tests replace `execute_mikrotik_command` with `FakeExecutor` from `tests/conftest.py` (`monkeypatch.setattr(module, "execute_mikrotik_command", fake)`) and assert the exact command string. Cover the refusal path and the "nothing matched" path too, not only success.
-- Put new unit tests in `tests/unit/test_scope_<area>.py`. Integration tests go in `tests/integration/`, use the `integration` marker and skip themselves without Docker.
-- `tests/unit/test_scopes_smoke.py` lists wrappers that are known to raise (`BROKEN_WRAPPER_FUNCS`). If you fix one, remove it from that list.
+- Put new unit tests in `tests/unit/scope/<area>/test_<module>.py`; a test that spans several areas goes in `tests/unit/scope/`. Every test folder is a package, so a new area folder needs an `__init__.py`. Integration tests go in `tests/integration/`, use the `integration` marker and skip themselves without Docker.
+- `tests/unit/scope/test_smoke.py` runs every tool function with dummy arguments and finds the modules itself, so there is no list to update. `tests/unit/scope/test_layout.py` checks the layout rules under "Where code goes" and says what to move or import when one is broken.
 - A bug fix needs a test that fails without the fix.
 
 ## Security considerations
 
-- Everything interpolated into a RouterOS command is model-controlled input. Validate ids, durations, names and similar values with a regular expression before building the command (see `_DURATION_RE` in `scope/dhcp.py` and `scope/_selectors.py`) instead of passing them through.
+- Everything interpolated into a RouterOS command is model-controlled input. Validate ids, durations, names and similar values with a regular expression before building the command (see `_DURATION_RE` in `scope/dhcp/dhcp.py` and `scope/_shared/selectors.py`) instead of passing them through.
 - The connector logs every command, to the server log and to the client as a notification. Do not put a password, key or token in your own `ctx.info` text, and do not write secrets to test fixtures or docs.
 - `--sensitive-hiding` (`MIKROTIK_SENSITIVE_HIDING`) redacts recognised credentials in results through `sensitive.py`. A new tool that can return secrets must work with it, and a tool whose output cannot be redacted safely should be left out of that mode (see `SENSITIVE_TOOLS` in `configured_mcp_server.py`).
 - Inventory files and `.env` files hold credentials. Never commit one; `inventory.example.yml` is the template.
@@ -133,4 +145,4 @@ Releases are queued, one at a time. When several merges land within a few minute
 
 ## Documentation
 
-`docs/` is the source of the documentation; the website at mikrotik-mcp.com is built from the separate `wiresage/mikrotik-mcp-website` repository. When a tool's parameters change, update its page under `docs/reference/`.
+`docs/` is the source of the documentation; the website at mikrotik-mcp.com is built from the separate `wiresage/mikrotik-mcp-website` repository. When a tool's parameters change, update its page under `docs/reference/`. A change to the scope layout or to the contributor workflow also needs a matching change in that repository, whose contributing page describes both.

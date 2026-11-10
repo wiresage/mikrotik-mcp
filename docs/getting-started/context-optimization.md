@@ -63,8 +63,11 @@ the tool schema from **≈ 54 k tokens → ≈ 48 k tokens**, leaving meaningful
 room for the conversation.
 
 > **Further reduction:** If you only need a subset of tools (e.g. only DNS
-> and WireGuard), you can comment out the unused scope imports in
-> `src/mcp_mikrotik/app.py` to drop those tools entirely.
+> and WireGuard), you can comment out the unused area imports in
+> `src/mcp_mikrotik/app.py` to drop a whole feature area, or the unused
+> modules in an area's `__init__.py` to drop single modules (WireGuard lives
+> in `src/mcp_mikrotik/scope/interfaces/__init__.py`, next to VLAN, bridge and
+> wireless).
 
 ---
 

@@ -16,21 +16,20 @@ Complete documentation for MikroTik MCP.
 
 ## API Reference
 
-Complete tool documentation organized by category:
+Complete tool documentation, organized by feature area ([full index](reference/README.md)):
 
-- **[VLAN](reference/vlan/README.md)** - VLAN Interface Management
-- **[Bridge](reference/bridge/README.md)** - Bridge VLAN Management
-- **[IP Address](reference/ip-address/README.md)** - IP Address Management
+- **[Devices](reference/devices/README.md)** - Inventory of managed devices and safe mode
 - **[DHCP](reference/dhcp/README.md)** - DHCP Server Management
-- **[NAT](reference/nat/README.md)** - NAT Rules Management
-- **[IP Pool](reference/ip-pool/README.md)** - IP Pool Management
-- **[Backup](reference/backup/README.md)** - Backup and Export Management
-- **[Logs](reference/logs/README.md)** - Log Management
-- **[Firewall](reference/firewall/README.md)** - Firewall Filter Rules
-- **[Routes](reference/routes/README.md)** - Route Management
 - **[DNS](reference/dns/README.md)** - DNS Management
+- **[Firewall](reference/firewall/README.md)** - Filter, IPv6 filter, NAT, raw rules and address lists
+- **[Interfaces](reference/interfaces/README.md)** - Interfaces, VLAN, bridge, WireGuard, wireless and PoE
+- **[IP](reference/ip/README.md)** - IP and IPv6 addresses, pools, ARP and neighbors, IP services
+- **[Monitoring](reference/monitoring/README.md)** - Logs and Netwatch
+- **[Queue](reference/queue/README.md)** - Queue Types, Trees, and Simple Queues
+- **[Routing](reference/routing/README.md)** - Route Management
+- **[System](reference/system/README.md)** - System information, scheduler, backup and export
 - **[Users](reference/users/README.md)** - User Management
-- **[WireGuard](reference/wireguard/README.md)** - WireGuard VPN Management
+- **[VPN](reference/vpn/README.md)** - IPsec
 
 ## Examples
 
@@ -39,6 +38,7 @@ Complete tool documentation organized by category:
 ## Contributing
 
 - **[Contributing Guide](../CONTRIBUTING.md)** - Learn how to contribute
+- **[Project Structure](../CONTRIBUTING.md#project-structure)** - How the code, tests and reference docs are organized by feature area
 - **[API Coverage](api-coverage.md)** - List of implemented and planned RouterOS features
 
 ## Learning Resources

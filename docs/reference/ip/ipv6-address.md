@@ -2,7 +2,7 @@
 
 Tools for managing IPv6 addresses on interfaces, under the RouterOS
 `/ipv6 address` command tree. This is the IPv6 counterpart of the
-[IP Address](../ip-address/README.md) (IPv4) scope.
+[IP Address](address.md) (IPv4) scope.
 
 > IPv6 lives in a separate command tree from IPv4 (`/ipv6 …` vs `/ip …`).
 > These tools cover IPv6 *addressing*; IPv6 routing, firewall, DHCPv6/ND, and

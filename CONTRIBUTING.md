@@ -4,23 +4,58 @@ Thank you for your interest in contributing to the MikroTik MCP server! This gui
 
 ## Overview
 
-This MCP (Model Context Protocol) server provides tools for managing MikroTik RouterOS devices. Contributors can extend functionality by adding new scopes (feature areas) and their corresponding tools.
+This MCP (Model Context Protocol) server provides tools for managing MikroTik RouterOS devices. Contributors can extend functionality by adding tools to a feature area, or by adding a new feature area.
 
 ## Project Structure
 
 ```
 src/mcp_mikrotik/
-├── scope/          # Feature modules — each file registers MCP tools via decorators
-├── app.py          # MCPServer instance and ToolAnnotation constants
+├── scope/          # The tools: one package per feature area (see "Feature areas" below)
+│   ├── _shared/    #   helpers used by several areas (quoting, selectors)
+│   ├── firewall/   #   an area: __init__.py, filter.py, nat.py, raw.py, ...
+│   └── ...
+├── app.py          # MCPServer instance, ToolAnnotation constants, one import per area
 ├── config.py       # Configuration (pydantic-settings, CLI args, env vars)
 ├── connector.py    # SSH connection handling
-├── server.py       # Entry point — imports scopes, starts the server
+├── server.py       # Entry point — starts the server
 └── mikrotik_ssh_client.py  # Low-level SSH client
 
 tests/
 ├── integration/    # Integration tests using testcontainers
-└── unit/          # Unit tests
+└── unit/
+    ├── scope/      # Tests of the tools: scope/<area>/ for one area, scope/ for tests that span areas
+    └── ...         # Everything else: connector, config, ssh, app, ...
+
+docs/reference/     # Reference pages, one folder per feature area (the same areas as scope/)
 ```
+
+### Feature areas
+
+Everything for one feature lives in one place: a package under `src/mcp_mikrotik/scope/`, its tests under
+`tests/unit/scope/<area>/` and its reference pages under `docs/reference/<area>/`.
+
+| Area | What belongs in it | Modules |
+|---|---|---|
+| `devices` | The managed devices themselves: the inventory and the safe-mode session | `inventory`, `safe_mode` |
+| `dhcp` | `/ip dhcp-server` and `/ipv6 dhcp-server` | `dhcp` |
+| `dns` | `/ip dns` | `dns` |
+| `firewall` | `/ip firewall` and `/ipv6 firewall`, IPv4 and IPv6 side by side | `filter`, `ipv6_filter`, `nat`, `raw`, `ipv6_raw`, `address_list` |
+| `interfaces` | `/interface`, any type | `generic`, `vlan`, `bridge`, `wireguard`, `wireless`, `poe` |
+| `ip` | `/ip` and `/ipv6` menus that have no area of their own | `address`, `ipv6_address`, `pool`, `neighbors`, `services` |
+| `monitoring` | Logs, Netwatch and other ways to observe a device | `logs`, `netwatch` |
+| `queue` | `/queue` | `queue` |
+| `routing` | Routes and routing tables | `routes` |
+| `system` | `/system`: resource information, scheduler and scripts, backups and files | `info`, `scheduler`, `backup` |
+| `users` | `/user` | `users` |
+| `vpn` | VPN protocols other than WireGuard (an `/interface` type, so it lives in `interfaces`) | `ipsec` |
+
+The rules:
+
+- **Find the area** whose RouterOS menu your feature extends and put the module there. If none fits, add an area (see "Register Your Module" below).
+- **Name a module** after the RouterOS menu it manages, without repeating the area: `firewall/raw.py`, not `firewall/firewall_raw.py`. An area with a single module names it after the area (`dns/dns.py`), so a second module can sit next to it later.
+- **Helpers**: a helper used by one area is a module with a leading underscore in that area (`firewall/_raw_common.py`); a helper used by several areas goes in `scope/_shared/`.
+- **Areas never import each other.** What two areas need goes to `_shared`.
+- `tests/unit/scope/test_layout.py` checks these rules and says what to fix when one is broken.
 
 ## Development Setup
 
@@ -76,27 +111,29 @@ Keep these in mind when you touch dependencies:
 
 ## Contributing New Features
 
-To add a new MikroTik feature/scope to the project, follow these steps:
+To add a new MikroTik feature to the project, follow these steps:
 
-### 1. Create the Scope Implementation
+### 1. Create the Tool Module
 
-Navigate to `src/mcp_mikrotik/scope/` and create a new Python file for your feature (e.g., `my_feature.py`).
+Find the area for your feature in the table above and create a new Python file in that package, for example
+`src/mcp_mikrotik/scope/firewall/mangle.py`. If no area fits, create a new package for it (see step 3).
 
-Your scope file should:
-- Import `mcp`, the appropriate `ToolAnnotations` constant, **and `annotate`** from `..app`
-- Import `execute_mikrotik_command` from `..connector`
+Your module should:
+- Import `mcp`, the appropriate `ToolAnnotations` constant, **and `annotate`** from `...app` (three dots: a module sits two packages below `mcp_mikrotik`)
+- Import `execute_mikrotik_command` from `...connector`
+- Import shared helpers from `.._shared`, for example `from .._shared.selectors import resolve_item_id`
 - Register tools using `@mcp.tool()` decorators — **always use `annotate(BASE, "Title")`** (never a bare constant)
 - Follow the existing naming convention: `mikrotik_<action>_<resource>`
 - Use type hints for all parameters (including `Literal` for fixed-value params)
 - Keep docstrings **concise** — a single sentence is ideal; avoid re-documenting every parameter
 - Handle errors gracefully and return meaningful messages
 
-**Example structure**:
+**Example structure** (`src/mcp_mikrotik/scope/my_area/my_feature.py`):
 ```python
 from typing import Optional
-from mcp.server.fastmcp import Context
-from ..connector import execute_mikrotik_command
-from ..app import mcp, READ, WRITE, annotate
+from mcp.server.mcpserver import Context
+from ...connector import execute_mikrotik_command
+from ...app import mcp, READ, WRITE, annotate
 
 @mcp.tool(name="create_my_resource", annotations=annotate(WRITE, "Create My Resource"))
 async def mikrotik_create_my_resource(
@@ -136,22 +173,42 @@ Import the appropriate annotation constant from `app.py` and pass it via `@mcp.t
 | `DESTRUCTIVE` | Idempotent destructive operations (remove, flush) |
 | `DANGEROUS` | Non-idempotent destructive operations (reset, bulk create) |
 
-### 3. Register Your Scope
+### 3. Register Your Module
 
-Update `src/mcp_mikrotik/app.py` to import your new scope module:
+Add the module's name to the `from . import ...` line of its area's `__init__.py`:
 
 ```python
-from mcp_mikrotik.scope import (  # noqa: F401
-    backup, dhcp, dns, firewall_filter, firewall_nat,
-    ip_address, ip_pool, logs, my_feature, routes, users, vlan, wireless,
+# src/mcp_mikrotik/scope/firewall/__init__.py
+from . import address_list, filter, ipv6_filter, ipv6_raw, mangle, nat, raw  # noqa: F401
+```
+
+The import triggers the `@mcp.tool()` decorators, which register your tools with the MCP server. A module its area does
+not import registers nothing, so `tests/unit/scope/test_layout.py` fails if you forget this step.
+
+**A new area** is a new package: create `src/mcp_mikrotik/scope/my_area/__init__.py` with a docstring that says what
+belongs in the area and the `from . import ...` line, then add the package to the import list in
+`src/mcp_mikrotik/app.py` (one name per line, in alphabetical order, so two pull requests that add areas rarely conflict):
+
+```python
+from mcp_mikrotik.scope import (  # noqa: F401, E402
+    devices,
+    ...
+    my_area,
+    ...
 )
 ```
 
-The import triggers the `@mcp.tool()` decorators, which automatically register your tools with the MCP server. No manual registry is needed.
+A new area also gets a folder for its tests (`tests/unit/scope/my_area/` with an `__init__.py`) and one for its reference
+pages (`docs/reference/my_area/`).
 
-### 4. Write Tests
+### 4. Write Tests and Documentation
 
-Create tests in `tests/` for unit tests or `tests/integration/` for integration tests.
+Create unit tests in `tests/unit/scope/<area>/test_<module>.py` (a test that spans several areas goes in
+`tests/unit/scope/`) and integration tests in `tests/integration/`. The smoke test (`tests/unit/scope/test_smoke.py`)
+finds your module by itself, so there is no list to update.
+
+Add a reference page, `docs/reference/<area>/<module>.md` (in an area with a single module the page is the area's
+`README.md`), and link it from the area's overview page and from `docs/reference/README.md`.
 
 Integration tests should:
 - Use testcontainers to spin up a real MikroTik RouterOS container
@@ -165,7 +222,7 @@ Integration tests should:
 """Integration tests for MikroTik my feature using testcontainers."""
 
 import pytest
-from mcp_mikrotik.scope.my_feature import (
+from mcp_mikrotik.scope.my_area.my_feature import (
     mikrotik_create_my_resource,
     mikrotik_list_my_resources
 )
@@ -318,7 +375,7 @@ Published versions use a **4-part** format: `MAJOR.MINOR.PATCH.BUILD`
 #### Scopes (optional)
 
 Scopes help indicate which area of the codebase is affected:
-- Feature areas: `dhcp`, `dns`, `firewall`, `wireless`, `users`, `backup`, `queue`, `safe-mode`, `wireguard`, etc.
+- Feature areas: the area (`firewall`, `interfaces`, `ip`, `dhcp`, `dns`, `routing`, `queue`, `users`, `system`, `monitoring`, `devices`, `vpn`) or, for something narrower, its module (`wireless`, `wireguard`, `backup`, `safe-mode`, etc.)
 - Infrastructure: `api`, `cli`, `config`, `ssh`, `connector`
 
 ### Examples
@@ -426,7 +483,7 @@ to search for one).
 
 ## Getting Help
 
-- Check existing scope implementations for reference
+- Look at an existing area for reference, for example `src/mcp_mikrotik/scope/firewall/`
 - Review the MikroTik RouterOS documentation for command syntax
 - Look at existing tests for testing patterns
 - Open an issue if you need clarification on implementation details
