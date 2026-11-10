@@ -147,14 +147,14 @@ def test_result_returned_to_the_caller_is_not_redacted(ctx, monkeypatch):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("module,function", [
-    ("users", "mikrotik_add_user"),
-    ("users", "mikrotik_update_user"),
-    ("wireguard", "mikrotik_create_wireguard_interface"),
-    ("wireguard", "mikrotik_update_wireguard_interface"),
-    ("wireguard", "mikrotik_add_wireguard_peer"),
-    ("wireguard", "mikrotik_update_wireguard_peer"),
-    ("backup", "mikrotik_restore_backup"),
-    ("wireless", "mikrotik_set_wireless_passphrase"),
+    ("users.users", "mikrotik_add_user"),
+    ("users.users", "mikrotik_update_user"),
+    ("interfaces.wireguard", "mikrotik_create_wireguard_interface"),
+    ("interfaces.wireguard", "mikrotik_update_wireguard_interface"),
+    ("interfaces.wireguard", "mikrotik_add_wireguard_peer"),
+    ("interfaces.wireguard", "mikrotik_update_wireguard_peer"),
+    ("system.backup", "mikrotik_restore_backup"),
+    ("interfaces.wireless", "mikrotik_set_wireless_passphrase"),
 ])
 def test_secret_bearing_tools_pass_redact(module, function):
     """A credential tool that forgets redact= puts the secret in the logs."""
