@@ -58,7 +58,8 @@ review and idea.
      API still reports hassan-khurram-hsol. Keep this override on regeneration.
      inistor is here for issue reports rather than merged commits, and
      lilianmoraru and Kn-ut99 for pull requests (#187, #188) that are still open,
-     so the contributors API does not return them either. -->
+     so the contributors API does not return them either. mkranjcic is here for
+     the pull requests #206 to #221, also still open. -->
 <p>
 <a href="https://github.com/jeff-nasseri" title="jeff-nasseri"><img src="https://avatars.githubusercontent.com/u/57312476?s=72" width="72" height="72" alt="jeff-nasseri" /></a>
 <a href="https://github.com/goto1134" title="goto1134"><img src="https://avatars.githubusercontent.com/u/9569795?s=72" width="72" height="72" alt="goto1134" /></a>
@@ -76,6 +77,7 @@ review and idea.
 <a href="https://github.com/Kn-ut99" title="Kn-ut99"><img src="https://avatars.githubusercontent.com/u/73541663?s=72" width="72" height="72" alt="Kn-ut99" /></a>
 <a href="https://github.com/vanelin" title="vanelin"><img src="https://avatars.githubusercontent.com/u/18135591?s=72" width="72" height="72" alt="vanelin" /></a>
 <a href="https://github.com/siderakis" title="siderakis"><img src="https://avatars.githubusercontent.com/u/1545690?s=72" width="72" height="72" alt="siderakis" /></a>
+<a href="https://github.com/mkranjcic" title="mkranjcic"><img src="https://avatars.githubusercontent.com/u/9868887?s=72" width="72" height="72" alt="mkranjcic" /></a>
 </p>
 
 Contributions of every kind are welcome: code, bug reports, documentation and
