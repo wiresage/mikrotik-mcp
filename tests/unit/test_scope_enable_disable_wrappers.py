@@ -18,23 +18,23 @@ SCOPE_DIR = pathlib.Path(__file__).resolve().parents[2] / "src" / "mcp_mikrotik"
 
 #            module          tool function                    kwargs                                  expected command fragment
 WRAPPERS = [
-    ("dns", "mikrotik_enable_dns_static", {"entry_id": "*1"}, "/ip dns static set *1 disabled=no"),
-    ("dns", "mikrotik_disable_dns_static", {"entry_id": "*1"}, "/ip dns static set *1 disabled=yes"),
-    ("firewall_nat", "mikrotik_enable_nat_rule", {"rule_id": "*1"}, "/ip firewall nat set *1 disabled=no"),
-    ("firewall_nat", "mikrotik_disable_nat_rule", {"rule_id": "*1"}, "/ip firewall nat set *1 disabled=yes"),
-    ("routes", "mikrotik_enable_route", {"route_id": "*1"}, "/ip route set *1 disabled=no"),
-    ("routes", "mikrotik_disable_route", {"route_id": "*1"}, "/ip route set *1 disabled=yes"),
-    ("users", "mikrotik_enable_user", {"name": "bob"}, '/user set [find name="bob"] disabled=no'),
-    ("users", "mikrotik_disable_user", {"name": "bob"}, '/user set [find name="bob"] disabled=yes'),
+    ("dns.dns", "mikrotik_enable_dns_static", {"entry_id": "*1"}, "/ip dns static set *1 disabled=no"),
+    ("dns.dns", "mikrotik_disable_dns_static", {"entry_id": "*1"}, "/ip dns static set *1 disabled=yes"),
+    ("firewall.nat", "mikrotik_enable_nat_rule", {"rule_id": "*1"}, "/ip firewall nat set *1 disabled=no"),
+    ("firewall.nat", "mikrotik_disable_nat_rule", {"rule_id": "*1"}, "/ip firewall nat set *1 disabled=yes"),
+    ("routing.routes", "mikrotik_enable_route", {"route_id": "*1"}, "/ip route set *1 disabled=no"),
+    ("routing.routes", "mikrotik_disable_route", {"route_id": "*1"}, "/ip route set *1 disabled=yes"),
+    ("users.users", "mikrotik_enable_user", {"name": "bob"}, '/user set [find name="bob"] disabled=no'),
+    ("users.users", "mikrotik_disable_user", {"name": "bob"}, '/user set [find name="bob"] disabled=yes'),
     (
-        "ip_pool",
+        "ip.pool",
         "mikrotik_expand_ip_pool",
         {"name": "p", "additional_ranges": "10.0.0.50-10.0.0.60"},
         '/ip pool set [find name="p"] ranges=10.0.0.10-10.0.0.20,10.0.0.50-10.0.0.60',
     ),
     # the ones that were already correct stay correct
-    ("firewall_filter", "mikrotik_enable_filter_rule", {"rule_id": "*1"}, "/ip firewall filter set *1 disabled=no"),
-    ("firewall_filter", "mikrotik_disable_filter_rule", {"rule_id": "*1"}, "/ip firewall filter set *1 disabled=yes"),
+    ("firewall.filter", "mikrotik_enable_filter_rule", {"rule_id": "*1"}, "/ip firewall filter set *1 disabled=no"),
+    ("firewall.filter", "mikrotik_disable_filter_rule", {"rule_id": "*1"}, "/ip firewall filter set *1 disabled=yes"),
 ]
 
 
@@ -69,7 +69,12 @@ def _first_param_is_ctx(node):
 
 
 def _scope_modules():
-    return sorted(p for p in SCOPE_DIR.glob("*.py") if not p.name.startswith("__"))
+    return sorted(p for p in SCOPE_DIR.rglob("*.py") if not p.name.startswith("__"))
+
+
+def test_the_scan_finds_the_scope_modules():
+    """The parametrized test below runs once per module found: an empty scan would pass without checking anything."""
+    assert len(_scope_modules()) >= 30
 
 
 @pytest.mark.parametrize("path", _scope_modules(), ids=lambda p: p.name)

@@ -8,7 +8,7 @@ def test_expand_ip_pool_appends_the_new_ranges(ctx, monkeypatch):
     "TypeError: got multiple values for argument 'ctx'" on every call. (This test used to assert
     that TypeError.)
     """
-    from mcp_mikrotik.scope import ip_pool as mod
+    from mcp_mikrotik.scope.ip import pool as mod
 
     commands = []
 

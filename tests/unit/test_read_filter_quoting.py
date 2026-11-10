@@ -17,24 +17,24 @@ PAYLOAD = 'x" ; /ip firewall address-list add list=pwn ; :put "y'
 # (module, function, parameter) for every free-text filter in the IPsec, netwatch,
 # scheduler and services scopes.
 CASES = [
-    ("ipsec", "mikrotik_get_ipsec_installed_sa", "src_address_filter"),
-    ("ipsec", "mikrotik_get_ipsec_installed_sa", "dst_address_filter"),
-    ("ipsec", "mikrotik_get_ipsec_active_peers", "remote_address_filter"),
-    ("ipsec", "mikrotik_get_ipsec_active_peers", "state_filter"),
-    ("ipsec", "mikrotik_list_ipsec_peers", "name_filter"),
-    ("ipsec", "mikrotik_list_ipsec_peers", "address_filter"),
-    ("ipsec", "mikrotik_list_ipsec_policies", "peer_filter"),
-    ("ipsec", "mikrotik_list_ipsec_policies", "src_address_filter"),
-    ("ipsec", "mikrotik_list_ipsec_policies", "dst_address_filter"),
-    ("ipsec", "mikrotik_list_ipsec_profiles", "name_filter"),
-    ("ipsec", "mikrotik_list_ipsec_proposals", "name_filter"),
-    ("netwatch", "mikrotik_list_netwatch", "host_filter"),
-    ("netwatch", "mikrotik_list_netwatch", "comment_filter"),
-    ("netwatch", "mikrotik_list_netwatch", "status_filter"),
-    ("netwatch", "mikrotik_list_netwatch", "type_filter"),
-    ("scheduler", "mikrotik_list_schedulers", "name_filter"),
-    ("scheduler", "mikrotik_list_scripts", "name_filter"),
-    ("services", "mikrotik_list_ip_services", "name_filter"),
+    ("vpn.ipsec", "mikrotik_get_ipsec_installed_sa", "src_address_filter"),
+    ("vpn.ipsec", "mikrotik_get_ipsec_installed_sa", "dst_address_filter"),
+    ("vpn.ipsec", "mikrotik_get_ipsec_active_peers", "remote_address_filter"),
+    ("vpn.ipsec", "mikrotik_get_ipsec_active_peers", "state_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_peers", "name_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_peers", "address_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_policies", "peer_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_policies", "src_address_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_policies", "dst_address_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_profiles", "name_filter"),
+    ("vpn.ipsec", "mikrotik_list_ipsec_proposals", "name_filter"),
+    ("monitoring.netwatch", "mikrotik_list_netwatch", "host_filter"),
+    ("monitoring.netwatch", "mikrotik_list_netwatch", "comment_filter"),
+    ("monitoring.netwatch", "mikrotik_list_netwatch", "status_filter"),
+    ("monitoring.netwatch", "mikrotik_list_netwatch", "type_filter"),
+    ("system.scheduler", "mikrotik_list_schedulers", "name_filter"),
+    ("system.scheduler", "mikrotik_list_scripts", "name_filter"),
+    ("ip.services", "mikrotik_list_ip_services", "name_filter"),
 ]
 
 # A double-quoted RouterOS string, escapes included.
@@ -43,7 +43,7 @@ QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"')
 
 @pytest.mark.parametrize("module_name,func,param", CASES)
 def test_filter_value_cannot_leave_its_quotes(ctx, monkeypatch, module_name, func, param):
-    from mcp_mikrotik.scope._quoting import ros_quoted
+    from mcp_mikrotik.scope._shared.quoting import ros_quoted
 
     module = __import__(f"mcp_mikrotik.scope.{module_name}", fromlist=["*"])
     fake = FakeExecutor()

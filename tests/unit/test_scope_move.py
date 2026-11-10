@@ -15,7 +15,9 @@ import asyncio
 
 import pytest
 
-from mcp_mikrotik.scope import firewall_filter, firewall_nat, ipv6_firewall_filter
+from mcp_mikrotik.scope.firewall import filter as firewall_filter
+from mcp_mikrotik.scope.firewall import nat as firewall_nat
+from mcp_mikrotik.scope.firewall import ipv6_filter as ipv6_firewall_filter
 
 TOOLS = [
     (firewall_filter, "mikrotik_move_filter_rule", "/ip firewall filter"),

@@ -33,9 +33,9 @@ DETAIL = "Flags: X - disabled\n 0    chain=prerouting action=drop src-address=19
 @pytest.fixture(params=["v4", "v6"])
 def scope(request):
     if request.param == "v4":
-        from mcp_mikrotik.scope import firewall_raw as m
+        from mcp_mikrotik.scope.firewall import raw as m
         return m, "/ip firewall raw", "raw_rule"
-    from mcp_mikrotik.scope import ipv6_firewall_raw as m
+    from mcp_mikrotik.scope.firewall import ipv6_raw as m
     return m, "/ipv6 firewall raw", "ipv6_raw_rule"
 
 
@@ -130,7 +130,8 @@ def test_create_without_matcher_warns(ctx, monkeypatch, scope):
 
 
 def test_family_specific_matchers():
-    from mcp_mikrotik.scope import firewall_raw, ipv6_firewall_raw
+    from mcp_mikrotik.scope.firewall import raw as firewall_raw
+    from mcp_mikrotik.scope.firewall import ipv6_raw as ipv6_firewall_raw
     import inspect
     assert "ttl" in inspect.signature(firewall_raw.mikrotik_create_raw_rule).parameters
     assert "hop_limit" not in inspect.signature(firewall_raw.mikrotik_create_raw_rule).parameters

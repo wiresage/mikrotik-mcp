@@ -5,7 +5,7 @@ from mcp_mikrotik.config import MikrotikConfig
 
 def test_create_export_cannot_show_sensitive_in_sensitive_hiding_mode(ctx, monkeypatch):
     from mcp_mikrotik import config
-    from mcp_mikrotik.scope import backup
+    from mcp_mikrotik.scope.system import backup
 
     commands = []
 
@@ -22,7 +22,7 @@ def test_create_export_cannot_show_sensitive_in_sensitive_hiding_mode(ctx, monke
 
 def test_export_section_cannot_show_sensitive_in_sensitive_hiding_mode(ctx, monkeypatch):
     from mcp_mikrotik import config
-    from mcp_mikrotik.scope import backup
+    from mcp_mikrotik.scope.system import backup
 
     commands = []
 
@@ -39,7 +39,7 @@ def test_export_section_cannot_show_sensitive_in_sensitive_hiding_mode(ctx, monk
 
 def test_export_section_can_show_sensitive_when_mode_is_disabled(ctx, monkeypatch):
     from mcp_mikrotik import config
-    from mcp_mikrotik.scope import backup
+    from mcp_mikrotik.scope.system import backup
 
     commands = []
 

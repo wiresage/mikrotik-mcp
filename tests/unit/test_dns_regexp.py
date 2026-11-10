@@ -9,8 +9,8 @@ import asyncio
 
 import pytest
 
-from mcp_mikrotik.scope import dns as dns_mod
-from mcp_mikrotik.scope._quoting import ros_quoted
+from mcp_mikrotik.scope.dns import dns as dns_mod
+from mcp_mikrotik.scope._shared.quoting import ros_quoted
 
 BS = chr(92)  # one backslash, written this way so the tests do not depend on how a backslash is escaped here
 

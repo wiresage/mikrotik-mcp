@@ -2,8 +2,8 @@ import asyncio
 
 from tests.conftest import FakeExecutor
 
-from mcp_mikrotik.scope.netwatch import _PROBE_CONFIG as _CONFIG
-from mcp_mikrotik.scope.netwatch import _PROBE_STATE as _STATE
+from mcp_mikrotik.scope.monitoring.netwatch import _PROBE_CONFIG as _CONFIG
+from mcp_mikrotik.scope.monitoring.netwatch import _PROBE_STATE as _STATE
 
 
 def _run(coro):
@@ -67,7 +67,7 @@ class NoStateFake(FakeExecutor):
 
 
 def test_command_filters_and_device(ctx, monkeypatch):
-    from mcp_mikrotik.scope import netwatch
+    from mcp_mikrotik.scope.monitoring import netwatch
 
     fake = DetailFake()
     monkeypatch.setattr(netwatch, "execute_mikrotik_command", fake, raising=True)
@@ -103,7 +103,7 @@ def test_scripts_are_withheld_unless_asked_for(ctx, monkeypatch):
     is what keeps them off the wire; redaction alone would not, since it only
     matches patterns it recognises.
     """
-    from mcp_mikrotik.scope import netwatch
+    from mcp_mikrotik.scope.monitoring import netwatch
 
     fake = ScriptFake()
     monkeypatch.setattr(netwatch, "execute_mikrotik_command", fake, raising=True)
@@ -149,7 +149,7 @@ def test_detail_proplist_drops_what_detail_never_returns(ctx):
 
 def test_live_state_is_a_second_command(ctx, monkeypatch):
     """The numbers only `print as-value` carries have to reach the caller."""
-    from mcp_mikrotik.scope import netwatch
+    from mcp_mikrotik.scope.monitoring import netwatch
 
     monkeypatch.setattr(netwatch, "execute_mikrotik_command", DetailFake(), raising=True)
 
@@ -166,7 +166,7 @@ def test_live_state_records_split_on_id_only(ctx):
     `as-value` concatenates every record into one line with `;`, and a comment
     or a script may hold a semicolon of its own — RouterOS scripts usually do.
     """
-    from mcp_mikrotik.scope.netwatch import _split_records
+    from mcp_mikrotik.scope.monitoring.netwatch import _split_records
 
     out = _split_records(
         '.id=*1;comment=first;host=a;.id=*2;comment=has; a semicolon;host=b'
@@ -183,7 +183,7 @@ def test_a_refused_live_state_still_returns_the_configuration(ctx, monkeypatch):
     The live state is an addition, so failing to read it must not cost the
     caller the configuration that was already in hand.
     """
-    from mcp_mikrotik.scope import netwatch
+    from mcp_mikrotik.scope.monitoring import netwatch
 
     monkeypatch.setattr(netwatch, "execute_mikrotik_command", NoStateFake(), raising=True)
 
@@ -194,7 +194,7 @@ def test_a_refused_live_state_still_returns_the_configuration(ctx, monkeypatch):
 
 
 def test_no_match_is_not_the_legend(ctx, monkeypatch):
-    from mcp_mikrotik.scope import netwatch
+    from mcp_mikrotik.scope.monitoring import netwatch
 
     fake = LegendOnlyFake()
     monkeypatch.setattr(netwatch, "execute_mikrotik_command", fake, raising=True)

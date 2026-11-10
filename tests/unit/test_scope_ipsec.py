@@ -32,7 +32,7 @@ class LegendOnlyFake(FakeExecutor):
 
 
 def test_installed_sa_command_filters_and_device(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipsec
+    from mcp_mikrotik.scope.vpn import ipsec
 
     fake = DetailFake()
     monkeypatch.setattr(ipsec, "execute_mikrotik_command", fake, raising=True)
@@ -55,7 +55,7 @@ def test_installed_sa_command_filters_and_device(ctx, monkeypatch):
 
 def test_installed_sa_keeps_the_flags_legend(ctx, monkeypatch):
     """The `S` flag is the whole point: it must survive into the output."""
-    from mcp_mikrotik.scope import ipsec
+    from mcp_mikrotik.scope.vpn import ipsec
 
     class WithFlags(FakeExecutor):
         async def __call__(self, command, _ctx, device=None):
@@ -72,7 +72,7 @@ def test_installed_sa_keeps_the_flags_legend(ctx, monkeypatch):
 
 
 def test_no_match_is_not_reported_as_a_result(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipsec
+    from mcp_mikrotik.scope.vpn import ipsec
 
     monkeypatch.setattr(ipsec, "execute_mikrotik_command", LegendOnlyFake(), raising=True)
     for call in (
@@ -87,7 +87,7 @@ def test_no_match_is_not_reported_as_a_result(ctx, monkeypatch):
 
 
 def test_active_peers_command_and_filters(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipsec
+    from mcp_mikrotik.scope.vpn import ipsec
 
     fake = DetailFake()
     monkeypatch.setattr(ipsec, "execute_mikrotik_command", fake, raising=True)
@@ -106,7 +106,7 @@ def test_active_peers_command_and_filters(ctx, monkeypatch):
 
 
 def test_peers_policies_profiles_proposals(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipsec
+    from mcp_mikrotik.scope.vpn import ipsec
 
     fake = DetailFake()
     monkeypatch.setattr(ipsec, "execute_mikrotik_command", fake, raising=True)
@@ -133,7 +133,7 @@ def test_peers_policies_profiles_proposals(ctx, monkeypatch):
 
 def test_every_tool_is_read_only(ctx):
     """These must survive --read-only: the module exists to be usable there."""
-    from mcp_mikrotik.scope import ipsec  # noqa: F401
+    from mcp_mikrotik.scope.vpn import ipsec  # noqa: F401
     from mcp_mikrotik.app import mcp
 
     names = {
@@ -149,7 +149,7 @@ def test_every_tool_is_read_only(ctx):
 
 def test_no_tool_exposes_ipsec_identities(ctx):
     """`/ip ipsec identity print detail` carries `secret=` in clear text."""
-    from mcp_mikrotik.scope import ipsec
+    from mcp_mikrotik.scope.vpn import ipsec
 
     source = __import__("inspect").getsource(ipsec)
     assert "ipsec identity" not in source.replace("`/ip ipsec identity`", "")

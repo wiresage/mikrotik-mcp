@@ -35,7 +35,7 @@ class FakeWifi:
 
 
 def _patch(monkeypatch, fake):
-    from mcp_mikrotik.scope import wireless as m
+    from mcp_mikrotik.scope.interfaces import wireless as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
 

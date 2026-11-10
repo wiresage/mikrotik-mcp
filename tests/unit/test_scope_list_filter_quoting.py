@@ -17,8 +17,8 @@ def _run(coro):
 
 
 CASES = [
-    ("firewall_filter", "mikrotik_list_filter_rules", "/ip firewall filter print"),
-    ("firewall_nat", "mikrotik_list_nat_rules", "/ip firewall nat print"),
+    ("firewall.filter", "mikrotik_list_filter_rules", "/ip firewall filter print"),
+    ("firewall.nat", "mikrotik_list_nat_rules", "/ip firewall nat print"),
 ]
 
 

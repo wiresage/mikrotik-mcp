@@ -37,7 +37,7 @@ class ScriptedExecutor(FakeExecutor):
 
 
 def _create(monkeypatch, executor, ctx, **kwargs):
-    module = import_module("mcp_mikrotik.scope.queue")
+    module = import_module("mcp_mikrotik.scope.queue.queue")
     monkeypatch.setattr(module, "execute_mikrotik_command", executor, raising=True)
     return _run(module.mikrotik_create_queue_tree(ctx, **kwargs))
 

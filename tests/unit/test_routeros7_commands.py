@@ -8,8 +8,8 @@ import asyncio
 
 import pytest
 
-from mcp_mikrotik.scope import dns as dns_mod
-from mcp_mikrotik.scope import routes as routes_mod
+from mcp_mikrotik.scope.dns import dns as dns_mod
+from mcp_mikrotik.scope.routing import routes as routes_mod
 
 
 def run(coro):

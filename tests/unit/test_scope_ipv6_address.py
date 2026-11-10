@@ -14,7 +14,7 @@ def _run(coro):
 # ---------------------------------------------------------------------------
 
 def test_add_minimal(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -24,7 +24,7 @@ def test_add_minimal(ctx, monkeypatch):
 
 
 def test_add_all_options(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -45,7 +45,7 @@ def test_add_all_options(ctx, monkeypatch):
 
 
 def test_add_advertise_false_is_explicit(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -56,7 +56,7 @@ def test_add_advertise_false_is_explicit(ctx, monkeypatch):
 
 def test_add_no_broadcast_field(ctx, monkeypatch):
     """IPv6 has no broadcast — make sure we never emit one."""
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -70,7 +70,7 @@ def test_add_no_broadcast_field(ctx, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_list_no_filters(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -80,7 +80,7 @@ def test_list_no_filters(ctx, monkeypatch):
 
 
 def test_list_with_filters(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -99,7 +99,7 @@ def test_list_with_filters(ctx, monkeypatch):
 
 
 def test_list_link_local_filter(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -109,7 +109,7 @@ def test_list_link_local_filter(ctx, monkeypatch):
 
 
 def test_list_empty_message(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     async def fake(cmd, _ctx, device=None):
         return ""
@@ -125,7 +125,7 @@ def test_list_empty_message(ctx, monkeypatch):
 
 def test_get_by_id_queries_id_first(ctx, monkeypatch):
     """A non-colon value (a RouterOS id) is queried by .id first."""
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     calls = []
 
@@ -141,7 +141,7 @@ def test_get_by_id_queries_id_first(ctx, monkeypatch):
 
 def test_get_by_address_queries_address_first(ctx, monkeypatch):
     """A value containing ':' (an IPv6 address) is queried by address first."""
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     calls = []
 
@@ -158,7 +158,7 @@ def test_get_by_address_queries_address_first(ctx, monkeypatch):
 def test_get_legend_only_is_treated_as_not_found(ctx, monkeypatch):
     """Regression (caught live): `print detail` returns the Flags legend even
     when nothing matches — that must NOT be reported as a found entry."""
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     legend = "Flags: X - disabled, I - invalid; D - dynamic; G - global, L - link-local"
 
@@ -171,7 +171,7 @@ def test_get_legend_only_is_treated_as_not_found(ctx, monkeypatch):
 
 
 def test_remove_by_id(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     async def fake(cmd, _ctx, device=None):
         if "count-only" in cmd:
@@ -190,7 +190,7 @@ def test_remove_by_id(ctx, monkeypatch):
 
 
 def test_remove_not_found(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     async def fake(cmd, _ctx, device=None):
         return "0"  # count-only returns 0 for both id and address
@@ -206,7 +206,7 @@ def test_remove_not_found(ctx, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_get_canonicalizes_noncanonical_address(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     calls = []
 
@@ -223,7 +223,7 @@ def test_get_canonicalizes_noncanonical_address(ctx, monkeypatch):
 def test_remove_by_address_path_canonicalized(ctx, monkeypatch):
     """The primary real-world path: .id lookup misses, address lookup matches,
     and the input is canonicalized before the remove."""
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     seen = []
 
@@ -246,7 +246,7 @@ def test_remove_by_address_path_canonicalized(ctx, monkeypatch):
 def test_add_from_pool_confirms_via_interface(ctx, monkeypatch):
     """With from_pool the stored address differs from the input, so the
     confirmation must look up by interface, not by the (host-only) input."""
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     seen = []
 
@@ -266,7 +266,7 @@ def test_add_from_pool_confirms_via_interface(ctx, monkeypatch):
 
 
 def test_add_failure_path(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     async def fake(cmd, _ctx, device=None):
         return "failure: already have such address"
@@ -277,7 +277,7 @@ def test_add_failure_path(ctx, monkeypatch):
 
 
 def test_remove_failure_path(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ipv6_address as m
+    from mcp_mikrotik.scope.ip import ipv6_address as m
 
     async def fake(cmd, _ctx, device=None):
         if "count-only" in cmd:

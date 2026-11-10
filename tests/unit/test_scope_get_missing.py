@@ -10,7 +10,7 @@ import importlib
 
 import pytest
 
-from mcp_mikrotik.scope._selectors import has_item_rows
+from mcp_mikrotik.scope._shared.selectors import has_item_rows
 
 # the legend a router prints for an empty result, one line or several
 LEGEND_ONE_LINE = "Flags: X - disabled, I - invalid; D - dynamic\r\n"
@@ -43,20 +43,20 @@ def test_has_item_rows(output, expected):
 
 #            module           tool                                 identifier keyword  menu words the "details" header has
 TOOLS = [
-    ("dhcp", "mikrotik_get_dhcp_server", "name", "DHCP SERVER DETAILS"),
-    ("dns", "mikrotik_get_dns_static", "entry_id", "STATIC DNS ENTRY DETAILS"),
-    ("firewall_nat", "mikrotik_get_nat_rule", "rule_id", "NAT RULE DETAILS"),
-    ("interfaces", "mikrotik_get_interface", "name", "INTERFACE DETAILS"),
-    ("ip_address", "mikrotik_get_ip_address", "address_id", "IP ADDRESS DETAILS"),
-    ("queue", "mikrotik_get_queue_type", "name", "QUEUE TYPE DETAILS"),
-    ("queue", "mikrotik_get_queue_tree", "name", "QUEUE TREE DETAILS"),
-    ("queue", "mikrotik_get_simple_queue", "name", "SIMPLE QUEUE DETAILS"),
-    ("routes", "mikrotik_get_route", "route_id", "ROUTE DETAILS"),
-    ("users", "mikrotik_get_user", "name", "USER DETAILS"),
-    ("vlan", "mikrotik_get_vlan_interface", "name", "VLAN INTERFACE DETAILS"),
-    ("wireguard", "mikrotik_get_wireguard_interface", "name", "WIREGUARD INTERFACE DETAILS"),
-    ("wireguard", "mikrotik_get_wireguard_peer", "peer_id", "WIREGUARD PEER DETAILS"),
-    ("wireless", "mikrotik_get_wireless_interface", "name", "WIRELESS INTERFACE DETAILS"),
+    ("dhcp.dhcp", "mikrotik_get_dhcp_server", "name", "DHCP SERVER DETAILS"),
+    ("dns.dns", "mikrotik_get_dns_static", "entry_id", "STATIC DNS ENTRY DETAILS"),
+    ("firewall.nat", "mikrotik_get_nat_rule", "rule_id", "NAT RULE DETAILS"),
+    ("interfaces.generic", "mikrotik_get_interface", "name", "INTERFACE DETAILS"),
+    ("ip.address", "mikrotik_get_ip_address", "address_id", "IP ADDRESS DETAILS"),
+    ("queue.queue", "mikrotik_get_queue_type", "name", "QUEUE TYPE DETAILS"),
+    ("queue.queue", "mikrotik_get_queue_tree", "name", "QUEUE TREE DETAILS"),
+    ("queue.queue", "mikrotik_get_simple_queue", "name", "SIMPLE QUEUE DETAILS"),
+    ("routing.routes", "mikrotik_get_route", "route_id", "ROUTE DETAILS"),
+    ("users.users", "mikrotik_get_user", "name", "USER DETAILS"),
+    ("interfaces.vlan", "mikrotik_get_vlan_interface", "name", "VLAN INTERFACE DETAILS"),
+    ("interfaces.wireguard", "mikrotik_get_wireguard_interface", "name", "WIREGUARD INTERFACE DETAILS"),
+    ("interfaces.wireguard", "mikrotik_get_wireguard_peer", "peer_id", "WIREGUARD PEER DETAILS"),
+    ("interfaces.wireless", "mikrotik_get_wireless_interface", "name", "WIRELESS INTERFACE DETAILS"),
 ]
 
 
@@ -108,7 +108,7 @@ def test_a_silent_router_is_still_not_found(module, function, keyword, header, c
 
 def test_get_ip_address_falls_back_to_the_address_value(ctx, monkeypatch):
     """By id nothing matches (a legend comes back); by address value the row does."""
-    from mcp_mikrotik.scope import ip_address as mod
+    from mcp_mikrotik.scope.ip import address as mod
 
     seen = []
 
