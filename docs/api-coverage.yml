@@ -946,7 +946,7 @@ menus:
       add:
         status: partial
         tools: [create_filter_rule]
-        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
+        params: [chain, action, reject-with, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -982,7 +982,6 @@ menus:
           - psd
           - random
           - realm
-          - reject-with
           - routing-mark
           - src-address-type
           - src-mac-address
@@ -999,7 +998,7 @@ menus:
       set:
         status: implemented
         tools: [update_filter_rule]
-        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix]
+        params: [chain, action, reject-with, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -1035,7 +1034,6 @@ menus:
           - psd
           - random
           - realm
-          - reject-with
           - routing-mark
           - src-address-type
           - src-mac-address
@@ -1495,7 +1493,7 @@ menus:
       add:
         status: implemented
         tools: [create_ipv6_filter_rule]
-        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, connection-state, src-address-list, dst-address-list, src-address-type, dst-address-type, icmp-options, hop-limit, headers, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
+        params: [chain, action, jump-target, reject-with, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, connection-state, src-address-list, dst-address-list, src-address-type, dst-address-type, icmp-options, hop-limit, headers, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -1523,7 +1521,6 @@ menus:
           - port
           - priority
           - random
-          - reject-with
           - routing-mark
           - src-mac-address
           - tcp-mss
@@ -1537,7 +1534,7 @@ menus:
       set:
         status: implemented
         tools: [update_ipv6_filter_rule]
-        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, connection-state, src-address-list, dst-address-list, src-address-type, dst-address-type, icmp-options, hop-limit, headers, limit, tcp-flags, comment, disabled, log, log-prefix]
+        params: [chain, action, jump-target, reject-with, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, connection-state, src-address-list, dst-address-list, src-address-type, dst-address-type, icmp-options, hop-limit, headers, limit, tcp-flags, comment, disabled, log, log-prefix]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -1565,7 +1562,6 @@ menus:
           - port
           - priority
           - random
-          - reject-with
           - routing-mark
           - src-mac-address
           - tcp-mss
