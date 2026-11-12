@@ -2,6 +2,7 @@ from typing import Literal, Optional
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from ._selectors import has_item_rows
 
 
@@ -309,7 +310,7 @@ async def mikrotik_create_queue_tree(
     if priority is not None:
         cmd += f" priority={priority}"
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 
@@ -431,7 +432,7 @@ async def mikrotik_update_queue_tree(
     if priority is not None:
         updates.append(f"priority={priority}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
 
@@ -555,7 +556,7 @@ async def mikrotik_create_simple_queue(
     if packet_marks is not None:
         cmd += f" packet-marks={packet_marks}"
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 
@@ -685,7 +686,7 @@ async def mikrotik_update_simple_queue(
     if packet_marks is not None:
         updates.append(f"packet-marks={packet_marks}")
     if comment is not None:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
         updates.append(f'disabled={"yes" if disabled else "no"}')
 

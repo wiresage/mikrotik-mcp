@@ -1,6 +1,7 @@
 from typing import List, Literal, Optional, Dict, Any
 
 from ..connector import execute_mikrotik_command
+from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ._selectors import has_item_rows
@@ -86,22 +87,22 @@ async def mikrotik_create_wireless_interface(
         cmd = f"{interface_type} add name={name}"
 
         if ssid:
-            cmd += f' ssid="{ssid}"'
+            cmd += f' ssid="{ros_quoted(ssid)}"'
         if disabled:
             cmd += " disabled=yes"
         if comment:
-            cmd += f' comment="{comment}"'
+            cmd += f' comment="{ros_quoted(comment)}"'
 
     elif interface_type == "/interface wifiwave2":
         # RouterOS v7.x wifiwave2 syntax
         cmd = f"{interface_type} add name={name}"
 
         if ssid:
-            cmd += f' ssid="{ssid}"'
+            cmd += f' ssid="{ros_quoted(ssid)}"'
         if disabled:
             cmd += " disabled=yes"
         if comment:
-            cmd += f' comment="{comment}"'
+            cmd += f' comment="{ros_quoted(comment)}"'
 
     else:
         # Legacy wireless syntax (RouterOS v6.x and older)
@@ -111,11 +112,11 @@ async def mikrotik_create_wireless_interface(
         cmd = f"{interface_type} add name={name} radio-name={radio_name} mode={mode or 'ap-bridge'}"
 
         if ssid:
-            cmd += f' ssid="{ssid}"'
+            cmd += f' ssid="{ros_quoted(ssid)}"'
         if disabled:
             cmd += " disabled=yes"
         if comment:
-            cmd += f' comment="{comment}"'
+            cmd += f' comment="{ros_quoted(comment)}"'
 
         # Add other legacy parameters if provided
         for param_name, param_value in [
@@ -246,7 +247,7 @@ async def mikrotik_remove_wireless_interface(ctx: Context, name: str, device: Op
         return "Error: No wireless interface support detected on this device."
 
     # Check if interface exists
-    check_cmd = f'{interface_type} print count-only where name="{_ros_quoted(name)}"'
+    check_cmd = f'{interface_type} print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
@@ -501,7 +502,7 @@ async def mikrotik_update_wireless_interface(
         return "Error: No wireless interface support detected on this device."
 
     # Check if interface exists
-    check_cmd = f'{interface_type} print count-only where name="{_ros_quoted(name)}"'
+    check_cmd = f'{interface_type} print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
@@ -516,13 +517,13 @@ async def mikrotik_update_wireless_interface(
         # v7 wifi/wifiwave2 has no top-level ssid property; it lives under
         # configuration.ssid (and setting it inline overrides any profile)
         if interface_type in ("/interface wifi", "/interface wifiwave2"):
-            updates.append(f'configuration.ssid="{ssid}"')
+            updates.append(f'configuration.ssid="{ros_quoted(ssid)}"')
         else:
-            updates.append(f'ssid="{ssid}"')
+            updates.append(f'ssid="{ros_quoted(ssid)}"')
     if disabled is not None:
         updates.append(f"disabled={'yes' if disabled else 'no'}")
     if comment:
-        updates.append(f'comment="{comment}"')
+        updates.append(f'comment="{ros_quoted(comment)}"')
 
     if not updates:
         return "No updates specified."
@@ -547,16 +548,6 @@ async def mikrotik_update_wireless_interface(
 
 # WPA-PSK accepts any printable ASCII, 8-63 characters.
 _PSK_MIN, _PSK_MAX = 8, 63
-
-
-def _ros_quoted(value: str) -> str:
-    """Escape a value for a RouterOS double-quoted string.
-
-    A bare `"` ends the string early, so RouterOS answers "expected end of
-    command" and the write never happens -- and quotes are legal in a WPA
-    passphrase. Backslash first, or it would escape the escapes.
-    """
-    return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
 @mcp.tool(name="set_wireless_passphrase", annotations=annotate(WRITE_IDEMPOTENT, "Set Wireless Passphrase"))
@@ -593,7 +584,7 @@ async def mikrotik_set_wireless_passphrase(
         return "Legacy /interface wireless stores passphrases in security profiles and is not supported by this tool. Use RouterOS v7 (/interface wifi or wifiwave2)."
 
     # Check if interface exists
-    check_cmd = f'{interface_type} print count-only where name="{_ros_quoted(name)}"'
+    check_cmd = f'{interface_type} print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
@@ -601,8 +592,8 @@ async def mikrotik_set_wireless_passphrase(
 
     # Inline dotted security.* settings override any assigned security profile
     cmd = (
-        f'{interface_type} set [find name="{_ros_quoted(name)}"] '
-        f'security.passphrase="{_ros_quoted(passphrase)}"'
+        f'{interface_type} set [find name="{ros_quoted(name)}"] '
+        f'security.passphrase="{ros_quoted(passphrase)}"'
     )
     if authentication_types:
         cmd += f" security.authentication-types={authentication_types}"
@@ -611,7 +602,7 @@ async def mikrotik_set_wireless_passphrase(
     # command, so redact both forms: the escaped one is what reaches the
     # command line, the raw one is what a result might echo back.
     result = await execute_mikrotik_command(
-        cmd, ctx, device=device, redact=[_ros_quoted(passphrase), passphrase]
+        cmd, ctx, device=device, redact=[ros_quoted(passphrase), passphrase]
     )
 
     # A successful `set` prints nothing, so ANY output means the write did not
