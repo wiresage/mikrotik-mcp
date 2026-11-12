@@ -25,6 +25,8 @@ docker compose -f routeros-docker/docker-compose.yml up -d
 uv run python tests/smoke_multi_device.py           # drives the server over stdio against both
 ```
 
+`up -d` never pulls a newer image and the lab keeps the RouterOS it first started with. Run `python routeros-docker/check_versions.py` to see what runs against the newest release, and follow [routeros-docker/README.md](routeros-docker/README.md) to move to it.
+
 ## Project structure
 
 ```
