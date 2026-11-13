@@ -173,6 +173,28 @@ def _file_creating_tool_names():
     return names
 
 
+def test_write_tools_declare_every_hint_explicitly():
+    """Write tools state readOnlyHint=False and their idempotency instead of leaving them to spec defaults."""
+    from mcp_mikrotik.app import mcp
+
+    for tool in asyncio.run(mcp.list_tools()):
+        hints = tool.annotations.model_dump(exclude_none=True)
+        if hints.get("read_only_hint") is True:
+            continue
+        missing = {"read_only_hint", "destructive_hint", "idempotent_hint", "open_world_hint"} - hints.keys()
+        assert not missing, (tool.name, missing)
+
+
+def test_rollback_safe_mode_is_destructive():
+    """Rolling back discards every uncommitted change made in the safe-mode session."""
+    from mcp_mikrotik.app import mcp
+
+    tools = {tool.name: tool for tool in asyncio.run(mcp.list_tools())}
+    annotations = tools["rollback_safe_mode"].annotations
+    assert annotations.destructive_hint is True
+    assert annotations.idempotent_hint is True
+
+
 def test_file_creating_tools_are_not_marked_read_only():
     from mcp_mikrotik.app import mcp
 

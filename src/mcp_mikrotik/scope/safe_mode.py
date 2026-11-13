@@ -3,7 +3,7 @@ from typing import Optional
 
 from mcp.server.mcpserver import Context
 
-from ..app import mcp, READ, WRITE, annotate
+from ..app import mcp, DESTRUCTIVE, READ, WRITE, annotate
 from ..inventory import DeviceNotFoundError
 from ..safe_mode import get_safe_mode_manager
 
@@ -41,7 +41,7 @@ async def mikrotik_commit_safe_mode(ctx: Context, device: Optional[str] = None) 
     return await asyncio.to_thread(manager.commit)
 
 
-@mcp.tool(name="rollback_safe_mode", annotations=annotate(WRITE, "Rollback Safe Mode"))
+@mcp.tool(name="rollback_safe_mode", annotations=annotate(DESTRUCTIVE, "Rollback Safe Mode"))
 async def mikrotik_rollback_safe_mode(ctx: Context, device: Optional[str] = None) -> str:
     """Discards all pending Safe Mode changes by closing the SSH session, triggering automatic rollback."""
     await ctx.info(f"Rolling back safe mode changes (device={device})")
