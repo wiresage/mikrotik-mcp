@@ -22,10 +22,30 @@ mcp = ConfiguredMCPServer("mcp-mikrotik", instructions=INSTRUCTIONS)
 # human-readable title, which allows MCP clients to surface compact tool
 # lists without re-rendering full descriptions — shrinking prompt context.
 READ = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
-WRITE = ToolAnnotations(destructive_hint=False, open_world_hint=False)
-WRITE_IDEMPOTENT = ToolAnnotations(destructive_hint=False, idempotent_hint=True, open_world_hint=False)
-DESTRUCTIVE = ToolAnnotations(destructive_hint=True, idempotent_hint=True, open_world_hint=False)
-DANGEROUS = ToolAnnotations(destructive_hint=True, open_world_hint=False)
+WRITE = ToolAnnotations(
+    read_only_hint=False,
+    destructive_hint=False,
+    idempotent_hint=False,
+    open_world_hint=False,
+)
+WRITE_IDEMPOTENT = ToolAnnotations(
+    read_only_hint=False,
+    destructive_hint=False,
+    idempotent_hint=True,
+    open_world_hint=False,
+)
+DESTRUCTIVE = ToolAnnotations(
+    read_only_hint=False,
+    destructive_hint=True,
+    idempotent_hint=True,
+    open_world_hint=False,
+)
+DANGEROUS = ToolAnnotations(
+    read_only_hint=False,
+    destructive_hint=True,
+    idempotent_hint=False,
+    open_world_hint=False,
+)
 
 
 def annotate(base: ToolAnnotations, title: str) -> ToolAnnotations:
