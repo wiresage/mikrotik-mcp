@@ -23,6 +23,11 @@ async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional
         "/interface wlan"  # Older versions
     ]
 
+    # A menu can exist but be empty (the v7 ``wifi`` menu answers ``0`` on routers
+    # that still run the legacy ``wireless`` package), so prefer a menu that
+    # actually has interfaces and keep the first supported one as a fallback.
+    fallback: Optional[str] = None
+
     for interface_type in interface_types:
         try:
             await ctx.debug(f"Testing interface type: {interface_type}")
@@ -44,12 +49,21 @@ async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional
                     continue
                 else:
                     # If we get a numeric result or no error, this type is supported
+                    stripped = result.strip()
+                    if stripped.isdigit() and int(stripped) == 0:
+                        if fallback is None:
+                            fallback = interface_type
+                        continue
                     await ctx.info(f"Detected wireless interface type: {interface_type}")
                     return interface_type
 
         except Exception as e:
             await ctx.debug(f"Interface type {interface_type} failed with exception: {e}")
             continue
+
+    if fallback:
+        await ctx.info(f"No wireless interfaces found, using: {fallback}")
+        return fallback
 
     # If none work, return None
     await ctx.warning("No wireless interface type detected")
