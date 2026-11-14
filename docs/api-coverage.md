@@ -610,6 +610,11 @@ These tools do not map to a single RouterOS menu command.
 - [x] `monitor_logs` — composite — Takes a count snapshot, waits, then reads the new entries.
 - [x] `download_file` — sftp — Transfers raw bytes over the SSH SFTP subsystem.
 - [x] `upload_file` — sftp — Transfers raw bytes over the SSH SFTP subsystem.
+- [x] `ping` — command — Runs /ping with a bounded count; needs the test policy.
+- [x] `traceroute` — command — Runs /tool traceroute with a bounded probe count; needs the test policy.
+- [x] `torch` — command — Runs /tool torch for a few seconds; needs the sniff policy.
+- [x] `sniff_packets` — command — Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
+- [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 
 ## Excluded / out of scope
 
