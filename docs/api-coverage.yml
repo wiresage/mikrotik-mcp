@@ -2585,6 +2585,21 @@ server_tools:
   upload_file:
     kind: sftp
     note: Transfers raw bytes over the SSH SFTP subsystem.
+  ping:
+    kind: command
+    note: Runs /ping with a bounded count; needs the test policy.
+  traceroute:
+    kind: command
+    note: Runs /tool traceroute with a bounded probe count; needs the test policy.
+  torch:
+    kind: command
+    note: Runs /tool torch for a few seconds; needs the sniff policy.
+  sniff_packets:
+    kind: command
+    note: Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
+  profile_cpu:
+    kind: command
+    note: Runs /tool profile for a few seconds.
 
 excluded:
   - menu: /container
