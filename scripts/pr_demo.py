@@ -37,6 +37,10 @@ Reply with one JSON object and nothing else (no code fence, no prose):
  "scenes": [{{"heading": "<={MAX_HEADING} chars", "tone": "before" | "after" | "info",
    "lines": [{{"text": "<={MAX_TEXT} chars, one terminal line", "style": "cmd" | "out" | "good" | "bad" | "note"}}]}}]}}
 
+The first scene MUST have tone "before": what happens on master today, with the problem visible (the call, the wrong result).
+The next scene MUST have tone "after": the same call with this pull request, with the fixed result. Use the same command or
+input in both so the difference is the only thing that changes. Only a change that has no visible behaviour (docs, CI, a
+rename) may use "info" scenes alone, and then say so in the description.
 Rules: {MAX_SCENES} scenes at most, {MAX_LINES} lines per scene at most, one short line each. Show a concrete before and after
 (a command or call, what it returned, what was wrong or right) taken from the change, not generic text. "cmd" is something
 typed, "out" is a result, "bad" and "good" mark a wrong and a right result, "note" is a plain remark. Do not invent behaviour
@@ -124,7 +128,8 @@ def draw(storyboard: dict, out: Path) -> int:
         image = Image.new("RGB", (width, height), colors["bg"])
         d = ImageDraw.Draw(image)
         d.rectangle([0, 0, width, 46], fill=bar[scene["tone"]])
-        d.text((20, 10), scene["heading"], font=bold, fill=(15, 15, 20))
+        label = {"before": "BEFORE (master): ", "after": "AFTER (this PR): "}.get(scene["tone"], "")
+        d.text((20, 10), label + scene["heading"], font=bold, fill=(15, 15, 20))
         y = 76
         for line in scene["lines"][:shown]:
             prefix = "> " if line["style"] == "cmd" else "  "
