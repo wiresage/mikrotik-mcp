@@ -1,4 +1,7 @@
-from typing import List, Literal, Optional, Dict, Any
+import re
+from typing import Annotated, List, Literal, Optional, Dict, Any
+
+from pydantic import Field
 
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
@@ -6,6 +9,9 @@ from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows
 from .._shared.results import refused, is_missing
+
+_INTERFACE_NAME_RE = re.compile(r"^[a-zA-Z0-9_./-]+$")
+_INTERFACE_NAME_VALUE_RE = re.compile(r'name="([^"]+)"')
 
 
 async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional[str] = None) -> Optional[str]:
@@ -202,6 +208,35 @@ async def mikrotik_list_wireless_interfaces(
                     "failure:" not in result.lower() and
                     "no such command prefix" not in result.lower()):
                 working_types.append(interface_type)
+
+                # Annotate auto frequency with the active channel when running
+                if interface_type in ("/interface wireless", "/interface wlan") and "frequency=auto" in result:
+                    try:
+                        auto_check_cmd = f'{interface_type} print proplist=name where frequency=auto and running=yes'
+                        if name_filter:
+                            auto_check_cmd += f' and name~"{name_filter}"'
+                        if disabled_only:
+                            auto_check_cmd += " and disabled=yes"
+                        auto_res = await execute_mikrotik_command(auto_check_cmd, ctx, device=device)
+                        names = _INTERFACE_NAME_VALUE_RE.findall(auto_res or "")
+                        for iface_name in names:
+                            try:
+                                chan_cmd = f':put ([{interface_type} monitor "{ros_quoted(iface_name)}" once as-value]->"channel")'
+                                chan_out = await execute_mikrotik_command(chan_cmd, ctx, device=device)
+                                active_chan = chan_out.strip() if chan_out else ""
+                                if active_chan and not active_chan.lower().startswith(("bad", "failure", "no such", "syntax")):
+                                    pattern = re.compile(
+                                        rf'(name="{re.escape(iface_name)}"(?:(?!name=).)*?\bfrequency=auto\b|\bfrequency=auto\b(?:(?!name=).)*?name="{re.escape(iface_name)}")',
+                                        re.DOTALL,
+                                    )
+                                    def _replace_auto(m):
+                                        return m.group(0).replace("frequency=auto", f"frequency=auto (active: {active_chan})")
+                                    result = pattern.sub(_replace_auto, result)
+                            except Exception as chan_err:
+                                await ctx.debug(f"Failed to query active channel for {iface_name}: {chan_err}")
+                    except Exception as auto_err:
+                        await ctx.debug(f"Auto frequency lookup failed: {auto_err}")
+
                 all_results.append(f"=== {interface_type.upper()} ===\n{result}")
 
         except Exception as e:
@@ -376,6 +411,88 @@ async def mikrotik_get_wireless_registration_table(
         return "No wireless clients registered."
 
     return f"WIRELESS REGISTRATION TABLE:\n\n{result}"
+
+
+@mcp.tool(name="monitor_wireless_interface", annotations=annotate(READ, "Monitor Wireless Interface"))
+async def mikrotik_monitor_wireless_interface(
+        ctx: Context,
+        interface: str,
+        device: Optional[str] = None,
+) -> str:
+    """Monitors real-time wireless status, frequency, CCQ, noise floor and client counts for an interface."""
+    await ctx.info(f"Monitoring wireless interface: {interface}")
+
+    interface = interface.strip()
+    if not interface or not _INTERFACE_NAME_RE.fullmatch(interface):
+        return f"Error: Invalid or empty interface name '{interface}'."
+
+    # Detect wireless interface type
+    interface_type = await mikrotik_detect_wireless_interface_type(ctx, device=device)
+
+    if not interface_type:
+        return "Error: No wireless interface support detected on this device."
+
+    # `once` is required — without it the monitor streams continuously and hangs the session.
+    cmd = f'{interface_type} monitor "{interface}" once'
+    result = await execute_mikrotik_command(cmd, ctx, device=device)
+
+    if not result or not result.strip():
+        return f"No monitor data returned for wireless interface '{interface}'."
+
+    result_lower = result.lower()
+    if "no such item" in result_lower:
+        return f"Error: Wireless interface '{interface}' not found."
+    if "failure:" in result_lower or "syntax error" in result_lower or "bad command name" in result_lower:
+        return f"Failed to monitor wireless interface: {result.strip()}"
+
+    return f"WIRELESS MONITOR ({interface}):\n\n{result.strip()}"
+
+
+@mcp.tool(name="frequency_monitor", annotations=annotate(READ, "Frequency Monitor"))
+async def mikrotik_frequency_monitor(
+        ctx: Context,
+        interface: str,
+        duration: Annotated[int, Field(ge=1, le=30)] = 5,
+        device: Optional[str] = None,
+) -> str:
+    """Monitors wireless frequency usage and noise floor across channels on legacy wireless interfaces."""
+    await ctx.info(f"Monitoring frequencies on interface {interface} for {duration}s")
+
+    interface = interface.strip()
+    if not interface or not _INTERFACE_NAME_RE.fullmatch(interface):
+        return f"Error: Invalid or empty interface name '{interface}'."
+
+    interface_type = await mikrotik_detect_wireless_interface_type(ctx, device=device)
+
+    if not interface_type:
+        return "Error: No wireless interface support detected on this device."
+
+    if interface_type in ("/interface wifi", "/interface wifiwave2"):
+        return f"frequency_monitor is only supported on legacy wireless interfaces (/interface wireless), but this device uses {interface_type}."
+
+    cmd = f'{interface_type} frequency-monitor "{interface}" duration={duration}'
+    result = await execute_mikrotik_command(cmd, ctx, device=device)
+
+    if not result or not result.strip():
+        return f"No frequency monitor data returned for wireless interface '{interface}'."
+
+    result_lower = result.lower()
+    if "no such item" in result_lower:
+        return f"Error: Wireless interface '{interface}' not found."
+    if "failure:" in result_lower or "syntax error" in result_lower or "bad command name" in result_lower:
+        return f"Failed to monitor frequency: {result.strip()}"
+
+    # Extract last frame if terminal redrew multiple frames
+    lines = result.replace("\r", "").split("\n")
+    starts = [i for i, line in enumerate(lines) if line.startswith("Columns:")]
+    if not starts:
+        header = next((line for line in lines if line.strip()), None)
+        if header is not None:
+            starts = [i for i, line in enumerate(lines) if line == header]
+    final_lines = lines[starts[-1]:] if starts and len(starts) > 1 else lines
+    clean_output = "\n".join(final_lines).strip("\n")
+
+    return f"FREQUENCY MONITOR ({interface}):\n\n{clean_output}"
 
 
 @mcp.tool(name="check_wireless_support", annotations=annotate(READ, "Check Wireless Support"))
