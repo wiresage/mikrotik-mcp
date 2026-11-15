@@ -50,7 +50,13 @@ def test_parse_rejects_what_is_not_a_storyboard(reply):
 def test_comment_uses_the_pr_title_for_the_tag_and_keeps_the_marker():
     body = pr_demo.comment({"title": "feat(x): add a thing"}, pr_demo.parse_storyboard(json.dumps(GOOD)))
     assert body.startswith(pr_demo.MARKER)
-    assert "#demonstration_feat(x):-add-a-thing" in body and pr_demo.GIF_URL_PLACEHOLDER in body
+    assert "[#demonstration_feat(x):-add-a-thing](" + pr_demo.COMMENT_URL_PLACEHOLDER + ")" in body
+    assert pr_demo.GIF_URL_PLACEHOLDER in body
+
+
+def test_the_tag_links_to_the_comment_and_brackets_in_the_title_cannot_break_the_link():
+    body = pr_demo.comment({"title": "fix [x]: y"}, pr_demo.parse_storyboard(json.dumps(GOOD)))
+    assert "[#demonstration_fix-\[x\]:-y](" + pr_demo.COMMENT_URL_PLACEHOLDER + ")" in body
 
 
 def test_prompt_marks_the_pr_as_data():

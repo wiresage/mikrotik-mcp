@@ -19,6 +19,7 @@ from pathlib import Path
 
 MARKER = "<!-- pr-demo -->"
 GIF_URL_PLACEHOLDER = "{{GIF_URL}}"
+COMMENT_URL_PLACEHOLDER = "{{COMMENT_URL}}"
 MAX_SCENES, MAX_LINES, MAX_TEXT, MAX_HEADING, MAX_DESCRIPTION, MAX_DIFF = 6, 8, 84, 64, 240, 60_000
 MAX_CONTEXT, MAX_FILE = 200_000, 40_000
 STYLES = {"cmd", "out", "good", "bad", "note"}
@@ -204,6 +205,11 @@ def draw(storyboard: dict, out: Path) -> int:
     return len(frames)
 
 
+def _link_text(text: str) -> str:
+    """Square brackets in a PR title would end the markdown link text early."""
+    return text.replace("[", "\\[").replace("]", "\\]")
+
+
 def comment(pr: dict, storyboard: dict) -> str:
     title = storyboard["title"] or _clean(pr.get("title", ""), 80)
     return (
@@ -211,7 +217,7 @@ def comment(pr: dict, storyboard: dict) -> str:
         f"### {title}\n\n"
         f"{storyboard['description']}\n\n"
         f"![{title}]({GIF_URL_PLACEHOLDER})\n\n"
-        f"{hashtag(pr.get('title', ''))}\n\n"
+        f"[{_link_text(hashtag(pr.get('title', '')))}]({COMMENT_URL_PLACEHOLDER})\n\n"
         "<sub>Illustrated by AI from this pull request's diff, so check it against the code. Updated on every push.</sub>\n"
     )
 
