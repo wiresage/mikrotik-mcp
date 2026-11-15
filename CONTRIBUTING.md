@@ -255,6 +255,10 @@ If the tool's parameters change, update its page under `docs/reference/<area>/`.
 
 The **Check API coverage** workflow does not update the lockfile (`docs/manual.lock.yml`) or manifest (`docs/api-coverage.yml`): review the `api-coverage-report` artifact, then update `docs/manual.lock.yml` and the manifest deliberately, run `--write`, and commit. Use `--strict` (or the workflow's `strict` input) when warnings should fail the run. The corpus is not committed; only the lockfile metadata is.
 
+### PR demo GIF
+
+Every pull request that targets `master` gets one comment from the **PR demo** workflow: a short GIF that illustrates the change, a title, a one-line description and a `#demonstration_<pr-title>` tag (spaces become `-`). The comment is updated on every push. The GIF is drawn by AI from the diff, so it is an illustration, not a recording; check it against the code. The workflow runs from `master` and never executes code from the pull request: the model gets no tools, `scripts/pr_demo.py` validates its storyboard and draws the GIF, and GIFs are stored on the orphan `pr-demos` branch. Re-run it for a pull request from the Actions tab (**PR demo**, *Run workflow*, with the number).
+
 ## Commit Message Format and Versioning
 
 This project uses [GitVersion](https://gitversion.net/) for automatic semantic versioning based on commit messages. We follow [Conventional Commits](https://www.conventionalcommits.org/) specification.

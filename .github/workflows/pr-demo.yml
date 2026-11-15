@@ -1,0 +1,140 @@
+name: PR demo
+
+# Every pull request that targets master gets one comment with a short GIF that shows what the change does, a title, a
+# one-line description and a #demonstration_<pr-title> tag. The comment is updated on every push.
+#
+# Safety, because this runs for pull requests from forks:
+#   * `pull_request_target` runs the workflow and the scripts from master. Nothing from the pull request is checked
+#     out or executed; its title, body and diff are only read through the API and handed to the model as text.
+#   * The model gets no tools and no GitHub token. It can only answer with a storyboard (JSON), which scripts/pr_demo.py
+#     validates and draws itself. Its worst case is a wrong or silly GIF.
+#   * Only the last job can write, it runs no model, and it only handles the GIF and the comment text the draw job made.
+on:
+  pull_request_target:
+    branches: [master]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request to (re)draw
+        required: true
+
+concurrency:
+  group: pr-demo-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  PR: ${{ github.event.pull_request.number || inputs.pr_number }}
+
+jobs:
+  draw:
+    # Dependabot pull requests are version bumps; they get no demo.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # On pull_request_target this is master, never the pull request.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Install the tools
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.325
+          python3 -m pip install --quiet "pillow==10.4.0"
+
+      - name: Read the pull request (as data)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr view "$PR" --json number,title,body,headRefOid > pr.json
+          gh pr diff "$PR" | head -c 60000 > pr.diff || true
+          python3 scripts/pr_demo.py prompt pr.json pr.diff > prompt.txt
+
+      # No tools, no GitHub token in this step: the model only sees the prompt and answers with text.
+      - name: Ask for a storyboard
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: claude -p --tools "" --output-format text < prompt.txt > reply.txt
+
+      - name: Draw the GIF and write the comment
+        run: python3 scripts/pr_demo.py render pr.json reply.txt demo.gif comment.md
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pr-demo
+          path: |
+            demo.gif
+            comment.md
+            pr.json
+          if-no-files-found: error
+
+  publish:
+    needs: draw
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # the GIF goes to the pr-demos branch
+      pull-requests: write # the comment
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pr-demo
+          path: demo
+
+      # GIFs live on their own orphan branch, so master and its history never carry them.
+      - name: Store the GIF on the pr-demos branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          sha="$(python3 -c "import json;print(json.load(open('demo/pr.json'))['headRefOid'][:7])")"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          if git ls-remote --exit-code --heads "$remote" pr-demos >/dev/null 2>&1; then
+            git clone -q --depth 1 --branch pr-demos "$remote" store
+          else
+            git init -q store
+            git -C store checkout -q --orphan pr-demos
+            git -C store remote add origin "$remote"
+          fi
+          cp demo/demo.gif "store/pr-${PR}.gif"
+          git -C store add "pr-${PR}.gif"
+          git -C store commit -q -m "demo for pull request ${PR} at ${sha}" || true
+          for attempt in 1 2 3 4 5; do
+            git -C store push -q origin pr-demos && break
+            git -C store pull -q --rebase origin pr-demos
+          done
+          echo "GIF_URL=https://raw.githubusercontent.com/${REPO}/pr-demos/pr-${PR}.gif?v=${sha}" >> "$GITHUB_ENV"
+
+      - name: Comment on the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, pathlib
+          body = pathlib.Path("demo/comment.md").read_text(encoding="utf-8").replace("{{GIF_URL}}", os.environ["GIF_URL"])
+          pathlib.Path("body.md").write_text(body, encoding="utf-8")
+          PY
+          existing="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- pr-demo -->")))] | first | .id // empty')"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${REPO}/issues/comments/${existing}" -F body=@body.md >/dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body-file body.md
+          fi
