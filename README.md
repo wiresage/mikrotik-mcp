@@ -2,9 +2,9 @@
 
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/logo-light.svg">
-    <img alt="MikroTik MCP" src="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/logo-light.svg" width="440">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/header-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/header-light.svg">
+    <img alt="MikroTik MCP" src="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/header-light.svg" width="480">
   </picture>
 
   <p><b>Manage MikroTik RouterOS from any AI assistant.</b></p>
