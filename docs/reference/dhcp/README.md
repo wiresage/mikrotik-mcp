@@ -92,6 +92,35 @@ Creates a DHCP network configuration.
   mikrotik_create_dhcp_network(network="192.168.1.0/24", gateway="192.168.1.1", dns_servers=["8.8.8.8", "8.8.4.4"])
   ```
 
+## `mikrotik_update_dhcp_network`
+Updates fields on an existing DHCP network entry.
+- Parameters:
+  - `network` (required): Network address of the entry to update
+  - `gateway` (optional): Gateway address
+  - `netmask` (optional): Network mask
+  - `dns_servers` (optional): DNS server list
+  - `domain` (optional): Domain name
+  - `wins_servers` (optional): WINS server list
+  - `ntp_servers` (optional): NTP server list
+  - `dhcp_option` (optional): DHCP options
+  - `comment` (optional): Description
+- Notes:
+  - Pass an empty list for `dns_servers`, `wins_servers`, `ntp_servers` or `dhcp_option` (or `""` for `domain`) to clear that field.
+  - Answers "DHCP network '<network>' not found." when no entry has that network address, and "No updates specified." when no field is given.
+- Example:
+  ```
+  mikrotik_update_dhcp_network(network="192.168.1.0/24", dns_servers=["1.1.1.1"])
+  ```
+
+## `mikrotik_remove_dhcp_network`
+Removes a DHCP network configuration.
+- Parameters:
+  - `network` (required): Network address of the entry to remove
+- Example:
+  ```
+  mikrotik_remove_dhcp_network(network="192.168.1.0/24")
+  ```
+
 ## `mikrotik_create_dhcp_pool`
 Creates a DHCP address pool.
 - Parameters:
