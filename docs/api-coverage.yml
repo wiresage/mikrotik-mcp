@@ -2600,7 +2600,13 @@ server_tools:
   profile_cpu:
     kind: command
     note: Runs /tool profile for a few seconds.
+  frequency_monitor:
+    kind: command
+    note: Runs /interface wireless frequency-monitor traffic and noise floor monitoring.
 
+  monitor_wireless_interface:
+    kind: command
+    note: Monitors real-time wireless interface status.
 excluded:
   - menu: /container
     reason: Container management is out of scope.
