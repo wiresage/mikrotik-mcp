@@ -52,7 +52,8 @@ jobs:
       - name: Install the tools
         run: |
           npm install --global @anthropic-ai/claude-code@2.1.325
-          python3 -m pip install --quiet "pillow==10.4.0"
+          # Binary wheels only: the runner's Python (3.14) has no wheel for older Pillow and a source build needs libjpeg.
+          python3 -m pip install --quiet --only-binary=:all: "pillow==12.0.0"
 
       - name: Read the pull request (as data)
         env:
