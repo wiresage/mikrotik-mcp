@@ -126,21 +126,26 @@ jobs:
           done
           echo "GIF_URL=https://raw.githubusercontent.com/${REPO}/pr-demos/pr-${PR}.gif?v=${sha}" >> "$GITHUB_ENV"
 
+      # The tag links to the comment itself, whose id exists only once the comment does: create it, then fill the link in.
       - name: Comment on the pull request
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import os, pathlib
-          body = pathlib.Path("demo/comment.md").read_text(encoding="utf-8").replace("{{GIF_URL}}", os.environ["GIF_URL"])
+          fill() { # the comment link to use in the body
+            python3 - "$1" <<'PY'
+          import os, pathlib, sys
+          body = pathlib.Path("demo/comment.md").read_text(encoding="utf-8")
+          body = body.replace("{{GIF_URL}}", os.environ["GIF_URL"]).replace("{{COMMENT_URL}}", sys.argv[1])
           pathlib.Path("body.md").write_text(body, encoding="utf-8")
           PY
-          existing="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
-            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- pr-demo -->")))] | first | .id // empty')"
-          if [ -n "$existing" ]; then
-            gh api --method PATCH "repos/${REPO}/issues/comments/${existing}" -F body=@body.md >/dev/null
-          else
-            gh pr comment "$PR" --repo "$REPO" --body-file body.md
+          }
+          pr_url="https://github.com/${REPO}/pull/${PR}"
+          id="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate             --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- pr-demo -->")))] | first | .id // empty')"
+          if [ -z "$id" ]; then
+            fill "$pr_url"
+            id="$(gh api --method POST "repos/${REPO}/issues/${PR}/comments" -F body=@body.md --jq .id)"
           fi
+          fill "${pr_url}#issuecomment-${id}"
+          gh api --method PATCH "repos/${REPO}/issues/comments/${id}" -F body=@body.md >/dev/null
