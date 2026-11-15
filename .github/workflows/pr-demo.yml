@@ -60,9 +60,14 @@ jobs:
         run: |
           gh pr view "$PR" --json number,title,body,headRefOid > pr.json
           gh pr diff "$PR" | head -c 60000 > pr.diff || true
-          python3 scripts/pr_demo.py prompt pr.json pr.diff > prompt.txt
+          # The names of the touched files, as data: the script reads master's version of each, checked to stay in the repo.
+          gh pr view "$PR" --json files --jq '.files[].path' > changed.txt
+          mapfile -t changed < changed.txt
+          python3 scripts/pr_demo.py context . "${changed[@]}" > context.txt
+          python3 scripts/pr_demo.py prompt pr.json pr.diff context.txt > prompt.txt
 
-      # No tools, no GitHub token in this step: the model only sees the prompt and answers with text.
+      # No tools, no GitHub token in this step: the model only sees the prompt (master's docs and code around the change, the
+      # pull request and its diff) and answers with text. It gets no file tools on purpose: they could read this step's environment.
       - name: Ask for a storyboard
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
