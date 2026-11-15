@@ -1,6 +1,6 @@
 ### User Management
 
-#### `mikrotik_add_user`
+#### `add_user`
 Adds a new user to MikroTik device.
 - Parameters:
   - `name` (required): Username
@@ -11,10 +11,10 @@ Adds a new user to MikroTik device.
   - `disabled` (optional): Disable user
 - Example:
   ```
-  mikrotik_add_user(name="john", password="secure123", group="full")
+  add_user(name="john", password="secure123", group="full")
   ```
 
-#### `mikrotik_list_users`
+#### `list_users`
 Lists users on MikroTik device.
 - Parameters:
   - `name_filter` (optional): Filter by name
@@ -23,19 +23,19 @@ Lists users on MikroTik device.
   - `active_only` (optional): Show only active users
 - Example:
   ```
-  mikrotik_list_users(group_filter="full")
+  list_users(group_filter="full")
   ```
 
-#### `mikrotik_get_user`
+#### `get_user`
 Gets detailed information about a specific user.
 - Parameters:
   - `name` (required): Username
 - Example:
   ```
-  mikrotik_get_user(name="john")
+  get_user(name="john")
   ```
 
-#### `mikrotik_update_user`
+#### `update_user`
 Updates an existing user on MikroTik device.
 - Parameters:
   - `name` (required): Current username
@@ -47,37 +47,37 @@ Updates an existing user on MikroTik device.
   - `disabled` (optional): Enable/disable user
 - Example:
   ```
-  mikrotik_update_user(name="john", group="read")
+  update_user(name="john", group="read")
   ```
 
-#### `mikrotik_remove_user`
+#### `remove_user`
 Removes a user from MikroTik device.
 - Parameters:
   - `name` (required): Username
 - Example:
   ```
-  mikrotik_remove_user(name="john")
+  remove_user(name="john")
   ```
 
-#### `mikrotik_disable_user`
+#### `disable_user`
 Disables a user account.
 - Parameters:
   - `name` (required): Username
 - Example:
   ```
-  mikrotik_disable_user(name="john")
+  disable_user(name="john")
   ```
 
-#### `mikrotik_enable_user`
+#### `enable_user`
 Enables a user account.
 - Parameters:
   - `name` (required): Username
 - Example:
   ```
-  mikrotik_enable_user(name="john")
+  enable_user(name="john")
   ```
 
-#### `mikrotik_add_user_group`
+#### `add_user_group`
 Adds a new user group to MikroTik device.
 - Parameters:
   - `name` (required): Group name
@@ -86,29 +86,29 @@ Adds a new user group to MikroTik device.
   - `comment` (optional): Description
 - Example:
   ```
-  mikrotik_add_user_group(name="operators", policy=["read", "write", "reboot"])
+  add_user_group(name="operators", policy=["read", "write", "reboot"])
   ```
 
-#### `mikrotik_list_user_groups`
+#### `list_user_groups`
 Lists user groups on MikroTik device.
 - Parameters:
   - `name_filter` (optional): Filter by name
   - `policy_filter` (optional): Filter by policy
 - Example:
   ```
-  mikrotik_list_user_groups()
+  list_user_groups()
   ```
 
-#### `mikrotik_get_user_group`
+#### `get_user_group`
 Gets detailed information about a specific user group.
 - Parameters:
   - `name` (required): Group name
 - Example:
   ```
-  mikrotik_get_user_group(name="operators")
+  get_user_group(name="operators")
   ```
 
-#### `mikrotik_update_user_group`
+#### `update_user_group`
 Updates an existing user group on MikroTik device.
 - Parameters:
   - `name` (required): Current group name
@@ -118,69 +118,69 @@ Updates an existing user group on MikroTik device.
   - `comment` (optional): New description
 - Example:
   ```
-  mikrotik_update_user_group(name="operators", policy=["read", "write"])
+  update_user_group(name="operators", policy=["read", "write"])
   ```
 
-#### `mikrotik_remove_user_group`
+#### `remove_user_group`
 Removes a user group from MikroTik device.
 - Parameters:
   - `name` (required): Group name
 - Example:
   ```
-  mikrotik_remove_user_group(name="operators")
+  remove_user_group(name="operators")
   ```
 
-#### `mikrotik_get_active_users`
+#### `get_active_users`
 Gets currently active/logged-in users.
 - Parameters: None
 - Example:
   ```
-  mikrotik_get_active_users()
+  get_active_users()
   ```
 
-#### `mikrotik_disconnect_user`
+#### `disconnect_user`
 Disconnects an active user session.
 - Parameters:
   - `user_id` (required): User session ID
 - Example:
   ```
-  mikrotik_disconnect_user(user_id="*1")
+  disconnect_user(user_id="*1")
   ```
 
-#### `mikrotik_export_user_config`
+#### `export_user_config`
 Exports user configuration to a file.
 - Parameters:
   - `filename` (optional): Export filename
 - Example:
   ```
-  mikrotik_export_user_config(filename="users.rsc")
+  export_user_config(filename="users.rsc")
   ```
 
-#### `mikrotik_set_user_ssh_keys`
+#### `set_user_ssh_keys`
 Sets SSH public keys for a user.
 - Parameters:
   - `username` (required): Username
   - `key_file` (required): SSH key filename
 - Example:
   ```
-  mikrotik_set_user_ssh_keys(username="john", key_file="id_rsa.pub")
+  set_user_ssh_keys(username="john", key_file="id_rsa.pub")
   ```
 
-#### `mikrotik_list_user_ssh_keys`
+#### `list_user_ssh_keys`
 Lists SSH keys for a specific user.
 - Parameters:
   - `username` (required): Username
 - Example:
   ```
-  mikrotik_list_user_ssh_keys(username="john")
+  list_user_ssh_keys(username="john")
   ```
 
-#### `mikrotik_remove_user_ssh_key`
+#### `remove_user_ssh_key`
 Removes an SSH key.
 - Parameters:
   - `key_id` (required): SSH key ID
 - Example:
   ```
-  mikrotik_remove_user_ssh_key(key_id="*1")
+  remove_user_ssh_key(key_id="*1")
   ```
 

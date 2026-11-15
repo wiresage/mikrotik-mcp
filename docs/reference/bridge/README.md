@@ -8,7 +8,7 @@ that does not exist comes back as a failure.
 the stored value exactly: an entry holding `20,30` is found by `"20,30"`, not by
 `"20"`.
 
-## `mikrotik_list_bridge_vlans`
+## `list_bridge_vlans`
 Lists bridge VLAN table entries (tagged/untagged port membership per VLAN).
 - Parameters:
   - `bridge_filter` (optional): Filter by bridge name
@@ -16,10 +16,10 @@ Lists bridge VLAN table entries (tagged/untagged port membership per VLAN).
   - `dynamic_only` (optional): Show only dynamic entries
 - Example:
   ```
-  mikrotik_list_bridge_vlans(bridge_filter="bridge1")
+  list_bridge_vlans(bridge_filter="bridge1")
   ```
 
-## `mikrotik_add_bridge_vlan`
+## `add_bridge_vlan`
 Adds an entry to the bridge VLAN table.
 - Parameters:
   - `bridge` (required): Bridge name
@@ -30,10 +30,10 @@ Adds an entry to the bridge VLAN table.
   - `disabled` (optional): Disable entry
 - Example:
   ```
-  mikrotik_add_bridge_vlan(bridge="bridge1", vlan_ids="10", tagged="ether1,ether2", untagged="ether3")
+  add_bridge_vlan(bridge="bridge1", vlan_ids="10", tagged="ether1,ether2", untagged="ether3")
   ```
 
-## `mikrotik_update_bridge_vlan`
+## `update_bridge_vlan`
 Updates an existing bridge VLAN table entry.
 - Parameters:
   - `bridge` (required): Bridge name
@@ -45,30 +45,30 @@ Updates an existing bridge VLAN table entry.
   - `disabled` (optional): Enable/disable entry
 - Example:
   ```
-  mikrotik_update_bridge_vlan(bridge="bridge1", vlan_ids="10", tagged="ether1,ether2,ether4")
+  update_bridge_vlan(bridge="bridge1", vlan_ids="10", tagged="ether1,ether2,ether4")
   ```
 
-## `mikrotik_remove_bridge_vlan`
+## `remove_bridge_vlan`
 Removes an entry from the bridge VLAN table.
 - Parameters:
   - `bridge` (required): Bridge name
   - `vlan_ids` (required): VLAN IDs (must match the stored value exactly)
 - Example:
   ```
-  mikrotik_remove_bridge_vlan(bridge="bridge1", vlan_ids="10")
+  remove_bridge_vlan(bridge="bridge1", vlan_ids="10")
   ```
 
-## `mikrotik_list_bridge_ports`
+## `list_bridge_ports`
 Lists bridge ports, including each port's PVID.
 - Parameters:
   - `bridge_filter` (optional): Filter by bridge name
   - `interface_filter` (optional): Filter by interface name
 - Example:
   ```
-  mikrotik_list_bridge_ports(bridge_filter="bridge1")
+  list_bridge_ports(bridge_filter="bridge1")
   ```
 
-## `mikrotik_update_bridge_port`
+## `update_bridge_port`
 Updates per-port VLAN settings (PVID, frame types, ingress filtering) on a bridge port.
 - Parameters:
   - `interface` (required): Port's interface name
@@ -77,5 +77,5 @@ Updates per-port VLAN settings (PVID, frame types, ingress filtering) on a bridg
   - `ingress_filtering` (optional): Drop frames for VLANs the port is not a member of
 - Example:
   ```
-  mikrotik_update_bridge_port(interface="ether3", pvid=10, frame_types="admit-only-untagged-and-priority-tagged")
+  update_bridge_port(interface="ether3", pvid=10, frame_types="admit-only-untagged-and-priority-tagged")
   ```
