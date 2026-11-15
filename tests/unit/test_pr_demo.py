@@ -64,3 +64,8 @@ def test_render_writes_a_gif(tmp_path):
     out = tmp_path / "demo.gif"
     frames = pr_demo.draw(pr_demo.parse_storyboard(json.dumps(GOOD)), out)
     assert frames == 3 and out.read_bytes()[:6] in (b"GIF87a", b"GIF89a")
+
+
+def test_prompt_demands_a_before_and_an_after_scene():
+    text = pr_demo.build_prompt({"number": 1, "title": "t", "body": ""}, "diff")
+    assert 'tone "before"' in text and 'tone "after"' in text
