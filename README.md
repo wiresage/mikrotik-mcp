@@ -1,16 +1,26 @@
-# MikroTik MCP
-
 <!-- mcp-name: io.github.wiresage/mikrotik-mcp -->
 
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jeff-nasseri-mikrotik-mcp-badge.png)](https://mseep.ai/app/jeff-nasseri-mikrotik-mcp)
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/logo-light.svg">
+    <img alt="MikroTik MCP" src="https://raw.githubusercontent.com/wiresage/mikrotik-mcp/master/img/logo-light.svg" width="440">
+  </picture>
 
-[![MCP Toplist](https://mcptoplist.com/badge/io.github.wiresage%2Fmikrotik-mcp.svg)](https://mcptoplist.com/server/io.github.wiresage%2Fmikrotik-mcp)
-[![Audited by AddonAudit](https://addonaudit.com/badges/audited.svg)](https://addonaudit.com/addon/io-github-wiresage-mikrotik-mcp/)
+  <p><b>Manage MikroTik RouterOS from any AI assistant.</b></p>
+
 [![Website](https://img.shields.io/badge/website-mikrotik--mcp.com-007ACC?style=flat-square&logo=googlechrome&logoColor=white)](https://www.mikrotik-mcp.com/)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/wiresage/mikrotik-mcp/publish.yml?branch=master&label=build&style=flat-square&color=%23007ACC)](https://github.com/wiresage/mikrotik-mcp/actions/workflows/publish.yml)
 [![Tests](https://img.shields.io/github/actions/workflow/status/wiresage/mikrotik-mcp/publish.yml?branch=master&label=tests&style=flat-square&color=%2300C853)](https://github.com/wiresage/mikrotik-mcp/actions/workflows/publish.yml)
 [![MIT License](https://img.shields.io/github/license/wiresage/mikrotik-mcp?style=flat-square&color=%23FF6B35)](https://github.com/wiresage/mikrotik-mcp/blob/master/LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/kmVSpstbNU)
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.wiresage%2Fmikrotik-mcp.svg)](https://mcptoplist.com/server/io.github.wiresage%2Fmikrotik-mcp)
+[![Audited by AddonAudit](https://addonaudit.com/badges/audited.svg)](https://addonaudit.com/addon/io-github-wiresage-mikrotik-mcp/)
+[![audited by mseep.ai](https://img.shields.io/badge/audited%20by-mseep.ai-2ea44f?style=flat-square)](https://mseep.ai/app/jeff-nasseri-mikrotik-mcp)
+
+</div>
+
+---
 
 ## Overview
 
