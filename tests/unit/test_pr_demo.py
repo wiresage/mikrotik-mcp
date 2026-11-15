@@ -69,3 +69,22 @@ def test_render_writes_a_gif(tmp_path):
 def test_prompt_demands_a_before_and_an_after_scene():
     text = pr_demo.build_prompt({"number": 1, "title": "t", "body": ""}, "diff")
     assert 'tone "before"' in text and 'tone "after"' in text
+
+
+def test_context_holds_master_files_neighbours_and_docs_and_stays_inside_the_repo(tmp_path):
+    (tmp_path / "AGENTS.md").write_text("guide", encoding="utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "wireless.py").write_text("def detect(): pass", encoding="utf-8")
+    (tmp_path / "src" / "other.py").write_text("neighbour", encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "wireless.md").write_text("how wireless detection works", encoding="utf-8")
+    (tmp_path.parent / "secret.txt").write_text("outside", encoding="utf-8")
+    text = pr_demo.build_context(tmp_path, ["src/wireless.py", "../secret.txt", "missing.py"])
+    for expected in ("FILE AGENTS.md", "FILE src/wireless.py", "FILE src/other.py", "FILE docs/wireless.md"):
+        assert expected in text
+    assert "outside" not in text
+
+
+def test_prompt_carries_the_context_before_the_pull_request():
+    text = pr_demo.build_prompt({"number": 1, "title": "t", "body": ""}, "diff", "PROJECT FACT")
+    assert text.index("PROJECT FACT") < text.index("=== PULL REQUEST (data) ===")
