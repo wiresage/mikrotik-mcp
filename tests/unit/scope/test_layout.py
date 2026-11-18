@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 import mcp_mikrotik.scope as scope_package
+from tests.unit.md_links import relative_targets
 
 SCOPE_DIR = Path(scope_package.__file__).resolve().parent
 APP_PY = SCOPE_DIR.parent / "app.py"
@@ -158,3 +159,49 @@ def test_shared_helpers_import_no_area():
 def test_every_package_has_a_charter(package):
     """The docstring of a package says what belongs in it, so a contributor can decide where a new module goes."""
     assert ast.get_docstring(_tree(package / "__init__.py")), f"{package.name}/__init__.py needs a docstring"
+
+
+# --------------------------------------------------------------------------------------------- reference pages
+REFERENCE_DIR = Path(__file__).resolve().parents[3] / "docs" / "reference"
+# A page that documents two modules: (area, module) -> the page that covers it.
+SHARED_PAGES = {("firewall", "ipv6_raw"): "raw.md"}
+
+
+def _linked(page):
+    """The files and folders a markdown page links to, resolved: the exact targets, not a substring of the text."""
+    return {(page.parent / target).resolve() for target in relative_targets(page.read_text(encoding="utf-8"))}
+
+
+def _page_names(area):
+    """The reference pages an area's tool modules need: the area's README.md when it has one module, else one page per
+    module, named after the module with hyphens (`ipv6_filter` -> `ipv6-filter.md`)."""
+    modules = [p.stem for p in _modules(area, public_only=True)]
+    if len(modules) == 1:
+        return {"README.md"}
+    return {SHARED_PAGES.get((area.name, m), m.replace("_", "-") + ".md") for m in modules}
+
+
+@pytest.mark.parametrize("area", _areas(), ids=lambda p: p.name)
+def test_every_area_has_reference_pages_that_are_listed(area):
+    """docs/reference/<area>/ follows the code: an overview that links every page of the area, and an index that links them all."""
+    folder = REFERENCE_DIR / area.name
+    overview = folder / "README.md"
+    assert overview.is_file(), f"docs/reference/{area.name}/README.md is missing: describe the area's modules there"
+    index = _linked(REFERENCE_DIR / "README.md")
+    assert overview.resolve() in index or folder.resolve() in index, f"docs/reference/README.md does not link the {area.name} area"
+    pages = [p for p in sorted(folder.glob("*.md")) if p.name != "README.md"]
+    linked = _linked(overview)
+    unlisted = [p.name for p in pages if p.resolve() not in linked]
+    assert not unlisted, f"docs/reference/{area.name}/README.md does not link: {unlisted}"
+    unindexed = [p.name for p in pages if p.resolve() not in index]
+    assert not unindexed, f"docs/reference/README.md does not link {area.name}/: {unindexed}"
+
+
+@pytest.mark.parametrize("area", _areas(), ids=lambda p: p.name)
+def test_every_tool_module_has_a_reference_page(area):
+    """A new tool module comes with its page, named so that a reader (and this test) can find it."""
+    missing = sorted(name for name in _page_names(area) if not (REFERENCE_DIR / area.name / name).is_file())
+    assert not missing, (
+        f"docs/reference/{area.name}/ lacks {missing}: add one page per module, named after the module with hyphens "
+        "(the README.md is the page itself in an area with a single module)"
+    )

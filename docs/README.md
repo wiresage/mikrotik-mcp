@@ -17,38 +17,20 @@ Complete documentation for MikroTik MCP.
 
 ## API Reference
 
-Complete tool documentation organized by category:
+Complete tool documentation, organized by feature area ([full index](reference/README.md)):
 
-- **[Inventory](reference/inventory/README.md)** - Managing multiple MikroTik devices
-- **[Interfaces](reference/interfaces/README.md)** - All Interface Management (ethernet, bridge, PPPoE, SFP, LTE …)
-- **[PoE](reference/poe/README.md)** - Power over Ethernet monitoring
-- **[VLAN](reference/vlan/README.md)** - VLAN Interface Management
-- **[Bridge](reference/bridge/README.md)** - Bridge VLAN Table and Bridge Port PVID Management
-- **[IP Address](reference/ip-address/README.md)** - IPv4 Address Management
-- **[IPv6 Address](reference/ipv6-address/README.md)** - IPv6 Address Management
+- **[Devices](reference/devices/README.md)** - [Inventory](reference/devices/inventory.md) · [Safe Mode](reference/devices/safe-mode.md)
 - **[DHCP](reference/dhcp/README.md)** - DHCP Server Management
-- **[Neighbors](reference/neighbors/README.md)** - ARP and IPv6 Neighbor Discovery
-- **[NAT](reference/nat/README.md)** - NAT Rules Management
-- **[IP Pool](reference/ip-pool/README.md)** - IP Pool Management
-- **[Backup](reference/backup/README.md)** - Backup and Export Management
-- **[Logs](reference/logs/README.md)** - Log Management
-- **[Firewall](reference/firewall/README.md)** - Firewall Filter Rules Management
-- **[IPv6 Firewall](reference/ipv6-firewall/README.md)** - IPv6 Firewall Filter Rules Management
-- **[Firewall Raw](reference/firewall-raw/README.md)** - IPv4 and IPv6 Firewall Raw Rules (pre-conntrack)
-- **[Address Lists](reference/address-list/README.md)** - IPv4 and IPv6 Firewall Address Lists
-- **[Routes](reference/routes/README.md)** - Route Management
-- **[Diagnostics](reference/diagnostics/README.md)** - Ping, Traceroute, Torch, Quick Packet Capture, CPU Profile
-- **[System](reference/system/README.md)** - System Resource, Health, Clock, Packages
-- **[IP Services](reference/services/README.md)** - Management Services Exposure
-- **[Netwatch](reference/netwatch/README.md)** - Netwatch Probes and Liveness
-- **[Scheduler](reference/scheduler/README.md)** - Scheduled Tasks and Scripts
 - **[DNS](reference/dns/README.md)** - DNS Management
-- **[Users](reference/users/README.md)** - User Management
-- **[WireGuard](reference/wireguard/README.md)** - WireGuard VPN Management
-- **[IPsec](reference/ipsec/README.md)** - IPsec VPN Status
-- **[Wireless](reference/wireless/README.md)** - Wireless/WiFi Interface Management
+- **[Firewall](reference/firewall/README.md)** - [Filter rules](reference/firewall/filter.md) · [IPv6 filter rules](reference/firewall/ipv6-filter.md) · [NAT](reference/firewall/nat.md) · [Raw rules](reference/firewall/raw.md) · [Address lists](reference/firewall/address-list.md)
+- **[Interfaces](reference/interfaces/README.md)** - [Interfaces](reference/interfaces/generic.md) · [VLAN](reference/interfaces/vlan.md) · [Bridge](reference/interfaces/bridge.md) · [WireGuard](reference/interfaces/wireguard.md) · [Wireless](reference/interfaces/wireless.md) · [PoE](reference/interfaces/poe.md)
+- **[IP](reference/ip/README.md)** - [IP Address](reference/ip/address.md) · [IPv6 Address](reference/ip/ipv6-address.md) · [IP Pool](reference/ip/pool.md) · [Neighbors](reference/ip/neighbors.md) · [IP Services](reference/ip/services.md)
+- **[Monitoring](reference/monitoring/README.md)** - [Logs](reference/monitoring/logs.md) · [Netwatch](reference/monitoring/netwatch.md) · [Diagnostics](reference/monitoring/diagnostics.md)
 - **[Queue](reference/queue/README.md)** - Queue Types, Trees, and Simple Queues
-- **[Safe Mode](reference/safe-mode/README.md)** - Safe Mode Session Management
+- **[Routing](reference/routing/README.md)** - Route Management
+- **[System](reference/system/README.md)** - [System](reference/system/info.md) · [Scheduler](reference/system/scheduler.md) · [Backup](reference/system/backup.md)
+- **[Users](reference/users/README.md)** - User Management
+- **[VPN](reference/vpn/README.md)** - IPsec VPN Status
 
 ## Examples
 
@@ -57,6 +39,7 @@ Complete tool documentation organized by category:
 ## Contributing
 
 - **[Contributing Guide](../CONTRIBUTING.md)** - Learn how to contribute
+- **[Project Structure](../CONTRIBUTING.md#project-structure)** - How the code, tests and reference docs are organized by feature area
 - **[API Coverage](api-coverage.md)** - List of implemented and planned RouterOS features
 
 ## Learning Resources

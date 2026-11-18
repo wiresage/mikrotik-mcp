@@ -684,7 +684,7 @@ Use these commands to verify your configurations:
 
 # Multi-Device Examples (Inventory)
 
-The examples above target a single router. With an [inventory](../reference/inventory/README.md)
+The examples above target a single router. With an [inventory](../reference/devices/inventory.md)
 configured, one MCP server manages a whole fleet: every tool accepts a `device`
 argument naming the inventory `title` to target, and a `list_devices` tool lets
 the AI discover the fleet on its own.

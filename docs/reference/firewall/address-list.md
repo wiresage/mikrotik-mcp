@@ -3,7 +3,7 @@
 Tools for managing firewall address lists, under the RouterOS
 `/ip firewall address-list` and `/ipv6 firewall address-list` command trees.
 
-> Unlike the filter scopes, IPv4 and IPv6 address lists share one set of tools.
+> Unlike the filter rules, IPv4 and IPv6 address lists share one set of tools.
 > The entry schema is identical across families — only the command tree differs —
 > so each tool takes a required `family` of `"ipv4"` or `"ipv6"` instead of
 > duplicating seven tools per family.

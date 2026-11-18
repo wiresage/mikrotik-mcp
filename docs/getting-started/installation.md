@@ -45,7 +45,7 @@ claude mcp add --transport stdio mikrotik \
 ```
 
 See the [integration guides](../integrations/README.md) for SSH keys and client-specific
-steps, and [Inventory](../reference/inventory/README.md) to manage several devices.
+steps, and [Inventory](../reference/devices/inventory.md) to manage several devices.
 
 ### MCP Registry
 
@@ -262,7 +262,7 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_READ_ONLY` | Set to `true` to expose only tools that do not modify RouterOS or its file store | `false` |
    | `MIKROTIK_SENSITIVE_HIDING` | Set to `true` to redact recognized credentials and private key material | `false` |
    | `MIKROTIK_COMMAND_TIMEOUT` | Seconds a command may wait for the device before the call fails | `180` |
-   | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/inventory/README.md). | _(empty)_ |
+   | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/devices/inventory.md). | _(empty)_ |
    | `MIKROTIK_INVENTORY_FILE` | Path **inside the container** to a YAML file holding the inventory — mount it as a volume | _(empty)_ |
    | `MIKROTIK_MCP__TRANSPORT` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
    | `MIKROTIK_MCP__HOST` | HTTP server listen address | `0.0.0.0` |
@@ -384,7 +384,7 @@ When an inventory is set it takes precedence and `MIKROTIK_HOST` /
 can drop them. The entrypoint also stops applying its `192.168.88.1` default
 in that case, rather than injecting a host nobody asked for. Tools then take
 a `device` argument naming the title to target; see
-[Inventory](../reference/inventory/README.md).
+[Inventory](../reference/devices/inventory.md).
 
 The server is then reachable at `http://localhost:8000/mcp` (streamable HTTP)
 or `http://localhost:8000/sse` (if you set `MIKROTIK_MCP__TRANSPORT: sse`), and
