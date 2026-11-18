@@ -6,7 +6,7 @@ Tools for managing WireGuard VPN interfaces and peers on MikroTik devices (Route
 
 ## Interface Management
 
-### `mikrotik_create_wireguard_interface`
+### `create_wireguard_interface`
 Creates a WireGuard interface on MikroTik device.
 - Parameters:
   - `name` (required): Interface name (e.g. "wg0")
@@ -17,12 +17,12 @@ Creates a WireGuard interface on MikroTik device.
   - `disabled` (optional): Disable after creation (default: false)
 - Example:
   ```
-  mikrotik_create_wireguard_interface(name="wg0", listen_port=13231)
+  create_wireguard_interface(name="wg0", listen_port=13231)
   ```
 
 ---
 
-### `mikrotik_list_wireguard_interfaces`
+### `list_wireguard_interfaces`
 Lists WireGuard interfaces on MikroTik device.
 - Parameters:
   - `name_filter` (optional): Filter by interface name (partial match)
@@ -30,23 +30,23 @@ Lists WireGuard interfaces on MikroTik device.
   - `running_only` (optional): Show only running interfaces
 - Example:
   ```
-  mikrotik_list_wireguard_interfaces()
+  list_wireguard_interfaces()
   ```
 
 ---
 
-### `mikrotik_get_wireguard_interface`
+### `get_wireguard_interface`
 Gets detailed information about a specific WireGuard interface, including the public key.
 - Parameters:
   - `name` (required): Interface name
 - Example:
   ```
-  mikrotik_get_wireguard_interface(name="wg0")
+  get_wireguard_interface(name="wg0")
   ```
 
 ---
 
-### `mikrotik_update_wireguard_interface`
+### `update_wireguard_interface`
 Updates an existing WireGuard interface on MikroTik device.
 - Parameters:
   - `name` (required): Current interface name
@@ -58,47 +58,47 @@ Updates an existing WireGuard interface on MikroTik device.
   - `disabled` (optional): Enable (false) or disable (true) the interface
 - Example:
   ```
-  mikrotik_update_wireguard_interface(name="wg0", listen_port=51820, mtu=1280)
+  update_wireguard_interface(name="wg0", listen_port=51820, mtu=1280)
   ```
 
 ---
 
-### `mikrotik_remove_wireguard_interface`
+### `remove_wireguard_interface`
 Removes a WireGuard interface from MikroTik device. All peers belonging to the interface are removed as well.
 - Parameters:
   - `name` (required): Interface name to remove
 - Example:
   ```
-  mikrotik_remove_wireguard_interface(name="wg0")
+  remove_wireguard_interface(name="wg0")
   ```
 
 ---
 
-### `mikrotik_enable_wireguard_interface`
+### `enable_wireguard_interface`
 Enables a disabled WireGuard interface.
 - Parameters:
   - `name` (required): Interface name
 - Example:
   ```
-  mikrotik_enable_wireguard_interface(name="wg0")
+  enable_wireguard_interface(name="wg0")
   ```
 
 ---
 
-### `mikrotik_disable_wireguard_interface`
+### `disable_wireguard_interface`
 Disables a WireGuard interface without removing it.
 - Parameters:
   - `name` (required): Interface name
 - Example:
   ```
-  mikrotik_disable_wireguard_interface(name="wg0")
+  disable_wireguard_interface(name="wg0")
   ```
 
 ---
 
 ## Peer Management
 
-### `mikrotik_add_wireguard_peer`
+### `add_wireguard_peer`
 Adds a WireGuard peer to an interface on MikroTik device.
 - Parameters:
   - `interface` (required): WireGuard interface the peer belongs to
@@ -112,7 +112,7 @@ Adds a WireGuard peer to an interface on MikroTik device.
   - `disabled` (optional): Disable after creation (default: false)
 - Example:
   ```
-  mikrotik_add_wireguard_peer(
+  add_wireguard_peer(
       interface="wg0",
       public_key="base64pubkey==",
       allowed_address="10.0.0.2/32",
@@ -124,30 +124,30 @@ Adds a WireGuard peer to an interface on MikroTik device.
 
 ---
 
-### `mikrotik_list_wireguard_peers`
+### `list_wireguard_peers`
 Lists WireGuard peers on MikroTik device.
 - Parameters:
   - `interface_filter` (optional): Filter by WireGuard interface name
   - `disabled_only` (optional): Show only disabled peers
 - Example:
   ```
-  mikrotik_list_wireguard_peers(interface_filter="wg0")
+  list_wireguard_peers(interface_filter="wg0")
   ```
 
 ---
 
-### `mikrotik_get_wireguard_peer`
+### `get_wireguard_peer`
 Gets detailed information about a specific WireGuard peer.
 - Parameters:
   - `peer_id` (required): Peer ID (e.g. `"*1"` from list output)
 - Example:
   ```
-  mikrotik_get_wireguard_peer(peer_id="*1")
+  get_wireguard_peer(peer_id="*1")
   ```
 
 ---
 
-### `mikrotik_update_wireguard_peer`
+### `update_wireguard_peer`
 Updates an existing WireGuard peer on MikroTik device.
 - Parameters:
   - `peer_id` (required): Peer ID (e.g. `"*1"`)
@@ -160,48 +160,48 @@ Updates an existing WireGuard peer on MikroTik device.
   - `disabled` (optional): Enable (false) or disable (true) the peer
 - Example:
   ```
-  mikrotik_update_wireguard_peer(peer_id="*1", persistent_keepalive="25s", comment="laptop")
+  update_wireguard_peer(peer_id="*1", persistent_keepalive="25s", comment="laptop")
   ```
 
 ---
 
-### `mikrotik_remove_wireguard_peer`
+### `remove_wireguard_peer`
 Removes a WireGuard peer from MikroTik device.
 - Parameters:
   - `peer_id` (required): Peer ID (e.g. `"*1"`)
 - Example:
   ```
-  mikrotik_remove_wireguard_peer(peer_id="*1")
+  remove_wireguard_peer(peer_id="*1")
   ```
 
 ---
 
-### `mikrotik_enable_wireguard_peer`
+### `enable_wireguard_peer`
 Enables a disabled WireGuard peer.
 - Parameters:
   - `peer_id` (required): Peer ID (e.g. `"*1"`)
 - Example:
   ```
-  mikrotik_enable_wireguard_peer(peer_id="*1")
+  enable_wireguard_peer(peer_id="*1")
   ```
 
 ---
 
-### `mikrotik_disable_wireguard_peer`
+### `disable_wireguard_peer`
 Disables a WireGuard peer without removing it.
 - Parameters:
   - `peer_id` (required): Peer ID (e.g. `"*1"`)
 - Example:
   ```
-  mikrotik_disable_wireguard_peer(peer_id="*1")
+  disable_wireguard_peer(peer_id="*1")
   ```
 
 ---
 
 ## Client Configuration
 
-### `mikrotik_generate_wireguard_client_config`
-Generates a WireGuard client configuration file (`wg0.conf` format). This tool only formats configuration text — it does not communicate with the router. Use `mikrotik_get_wireguard_interface` to obtain the server public key, and `mikrotik_add_wireguard_peer` to register the client's public key on the server side.
+### `generate_wireguard_client_config`
+Generates a WireGuard client configuration file (`wg0.conf` format). This tool only formats configuration text — it does not communicate with the router. Use `get_wireguard_interface` to obtain the server public key, and `add_wireguard_peer` to register the client's public key on the server side.
 - Parameters:
   - `client_private_key` (required): Client's Base64-encoded WireGuard private key
   - `client_address` (required): IP address with prefix assigned to the client inside the VPN tunnel (e.g. `"10.0.0.2/24"`)
@@ -213,7 +213,7 @@ Generates a WireGuard client configuration file (`wg0.conf` format). This tool o
   - `persistent_keepalive` (optional): Seconds between keepalive packets. Recommended when the client is behind NAT (default: `25`, use `0` to disable)
 - Example:
   ```
-  mikrotik_generate_wireguard_client_config(
+  generate_wireguard_client_config(
       client_private_key="base64privatekey==",
       client_address="10.0.0.2/24",
       server_public_key="base64pubkey==",
@@ -230,19 +230,19 @@ Generates a WireGuard client configuration file (`wg0.conf` format). This tool o
 
 To configure a complete WireGuard VPN server, use the individual single-responsibility tools in sequence:
 
-1. **Create the WireGuard interface** — `mikrotik_create_wireguard_interface`
+1. **Create the WireGuard interface** — `create_wireguard_interface`
    ```
-   mikrotik_create_wireguard_interface(name="wg0", listen_port=51820)
-   ```
-
-2. **Assign an IP address to the interface** — `mikrotik_add_ip_address`
-   ```
-   mikrotik_add_ip_address(address="10.0.0.1/24", interface="wg0")
+   create_wireguard_interface(name="wg0", listen_port=51820)
    ```
 
-3. **Allow incoming WireGuard UDP traffic** — `mikrotik_create_filter_rule`
+2. **Assign an IP address to the interface** — `add_ip_address`
    ```
-   mikrotik_create_filter_rule(
+   add_ip_address(address="10.0.0.1/24", interface="wg0")
+   ```
+
+3. **Allow incoming WireGuard UDP traffic** — `create_filter_rule`
+   ```
+   create_filter_rule(
        chain="input",
        action="accept",
        protocol="udp",
@@ -251,9 +251,9 @@ To configure a complete WireGuard VPN server, use the individual single-responsi
    )
    ```
 
-4. *(Optional)* **Enable internet access for VPN clients via NAT** — `mikrotik_create_nat_rule`
+4. *(Optional)* **Enable internet access for VPN clients via NAT** — `create_nat_rule`
    ```
-   mikrotik_create_nat_rule(
+   create_nat_rule(
        chain="srcnat",
        action="masquerade",
        out_interface="ether1",
@@ -261,23 +261,23 @@ To configure a complete WireGuard VPN server, use the individual single-responsi
    )
    ```
 
-5. **Retrieve the server's public key** for client configuration — `mikrotik_get_wireguard_interface`
+5. **Retrieve the server's public key** for client configuration — `get_wireguard_interface`
    ```
-   mikrotik_get_wireguard_interface(name="wg0")
+   get_wireguard_interface(name="wg0")
    ```
 
-6. **Register each client** on the server — `mikrotik_add_wireguard_peer`
+6. **Register each client** on the server — `add_wireguard_peer`
    ```
-   mikrotik_add_wireguard_peer(
+   add_wireguard_peer(
        interface="wg0",
        public_key="client-base64pubkey==",
        allowed_address="10.0.0.2/32"
    )
    ```
 
-7. **Generate the client config file** — `mikrotik_generate_wireguard_client_config`
+7. **Generate the client config file** — `generate_wireguard_client_config`
    ```
-   mikrotik_generate_wireguard_client_config(
+   generate_wireguard_client_config(
        client_private_key="client-base64privkey==",
        client_address="10.0.0.2/24",
        server_public_key="server-base64pubkey==",
