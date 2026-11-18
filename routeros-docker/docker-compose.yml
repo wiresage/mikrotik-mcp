@@ -5,9 +5,23 @@
 #   routeros-b  ->  SSH on host port 2223   (inventory title: RouterB)
 #
 # Both boot inside QEMU and take ~2 minutes to become healthy.
+#
+# Which RouterOS runs is decided by the image tag (each image has one RouterOS version baked in):
+#   ROUTEROS_IMAGE                      image for both routers (default evilfreelancer/docker-routeros:latest)
+#   ROUTEROS_IMAGE_A / ROUTEROS_IMAGE_B image for one router, e.g. to run two versions side by side
+#
+# Keeping the lab on the newest RouterOS takes more than `up -d`: compose does not pull a newer `latest`, and the data
+# volumes keep the disk of the image that created them, so a newer image cannot boot from an old volume (QEMU: Could not
+# open '/routeros/chr-<new version>.vdi'). To move to a newer RouterOS:
+#
+#   docker compose -f routeros-docker/docker-compose.yml pull
+#   docker compose -f routeros-docker/docker-compose.yml down -v
+#   docker compose -f routeros-docker/docker-compose.yml up -d
+#
+# `python routeros-docker/check_versions.py` shows which RouterOS each router runs and how far behind that is.
 services:
   routeros-a:
-    image: ${ROUTEROS_IMAGE:-evilfreelancer/docker-routeros:latest}
+    image: ${ROUTEROS_IMAGE_A:-${ROUTEROS_IMAGE:-evilfreelancer/docker-routeros:latest}}
     container_name: ${CONTAINER_NAME_A:-routeros-a}
     hostname: ${HOSTNAME_A:-routeros-a}
     privileged: true
@@ -56,7 +70,7 @@ services:
       - /dev/net/tun
 
   routeros-b:
-    image: ${ROUTEROS_IMAGE:-evilfreelancer/docker-routeros:latest}
+    image: ${ROUTEROS_IMAGE_B:-${ROUTEROS_IMAGE:-evilfreelancer/docker-routeros:latest}}
     container_name: ${CONTAINER_NAME_B:-routeros-b}
     hostname: ${HOSTNAME_B:-routeros-b}
     privileged: true
