@@ -38,6 +38,9 @@ returns as a failure.
   `<user>+250w`, available to any tool through
   `execute_mikrotik_command(..., terminal_width=N)`. Other tools are unchanged.
 - Output is capped at 300 lines.
+- A quiet router is an answer, not a failure: torch, the sniffer and a profile per core print a row only for
+  what they saw, so when nothing matched the tools say so (`No traffic matched on ether1 during the 4
+  seconds.`). Ping and traceroute always print something, so for them no output at all is a failure.
 
 ## `ping`
 
@@ -57,7 +60,8 @@ returns as a failure.
 
 ## `torch`
 
-- `interface` (required), `duration` (1 to 30 s, default 5)
+- `interface` (required), `duration` (1 to 30 s, default 5; RouterOS prints the first frame after two
+  seconds, so a duration under 3 runs for 3)
 - `src_address`, `dst_address`, `src_address6`, `dst_address6`, `ip_protocol`,
   `port` (one port or `any`), `mac_protocol`, `vlan_id`, `dscp`
 
@@ -78,7 +82,8 @@ protocol, size, CPU). Nothing is saved on the router.
 
 ## `profile_cpu`
 
-- `duration` (1 to 30 s, default 5)
+- `duration` (1 to 30 s, default 5; the table per core, `all` or a core number, comes after two seconds,
+  so a duration under 3 runs for 3)
 - `cpu`: `total` (default), `all` for one column per core, or a core number
 
 ## Input validation
