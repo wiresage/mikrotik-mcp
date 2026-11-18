@@ -25,6 +25,7 @@ def test_server_main_runs_mcp_stdio(monkeypatch):
         ssh_agent_key=None,
         inventory=[],
         inventory_file=None,
+        dynamic_inventory_file=None,
         mcp=types.SimpleNamespace(host="127.0.0.1", port=8123, transport="stdio",
                                   allowed_hosts="", allowed_origins=""),
     )
@@ -59,6 +60,7 @@ def test_server_main_passes_http_options_to_run(monkeypatch):
         ssh_agent_key=None,
         inventory=[],
         inventory_file=None,
+        dynamic_inventory_file=None,
         mcp=types.SimpleNamespace(host="0.0.0.0", port=8123, transport="streamable-http",
                                   allowed_hosts="mcp.example.com", allowed_origins=""),
     )
@@ -95,6 +97,7 @@ def test_server_main_exits_on_exception(monkeypatch):
         ssh_agent_key=None,
         inventory=[],
         inventory_file=None,
+        dynamic_inventory_file=None,
         mcp=types.SimpleNamespace(host="127.0.0.1", port=8123, transport="stdio"),
     )
 
@@ -131,6 +134,7 @@ def test_server_main_exits_cleanly_on_bad_inventory_file(monkeypatch, tmp_path, 
     cfg = types.SimpleNamespace(
         host="10.0.0.1", username="admin", password="", port=22,
         key_filename=None, inventory=[], inventory_file=str(bad),
+        dynamic_inventory_file=None,
         mcp=types.SimpleNamespace(host="127.0.0.1", port=8123, transport="stdio",
                                   allowed_hosts="", allowed_origins=""),
     )
@@ -312,6 +316,7 @@ def test_server_main_handles_keyboard_interrupt(monkeypatch):
         ssh_agent_key=None,
         inventory=[],
         inventory_file=None,
+        dynamic_inventory_file=None,
         mcp=types.SimpleNamespace(host="127.0.0.1", port=8123, transport="stdio"),
     )
 

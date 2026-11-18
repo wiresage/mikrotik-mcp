@@ -141,6 +141,8 @@ tests and changing dependencies.
 | `--inventory-file` | Path to a YAML file holding the inventory | _(none)_ |
 | `--read-only` | Expose only tools that do not modify RouterOS or its file store | `false` |
 | `--sensitive-hiding` | Redact credentials and private key material from client-visible output | `false` |
+| `--allow-dynamic-devices` | Register `device_add`, which enrolls more devices while the server runs (`MIKROTIK_ALLOW_DYNAMIC_DEVICES`) | `false` |
+| `--dynamic-inventory-file` | YAML file that runtime enrollments are written to and reloaded from; `device_add` requires it (`MIKROTIK_DYNAMIC_INVENTORY_FILE`) | _(empty)_ |
 | `--command-timeout` | Seconds a command may wait for the device before the call fails (`MIKROTIK_COMMAND_TIMEOUT`) | `180` |
 | `--mcp.transport` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
 | `--mcp.host` | HTTP server listen address | `0.0.0.0` |
@@ -264,6 +266,8 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_COMMAND_TIMEOUT` | Seconds a command may wait for the device before the call fails | `180` |
    | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/inventory/README.md). | _(empty)_ |
    | `MIKROTIK_INVENTORY_FILE` | Path **inside the container** to a YAML file holding the inventory — mount it as a volume | _(empty)_ |
+   | `MIKROTIK_ALLOW_DYNAMIC_DEVICES` | Set to `true` to register `device_add`, which enrolls more devices while the server runs | `false` |
+   | `MIKROTIK_DYNAMIC_INVENTORY_FILE` | Path **inside the container** to the YAML file runtime enrollments are written to and reloaded from. Holds credentials — mount it writable | _(empty)_ |
    | `MIKROTIK_MCP__TRANSPORT` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
    | `MIKROTIK_MCP__HOST` | HTTP server listen address | `0.0.0.0` |
    | `MIKROTIK_MCP__PORT` | HTTP server listen port | `8000` |

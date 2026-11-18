@@ -2,6 +2,7 @@
 
 import copy
 import json
+import threading
 
 import pytest
 
@@ -151,6 +152,43 @@ def test_inventory_holds_no_connection_state(monkeypatch):
         pass
 
     assert vars(inv) == before
+
+
+def test_a_concurrent_add_never_breaks_a_reader():
+    """The device map is shared, so a reader must never iterate a live insert.
+
+    Sessions call `list_devices` while another session enrolls a device; if
+    `add` resized the dict a reader was walking, that call would fail with
+    "dictionary changed size during iteration".
+    """
+    inv = Inventory([_dev("RouterA", "10.0.0.1")])
+    failures = []
+    writer_done = threading.Event()
+
+    def reader():
+        while not writer_done.is_set():
+            try:
+                inv.describe()
+                inv.titles
+                inv.all_devices()
+                inv.resolve("RouterA")
+            except RuntimeError as exc:
+                failures.append(str(exc))
+                return
+
+    def writer():
+        for index in range(20000):
+            inv.add(DeviceConfig(title=f"t{index}", host="10.0.0.1"))
+        writer_done.set()
+
+    threads = [threading.Thread(target=reader), threading.Thread(target=writer)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert failures == []
+    assert len(inv) == 20001
 
 
 def test_session_closes_the_connection(monkeypatch):

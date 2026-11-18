@@ -99,6 +99,12 @@ UNIVERSAL_PARAMS = frozenset(
 # than as configurable arguments.
 IGNORED_MANUAL_ARGS = frozenset({"*", "-"})
 
+# Tools the manifest declares that are only registered under a non-default
+# flag, so they are absent from the default catalogue the contract check
+# loads. Keep the set tiny: anything listed here can be deleted from the
+# source without `declared - live` noticing.
+CONDITIONAL_TOOLS = frozenset({"device_add"})
+
 # Root command pages in llms-full.txt have headings without a slash, e.g.
 # "## import" or "## log". They are still RouterOS menus for our purposes.
 ROOT_MENUS = frozenset(
@@ -547,7 +553,7 @@ def check_tool_contract(
     label = str(manifest_path) if manifest_path else "the manifest"
 
     missing = sorted(live - declared)
-    unknown = sorted(declared - live)
+    unknown = sorted(declared - live - CONDITIONAL_TOOLS)
     if missing:
         errors.append(f"registered tools missing from {label}: " + ", ".join(missing))
     if unknown:
