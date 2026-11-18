@@ -152,6 +152,18 @@ class MikrotikConfig(BaseSettings):
     inventory: Annotated[List[DeviceConfig], NoDecode] = []
     inventory_file: Optional[str] = None
 
+    # ── Runtime enrollment ────────────────────────────────────────────────
+    # Off by default: with it off `device_add` is not registered at all, so
+    # the tool catalogue of an existing deployment is byte-identical. When it
+    # is on, `device_add` appends each enrolled device to
+    # ``dynamic_inventory_file`` (a YAML list in the same shape as
+    # ``inventory_file``) so the fleet reloads on the next start.
+    #
+    #   MIKROTIK_ALLOW_DYNAMIC_DEVICES=true
+    #   MIKROTIK_DYNAMIC_INVENTORY_FILE=/config/dynamic-inventory.yaml
+    allow_dynamic_devices: bool = False
+    dynamic_inventory_file: Optional[str] = None
+
     @field_validator("inventory", mode="before")
     @classmethod
     def _parse_inventory(cls, v):

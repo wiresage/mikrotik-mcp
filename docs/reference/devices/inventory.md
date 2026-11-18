@@ -132,6 +132,39 @@ region. **Credentials are never returned.**
 list_devices()
 ```
 
+## Runtime enrollment (`device_add`)
+
+Off by default, so an existing deployment's tool catalogue does not change.
+With `MIKROTIK_ALLOW_DYNAMIC_DEVICES=true` the server also offers `device_add`,
+which adds a device while the server is running — discover the neighbours with
+[`list_mikrotik_neighbors`](../neighbors/README.md), then enroll each one:
+
+```
+list_mikrotik_neighbors()                                  # what is adjacent
+device_add(title="BranchA", host="10.0.0.1", tags=["branch"])
+list_interfaces(device="BranchA")                          # now it is reachable
+```
+
+| Variable / flag | Purpose |
+|---|---|
+| `MIKROTIK_ALLOW_DYNAMIC_DEVICES` (`--allow-dynamic-devices`) | register `device_add`; default `false` |
+| `MIKROTIK_DYNAMIC_INVENTORY_FILE` (`--dynamic-inventory-file`) | the state file enrollments are written to; `device_add` refuses to run without it |
+
+The state file is the same YAML list shape as `MIKROTIK_INVENTORY_FILE`, it is
+read at startup, and enrolled devices therefore survive a restart. It is created
+on the first enrollment with a `# holds credentials — chmod 600` header and
+written with mode `600`; keep it out of version control.
+
+- `device_add` is a write tool: `--read-only` hides it.
+- `host` is an IPv4 address or a hostname. IPv6 and any other syntax are
+  refused before anything is written.
+- A title already in the inventory is refused, at enrollment and again at load.
+- A device that cannot be reached is **still enrolled** and reported as
+  unreachable — enrollment and connectivity are independent.
+- The password goes into the state file only. It never appears in a tool
+  result, a notification or a log line, so treat that file exactly like the
+  inventory itself.
+
 ## Docker
 
 When running the image, the inventory YAML file **must be mounted into the

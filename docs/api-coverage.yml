@@ -88,6 +88,7 @@ sections:
       - /ip/route
       - /ip/route/cache
       - /ip/arp
+      - /ip/neighbor
       - /ip/service
       - /ip/ipsec/installed-sa
       - /ip/ipsec/active-peers
@@ -1323,6 +1324,16 @@ menus:
         params: [address, mac-address, interface, status]
         accepted_gaps: [published]
 
+  /ip/neighbor:
+    title: MNDP neighbors
+    section: IP
+    notes: Read-only view of the neighbors this router discovers through MNDP.
+    commands:
+      print:
+        status: implemented
+        tools: [list_mikrotik_neighbors]
+        params: [identity, address, interface]
+
   /ip/service:
     title: IP services
     section: IP
@@ -2543,6 +2554,9 @@ server_tools:
   list_devices:
     kind: server
     note: Inventory discovery; no RouterOS command.
+  device_add:
+    kind: server
+    note: Enrolls a device at runtime; registered only with --allow-dynamic-devices.
   safe_mode_status:
     kind: interactive
     note: Reads the persistent safe-mode shell state.

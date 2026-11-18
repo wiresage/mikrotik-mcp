@@ -864,6 +864,27 @@ def test_check_tool_contract_names_the_custom_manifest(tmp_path):
     assert any(str(custom) in error for error in errors)
 
 
+def test_check_tool_contract_tolerates_only_flag_gated_tools():
+    """`device_add` is registered only with --allow-dynamic-devices.
+
+    It is declared in the manifest and absent from the default catalogue, so
+    the contract check must skip exactly that name — and no other.
+    """
+    manifest = _manifest_with(
+        {"/x": _menu("X", "Test", {"add": _command(tools=["some_tool"])})},
+        server_tools={
+            "device_add": api_coverage.ServerTool(kind="server", note="gated"),
+        },
+    )
+    assert api_coverage.check_tool_contract(manifest, {"some_tool"}) == []
+
+    manifest.server_tools["typo_tool"] = api_coverage.ServerTool(
+        kind="server", note="not a real tool"
+    )
+    errors = api_coverage.check_tool_contract(manifest, {"some_tool"})
+    assert errors and "typo_tool" in errors[0]
+
+
 # ---------------------------------------------------------------------------
 # Drift reporting
 # ---------------------------------------------------------------------------
