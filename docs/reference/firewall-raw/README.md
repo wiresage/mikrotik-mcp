@@ -75,7 +75,9 @@ applies to every packet before connection tracking.
 
 ## `update_raw_rule` / `update_ipv6_raw_rule`
 
-Runs `<menu> set <id> …`. Takes the same parameters as create, all optional.
+Runs `<menu> set <id> …`. Takes `rule_id` plus the same parameters as create, all
+optional, except `place_before` (use `move_raw_rule` or `move_ipv6_raw_rule` to
+change the position).
 Pass `""` to clear a matcher (for example `src_address=""` sends `!src-address`).
 Any output from `set` is reported as a refusal, for example
 `not enough permissions (9)` for a read-only account.

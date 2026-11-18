@@ -12,6 +12,8 @@ Creates a firewall filter rule on MikroTik device.
   - `protocol` (optional): Protocol
   - `in_interface` (optional): Input interface
   - `out_interface` (optional): Output interface
+  - `in_interface_list` (optional): Input interface list
+  - `out_interface_list` (optional): Output interface list
   - `connection_state` (optional): Connection state
   - `connection_nat_state` (optional): Connection NAT state
   - `src_address_list` (optional): Source address list
@@ -58,7 +60,7 @@ Gets detailed information about a specific firewall filter rule.
 Updates an existing firewall filter rule.
 - Parameters:
   - `rule_id` (required): Rule ID
-  - All parameters from `create_filter_rule` (optional)
+  - All parameters from `create_filter_rule` except `place_before` (optional); use `move_filter_rule` to change the position
 - Example:
   ```
   mikrotik_update_filter_rule(rule_id="*1", comment="Updated rule")

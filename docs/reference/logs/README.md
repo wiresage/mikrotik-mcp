@@ -4,13 +4,11 @@
 Gets logs from MikroTik device with filtering options.
 - Parameters:
   - `topics` (optional): Log topics
-  - `action` (optional): Log action
   - `time_filter` (optional): Time filter
   - `message_filter` (optional): Message filter
   - `prefix_filter` (optional): Prefix filter
   - `limit` (optional): Result limit
-  - `follow` (optional): Follow logs
-  - `print_as` (optional): Output format
+  - `print_as` (optional): Output format: `plain` (default), `detail` or `terse`
 - Example:
   ```
   mikrotik_get_logs(topics="firewall", limit=100)
@@ -88,23 +86,21 @@ Gets statistics about log entries.
   ```
 
 #### `mikrotik_export_logs`
-Exports logs to a file on the MikroTik device.
+Exports logs to a `.txt` file on the MikroTik device.
 - Parameters:
-  - `filename` (optional): Export filename
+  - `filename` (optional): Export filename (default `logs_export_<timestamp>`; RouterOS adds `.txt`)
   - `topics` (optional): Log topics
   - `time_filter` (optional): Time filter
-  - `format` (optional): Export format ("plain" or "csv")
 - Example:
   ```
   mikrotik_export_logs(filename="security-logs.txt", topics="firewall")
   ```
 
 #### `mikrotik_monitor_logs`
-Monitors logs in real-time for a specified duration.
+Watches for new log entries for a limited duration and returns the ones that arrived.
 - Parameters:
   - `topics` (optional): Log topics
-  - `action` (optional): Log action
-  - `duration` (optional): Monitor duration in seconds
+  - `duration` (optional, default `10`): Seconds to wait for new entries, capped at 60
 - Example:
   ```
   mikrotik_monitor_logs(topics="firewall", duration=30)

@@ -93,11 +93,9 @@ Gets a specific routing table.
   ```
 
 #### `mikrotik_check_route_path`
-Checks the route path to a destination.
+Checks the route MikroTik would use to reach a destination.
 - Parameters:
   - `destination` (required): Destination address
-  - `source` (optional): Source address
-  - `routing_table` (optional): Routing table name from `/routing table` (RouterOS 6 called this the routing mark)
 - Example:
   ```
   mikrotik_check_route_path(destination="8.8.8.8")

@@ -77,8 +77,9 @@ Gets one rule in detail. Runs `/ipv6 firewall filter print detail where .id=…`
 
 Updates an existing rule. Runs `/ipv6 firewall filter set …`.
 
-Takes `rule_id` plus any of the `create_ipv6_filter_rule` fields. Pass an empty
-string to clear an optional field (e.g. `src_address=""`).
+Takes `rule_id` plus any of the `create_ipv6_filter_rule` fields except
+`place_before` (use `move_ipv6_filter_rule` to change the position). Pass an
+empty string to clear an optional field (e.g. `src_address=""`).
 
 - Example:
   ```
@@ -88,6 +89,8 @@ string to clear an optional field (e.g. `src_address=""`).
 ## `remove_ipv6_filter_rule`
 
 Removes a rule. Runs `/ipv6 firewall filter remove …`.
+
+- Parameters: `rule_id` (required)
 
 - Example:
   ```
@@ -109,6 +112,8 @@ Moves a rule to another position. Runs `/ipv6 firewall filter move …`.
 ## `enable_ipv6_filter_rule` / `disable_ipv6_filter_rule`
 
 Toggles a rule without removing it.
+
+- Parameters: `rule_id` (required)
 
 - Example:
   ```

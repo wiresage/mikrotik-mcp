@@ -53,7 +53,7 @@ Gets detailed information about a specific NAT rule.
 Updates an existing NAT rule.
 - Parameters:
   - `rule_id` (required): Rule ID
-  - All parameters from `create_nat_rule` (optional)
+  - All parameters from `create_nat_rule` except `place_before` (optional); use `move_nat_rule` to change the position
 - Example:
   ```
   mikrotik_update_nat_rule(rule_id="*1", comment="Updated NAT rule")

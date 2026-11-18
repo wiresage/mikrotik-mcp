@@ -89,6 +89,8 @@ than as a successful update.
 Removes the matching entry. Removing a hostname entry also clears the dynamic
 entries RouterOS derived from it.
 
+- Parameters: `family`, `list_name`, `address` (all required)
+
 - Example:
   ```
   remove_address_list_entry(family="ipv4", list_name="trusted", address="203.0.113.0/24")
@@ -97,6 +99,8 @@ entries RouterOS derived from it.
 ## `enable_address_list_entry` / `disable_address_list_entry`
 
 Toggles an entry without removing it.
+
+- Parameters: `family`, `list_name`, `address` (all required)
 
 - Example:
   ```
