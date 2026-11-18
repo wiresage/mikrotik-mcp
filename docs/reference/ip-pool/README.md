@@ -1,6 +1,6 @@
 # IP Pool Management
 
-## `mikrotik_create_ip_pool`
+## `create_ip_pool`
 Creates an IP pool on MikroTik device.
 - Parameters:
   - `name` (required): Pool name
@@ -9,10 +9,10 @@ Creates an IP pool on MikroTik device.
   - `comment` (optional): Description
 - Example:
   ```
-  mikrotik_create_ip_pool(name="pool1", ranges="192.168.1.100-192.168.1.200")
+  create_ip_pool(name="pool1", ranges="192.168.1.100-192.168.1.200")
   ```
 
-## `mikrotik_list_ip_pools`
+## `list_ip_pools`
 Lists IP pools on MikroTik device.
 - Parameters:
   - `name_filter` (optional): Filter by name
@@ -20,19 +20,19 @@ Lists IP pools on MikroTik device.
   - `include_used` (optional): Include used addresses
 - Example:
   ```
-  mikrotik_list_ip_pools()
+  list_ip_pools()
   ```
 
-## `mikrotik_get_ip_pool`
+## `get_ip_pool`
 Gets detailed information about a specific IP pool.
 - Parameters:
   - `name` (required): Pool name
 - Example:
   ```
-  mikrotik_get_ip_pool(name="pool1")
+  get_ip_pool(name="pool1")
   ```
 
-## `mikrotik_update_ip_pool`
+## `update_ip_pool`
 Updates an existing IP pool.
 - Parameters:
   - `name` (required): Current pool name
@@ -42,19 +42,19 @@ Updates an existing IP pool.
   - `comment` (optional): New description
 - Example:
   ```
-  mikrotik_update_ip_pool(name="pool1", ranges="192.168.1.100-192.168.1.250")
+  update_ip_pool(name="pool1", ranges="192.168.1.100-192.168.1.250")
   ```
 
-## `mikrotik_remove_ip_pool`
+## `remove_ip_pool`
 Removes an IP pool from MikroTik device.
 - Parameters:
   - `name` (required): Pool name
 - Example:
   ```
-  mikrotik_remove_ip_pool(name="pool1")
+  remove_ip_pool(name="pool1")
   ```
 
-## `mikrotik_list_ip_pool_used`
+## `list_ip_pool_used`
 Lists used addresses from IP pools.
 - Parameters:
   - `pool_name` (optional): Filter by pool name
@@ -63,15 +63,15 @@ Lists used addresses from IP pools.
   - `info_filter` (optional): Filter by info
 - Example:
   ```
-  mikrotik_list_ip_pool_used(pool_name="pool1")
+  list_ip_pool_used(pool_name="pool1")
   ```
 
-## `mikrotik_expand_ip_pool`
+## `expand_ip_pool`
 Expands an existing IP pool by adding more ranges.
 - Parameters:
   - `name` (required): Pool name
   - `additional_ranges` (required): Additional IP ranges
 - Example:
   ```
-  mikrotik_expand_ip_pool(name="pool1", additional_ranges="192.168.1.251-192.168.1.254")
+  expand_ip_pool(name="pool1", additional_ranges="192.168.1.251-192.168.1.254")
   ```

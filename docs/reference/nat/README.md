@@ -1,6 +1,6 @@
 # NAT Rules Management
 
-## `mikrotik_create_nat_rule`
+## `create_nat_rule`
 Creates a NAT rule on MikroTik device.
 - Parameters:
   - `chain` (required): Chain type ("srcnat" or "dstnat")
@@ -21,10 +21,10 @@ Creates a NAT rule on MikroTik device.
   - `place_before` (optional): Rule placement
 - Example:
   ```
-  mikrotik_create_nat_rule(chain="srcnat", action="masquerade", out_interface="ether1")
+  create_nat_rule(chain="srcnat", action="masquerade", out_interface="ether1")
   ```
 
-## `mikrotik_list_nat_rules`
+## `list_nat_rules`
 Lists NAT rules on MikroTik device.
 - Parameters:
   - `chain_filter` (optional): Filter by chain
@@ -37,61 +37,61 @@ Lists NAT rules on MikroTik device.
   - `invalid_only` (optional): Show only invalid rules
 - Example:
   ```
-  mikrotik_list_nat_rules(chain_filter="srcnat")
+  list_nat_rules(chain_filter="srcnat")
   ```
 
-## `mikrotik_get_nat_rule`
+## `get_nat_rule`
 Gets detailed information about a specific NAT rule.
 - Parameters:
   - `rule_id` (required): Rule ID
 - Example:
   ```
-  mikrotik_get_nat_rule(rule_id="*1")
+  get_nat_rule(rule_id="*1")
   ```
 
-## `mikrotik_update_nat_rule`
+## `update_nat_rule`
 Updates an existing NAT rule.
 - Parameters:
   - `rule_id` (required): Rule ID
   - All parameters from `create_nat_rule` (optional)
 - Example:
   ```
-  mikrotik_update_nat_rule(rule_id="*1", comment="Updated NAT rule")
+  update_nat_rule(rule_id="*1", comment="Updated NAT rule")
   ```
 
-## `mikrotik_remove_nat_rule`
+## `remove_nat_rule`
 Removes a NAT rule from MikroTik device.
 - Parameters:
   - `rule_id` (required): Rule ID
 - Example:
   ```
-  mikrotik_remove_nat_rule(rule_id="*1")
+  remove_nat_rule(rule_id="*1")
   ```
 
-## `mikrotik_move_nat_rule`
+## `move_nat_rule`
 Moves a NAT rule to a different position.
 - Parameters:
   - `rule_id` (required): Rule ID
   - `destination` (required): New position
 - Example:
   ```
-  mikrotik_move_nat_rule(rule_id="*1", destination=0)
+  move_nat_rule(rule_id="*1", destination=0)
   ```
 
-## `mikrotik_enable_nat_rule`
+## `enable_nat_rule`
 Enables a NAT rule.
 - Parameters:
   - `rule_id` (required): Rule ID
 - Example:
   ```
-  mikrotik_enable_nat_rule(rule_id="*1")
+  enable_nat_rule(rule_id="*1")
   ```
 
-## `mikrotik_disable_nat_rule`
+## `disable_nat_rule`
 Disables a NAT rule.
 - Parameters:
   - `rule_id` (required): Rule ID
 - Example:
   ```
-  mikrotik_disable_nat_rule(rule_id="*1")
+  disable_nat_rule(rule_id="*1")
   ```

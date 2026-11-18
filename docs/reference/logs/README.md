@@ -1,6 +1,6 @@
 ### Log Management
 
-#### `mikrotik_get_logs`
+#### `get_logs`
 Gets logs from MikroTik device with filtering options.
 - Parameters:
   - `topics` (optional): Log topics
@@ -13,10 +13,10 @@ Gets logs from MikroTik device with filtering options.
   - `print_as` (optional): Output format
 - Example:
   ```
-  mikrotik_get_logs(topics="firewall", limit=100)
+  get_logs(topics="firewall", limit=100)
   ```
 
-#### `mikrotik_get_logs_by_severity`
+#### `get_logs_by_severity`
 Gets logs filtered by severity level.
 - Parameters:
   - `severity` (required): Severity level ("debug", "info", "warning", "error", "critical")
@@ -24,10 +24,10 @@ Gets logs filtered by severity level.
   - `limit` (optional): Result limit
 - Example:
   ```
-  mikrotik_get_logs_by_severity(severity="error", limit=50)
+  get_logs_by_severity(severity="error", limit=50)
   ```
 
-#### `mikrotik_get_logs_by_topic`
+#### `get_logs_by_topic`
 Gets logs for a specific topic/facility.
 - Parameters:
   - `topic` (required): Log topic
@@ -35,10 +35,10 @@ Gets logs for a specific topic/facility.
   - `limit` (optional): Result limit
 - Example:
   ```
-  mikrotik_get_logs_by_topic(topic="system")
+  get_logs_by_topic(topic="system")
   ```
 
-#### `mikrotik_search_logs`
+#### `search_logs`
 Searches logs for a specific term.
 - Parameters:
   - `search_term` (required): Search term
@@ -47,10 +47,10 @@ Searches logs for a specific term.
   - `limit` (optional): Result limit
 - Example:
   ```
-  mikrotik_search_logs(search_term="login failed")
+  search_logs(search_term="login failed")
   ```
 
-#### `mikrotik_get_system_events`
+#### `get_system_events`
 Gets system-related log events.
 - Parameters:
   - `event_type` (optional): Event type
@@ -58,36 +58,36 @@ Gets system-related log events.
   - `limit` (optional): Result limit
 - Example:
   ```
-  mikrotik_get_system_events(event_type="reboot")
+  get_system_events(event_type="reboot")
   ```
 
-#### `mikrotik_get_security_logs`
+#### `get_security_logs`
 Gets security-related log entries.
 - Parameters:
   - `time_filter` (optional): Time filter
   - `limit` (optional): Result limit
 - Example:
   ```
-  mikrotik_get_security_logs(limit=100)
+  get_security_logs(limit=100)
   ```
 
-#### `mikrotik_clear_logs`
+#### `clear_logs`
 Clears all logs from MikroTik device.
 - Parameters: None
 - Example:
   ```
-  mikrotik_clear_logs()
+  clear_logs()
   ```
 
-#### `mikrotik_get_log_statistics`
+#### `get_log_statistics`
 Gets statistics about log entries.
 - Parameters: None
 - Example:
   ```
-  mikrotik_get_log_statistics()
+  get_log_statistics()
   ```
 
-#### `mikrotik_export_logs`
+#### `export_logs`
 Exports logs to a file on the MikroTik device.
 - Parameters:
   - `filename` (optional): Export filename
@@ -96,10 +96,10 @@ Exports logs to a file on the MikroTik device.
   - `format` (optional): Export format ("plain" or "csv")
 - Example:
   ```
-  mikrotik_export_logs(filename="security-logs.txt", topics="firewall")
+  export_logs(filename="security-logs.txt", topics="firewall")
   ```
 
-#### `mikrotik_monitor_logs`
+#### `monitor_logs`
 Monitors logs in real-time for a specified duration.
 - Parameters:
   - `topics` (optional): Log topics
@@ -107,6 +107,6 @@ Monitors logs in real-time for a specified duration.
   - `duration` (optional): Monitor duration in seconds
 - Example:
   ```
-  mikrotik_monitor_logs(topics="firewall", duration=30)
+  monitor_logs(topics="firewall", duration=30)
   ```
 

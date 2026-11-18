@@ -29,3 +29,8 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
 - **[Queue](queue/README.md)** - Queue Types, Trees, and Simple Queues
 - **[Safe Mode](safe-mode/README.md)** - Safe Mode Session Management
+- **[IPsec](ipsec/README.md)** - IPsec Peers, Policies, Profiles, Proposals and Live Tunnel State
+- **[System](system/README.md)** - Resource, Health, Clock, RouterBOARD and Package Information
+- **[Scheduler](scheduler/README.md)** - Schedulers and Scripts
+- **[Netwatch](netwatch/README.md)** - Netwatch Probes with Live Status
+- **[IP Services](services/README.md)** - Management Services and Their Address Restrictions

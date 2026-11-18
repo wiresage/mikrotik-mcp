@@ -89,7 +89,7 @@ The server will start and display:
 
 **List IP Addresses:**
 ```bash
-curl -X POST http://localhost:8000/mikrotik-mcp-server/mikrotik_list_ip_addresses \
+curl -X POST http://localhost:8000/mikrotik-mcp-server/list_ip_addresses \
   -H "Authorization: Bearer your-secret-key" \
   -H "Content-Type: application/json" \
   -d '{}'
