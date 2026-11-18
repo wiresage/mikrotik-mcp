@@ -22,9 +22,8 @@ See [Usage Examples](usage-examples.md) for complete examples including:
 ### Wireless Configuration
 - Create Wireless Interface
 - List and Manage Wireless Interfaces
-- Wireless Security Profile Management
+- Wireless Security
 - Wireless Network Operations
-- Wireless Access List Management
 - Complete WiFi Network Setup Examples
 - Monitoring and Troubleshooting
 
@@ -34,6 +33,5 @@ See [Usage Examples](usage-examples.md) for complete examples including:
 - Backup and Restore Process
 - Basic Home Network Setup
 - Guest Network Setup
-- Enterprise Network Setup
 - Dual-Band Setup
 - Point-to-Point Wireless Link

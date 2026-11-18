@@ -83,13 +83,13 @@ mcpo --port 8000 --api-key "your-secret-key" --config ./mcp-config.json
 
 The server will start and display:
 - Server running on `http://0.0.0.0:8000`
-- Interactive API docs available at `http://localhost:8000/docs`
+- Interactive API docs available at `http://localhost:8000/mikrotik-mcp-server/docs`
 
 ### cURL Examples
 
 **List IP Addresses:**
 ```bash
-curl -X POST http://localhost:8000/mikrotik-mcp-server/mikrotik_list_ip_addresses \
+curl -X POST http://localhost:8000/mikrotik-mcp-server/list_ip_addresses \
   -H "Authorization: Bearer your-secret-key" \
   -H "Content-Type: application/json" \
   -d '{}'

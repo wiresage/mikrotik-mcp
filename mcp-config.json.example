@@ -1,15 +1,14 @@
 {
   "mcpServers": {
     "mikrotik-mcp-server": {
-      "command": "${PATH_TO_PYTHON_EXECUTE_ABLE_FILE}:-python",
-      "args": [
-          "${PATH_TO_SERVER_PY}:-mikrotik-mcp/src/mcp_mikrotik/server.py",
-          "--password", "${PASSWORD}:-admin",
-          "--host", "${HOST}:-127.0.0.1",
-          "--port", "${SSH_PORT}:-22",
-          "--username", "${USERNAME}:-admin"
-      ],
-      "env": {}
+      "command": "uvx",
+      "args": ["mcp-server-mikrotik"],
+      "env": {
+        "MIKROTIK_HOST": "192.168.88.1",
+        "MIKROTIK_USERNAME": "admin",
+        "MIKROTIK_PASSWORD": "your_password",
+        "MIKROTIK_PORT": "22"
+      }
     }
   }
 }

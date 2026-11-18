@@ -57,8 +57,8 @@ spawned process:
 {
   "mcpServers": {
     "mikrotik-mcp-server": {
-      "command": "python",
-      "args": ["-m", "mcp_mikrotik.server"],
+      "command": "uvx",
+      "args": ["mcp-server-mikrotik"],
       "env": {
         "MIKROTIK_INVENTORY_FILE": "/etc/mikrotik/inventory.yaml"
       }
@@ -80,8 +80,8 @@ no escaped quotes:
 {
   "mcpServers": {
     "mikrotik-mcp-server": {
-      "command": "python",
-      "args": ["-m", "mcp_mikrotik.server"],
+      "command": "uvx",
+      "args": ["mcp-server-mikrotik"],
       "env": {
         "MIKROTIK_INVENTORY": "[{title: TitleA, host: 127.0.0.1, username: admin, password: admin, region: NL, tags: [tag1]}, {title: TitleB, host: 192.168.88.1, username: admin, region: DE}]"
       }

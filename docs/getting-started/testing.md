@@ -1,31 +1,12 @@
-# Running Integration Tests
+# Running Tests
 
-This project uses **pytest** for integration testing against a temporary MikroTik RouterOS container.
-
-1. Make sure you have **Docker** installed and running.
-2. Install dependencies:
-
-   ```bash
-   uv sync
-   ```
-3. Run the tests:
-
-   ```bash
-   uv run pytest -v
-   ```
-
-   This will:
-
-   * Spin up a MikroTik RouterOS container
-   * Run integration tests (create, list, and delete user)
-   * Tear down the container automatically
-
-By default, tests are marked with `@pytest.mark.integration`.
-You can run only integration tests with:
+This project uses **pytest**. Install the locked environment first:
 
 ```bash
-uv run pytest -m integration -v
+uv sync --frozen
 ```
+
+## Unit tests
 
 The unit tests need neither Docker nor a router and are what CI runs on every pull
 request (Python 3.10, 3.11 and 3.12):
@@ -33,3 +14,15 @@ request (Python 3.10, 3.11 and 3.12):
 ```bash
 uv run pytest -m "not integration"
 ```
+
+## Integration tests
+
+Integration tests are marked `integration` and need **Docker** running. They start a
+temporary MikroTik RouterOS container, create, list and delete a user, then remove
+the container:
+
+```bash
+uv run pytest -m integration -v
+```
+
+Run `uv run pytest` for both suites.
