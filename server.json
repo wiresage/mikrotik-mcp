@@ -67,7 +67,7 @@
         },
         {
           "name": "MIKROTIK_INVENTORY_FILE",
-          "description": "Path to a YAML file listing multiple MikroTik devices (title, host, port, username, password, key_filename, tags, region). See docs/reference/inventory.",
+          "description": "Path to a YAML file listing multiple MikroTik devices (title, host, port, username, password, key_filename, tags, region). See docs/reference/devices/inventory.md.",
           "isRequired": false,
           "format": "string",
           "isSecret": false

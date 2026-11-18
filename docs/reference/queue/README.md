@@ -1,6 +1,6 @@
 # Queue Management
 
-MikroTik provides three queue subsystems managed by this scope: **Queue Types** (disciplines), **Queue Trees** (hierarchical / HTB), and **Simple Queues** (per-target rate limiting).
+MikroTik provides three queue subsystems managed by this area: **Queue Types** (disciplines), **Queue Trees** (hierarchical / HTB), and **Simple Queues** (per-target rate limiting).
 
 ---
 
