@@ -21,6 +21,11 @@ claude mcp add --transport stdio mikrotik \
   -- uvx mcp-server-mikrotik
 ```
 
+> **Windows PowerShell:** PowerShell drops a bare `--` when it runs the `claude` command, which then fails with
+> `missing required argument 'commandOrUrl'`. Write the separator as `'--'`, or run the command from Git Bash or cmd.
+> If the server then shows `Failed to connect` with error `-32022`, see
+> [Claude Code](../integrations/claude-code.md#troubleshooting).
+
 **Clients configured with JSON** (Claude Desktop, Cursor and others):
 
 ```json

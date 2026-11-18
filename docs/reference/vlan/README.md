@@ -1,6 +1,6 @@
 # VLAN Interface Management
 
-## `mikrotik_create_vlan_interface`
+## `create_vlan_interface`
 Creates a VLAN interface on MikroTik device.
 - Parameters:
   - `name` (required): VLAN interface name
@@ -14,10 +14,10 @@ Creates a VLAN interface on MikroTik device.
   - `arp_timeout` (optional): ARP timeout
 - Example:
   ```
-  mikrotik_create_vlan_interface(name="vlan100", vlan_id=100, interface="ether1")
+  create_vlan_interface(name="vlan100", vlan_id=100, interface="ether1")
   ```
 
-## `mikrotik_list_vlan_interfaces`
+## `list_vlan_interfaces`
 Lists VLAN interfaces on MikroTik device.
 - Parameters:
   - `name_filter` (optional): Filter by name
@@ -26,19 +26,19 @@ Lists VLAN interfaces on MikroTik device.
   - `disabled_only` (optional): Show only disabled interfaces
 - Example:
   ```
-  mikrotik_list_vlan_interfaces(vlan_id_filter=100)
+  list_vlan_interfaces(vlan_id_filter=100)
   ```
 
-## `mikrotik_get_vlan_interface`
+## `get_vlan_interface`
 Gets detailed information about a specific VLAN interface.
 - Parameters:
   - `name` (required): VLAN interface name
 - Example:
   ```
-  mikrotik_get_vlan_interface(name="vlan100")
+  get_vlan_interface(name="vlan100")
   ```
 
-## `mikrotik_update_vlan_interface`
+## `update_vlan_interface`
 Updates an existing VLAN interface.
 - Parameters:
   - `name` (required): Current VLAN interface name
@@ -53,14 +53,14 @@ Updates an existing VLAN interface.
   - `arp_timeout` (optional): ARP timeout
 - Example:
   ```
-  mikrotik_update_vlan_interface(name="vlan100", comment="Production VLAN")
+  update_vlan_interface(name="vlan100", comment="Production VLAN")
   ```
 
-## `mikrotik_remove_vlan_interface`
+## `remove_vlan_interface`
 Removes a VLAN interface from MikroTik device.
 - Parameters:
   - `name` (required): VLAN interface name
 - Example:
   ```
-  mikrotik_remove_vlan_interface(name="vlan100")
+  remove_vlan_interface(name="vlan100")
   ```

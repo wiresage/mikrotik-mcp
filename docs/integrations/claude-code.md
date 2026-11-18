@@ -50,6 +50,27 @@ claude mcp add --transport stdio mikrotik \
 
 Inside Claude Code, run `/mcp` to check that the server is connected and all tools are listed.
 
+## Troubleshooting
+
+**`missing required argument 'commandOrUrl'` on Windows.** PowerShell drops a bare `--` when it runs the
+`claude` command, so `uvx mcp-server-mikrotik` is swallowed by the preceding `--env` option. Write the
+separator as `'--'`, or run the command from Git Bash or cmd. The server name goes before the `--env` options.
+
+**`Failed to connect` with error `-32022`.** The first start through `uvx` can take several seconds: it
+downloads the package, and importing the MCP SDK alone takes a couple of seconds. Claude Code probes a stdio
+server for about two seconds before it falls back, and a server that answers the probe late then rejects the
+`initialize` request that follows. Checked with Claude Code 2.1.278. Add `MCP_PROTOCOL_NEGOTIATION=legacy` to
+the server's environment so that Claude Code skips the probe:
+
+```bash
+claude mcp add --transport stdio mikrotik \
+  --env MCP_PROTOCOL_NEGOTIATION=legacy \
+  --env MIKROTIK_HOST=192.168.88.1 \
+  --env MIKROTIK_USERNAME=admin \
+  --env MIKROTIK_PASSWORD=your_password \
+  -- uvx mcp-server-mikrotik
+```
+
 ## Manage
 
 ```bash

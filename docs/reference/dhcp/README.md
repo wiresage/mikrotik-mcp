@@ -1,6 +1,6 @@
 # DHCP Server Management
 
-## `mikrotik_create_dhcp_server`
+## `create_dhcp_server`
 Creates a DHCP server on MikroTik device.
 - Parameters:
   - `name` (required): DHCP server name
@@ -13,10 +13,10 @@ Creates a DHCP server on MikroTik device.
   - `comment` (optional): Description
 - Example:
   ```
-  mikrotik_create_dhcp_server(name="dhcp-vlan100", interface="vlan100", address_pool="pool-vlan100")
+  create_dhcp_server(name="dhcp-vlan100", interface="vlan100", address_pool="pool-vlan100")
   ```
 
-## `mikrotik_list_dhcp_servers`
+## `list_dhcp_servers`
 Lists DHCP servers on MikroTik device.
 - Parameters:
   - `name_filter` (optional): Filter by name
@@ -25,19 +25,19 @@ Lists DHCP servers on MikroTik device.
   - `invalid_only` (optional): Show only invalid servers
 - Example:
   ```
-  mikrotik_list_dhcp_servers()
+  list_dhcp_servers()
   ```
 
-## `mikrotik_get_dhcp_server`
+## `get_dhcp_server`
 Gets detailed information about a specific DHCP server.
 - Parameters:
   - `name` (required): DHCP server name
 - Example:
   ```
-  mikrotik_get_dhcp_server(name="dhcp-vlan100")
+  get_dhcp_server(name="dhcp-vlan100")
   ```
 
-## `mikrotik_list_dhcp_leases`
+## `list_dhcp_leases`
 Lists raw detailed IPv4 DHCP leases. Identity filters use the active lease fields.
 - Parameters:
   - `address_filter` (optional): Filter active address
@@ -54,10 +54,10 @@ Lists raw detailed IPv4 DHCP leases. Identity filters use the active lease field
   - `lease_time_filter` matches the RouterOS `lease-time` field.
 - Example:
   ```
-  mikrotik_list_dhcp_leases(status_filter="bound", last_seen_within="24h")
+  list_dhcp_leases(status_filter="bound", last_seen_within="24h")
   ```
 
-## `mikrotik_list_dhcpv6_bindings`
+## `list_dhcpv6_bindings`
 Lists raw detailed DHCPv6 bindings.
 - Parameters:
   - `address_filter` (optional): Filter assigned address or prefix
@@ -72,10 +72,10 @@ Lists raw detailed DHCPv6 bindings.
   - `lease_time_filter` matches the RouterOS `life-time` field.
 - Example:
   ```
-  mikrotik_list_dhcpv6_bindings(status_filter="bound", last_seen_within="1h")
+  list_dhcpv6_bindings(status_filter="bound", last_seen_within="1h")
   ```
 
-## `mikrotik_create_dhcp_network`
+## `create_dhcp_network`
 Creates a DHCP network configuration.
 - Parameters:
   - `network` (required): Network address
@@ -89,10 +89,37 @@ Creates a DHCP network configuration.
   - `comment` (optional): Description
 - Example:
   ```
-  mikrotik_create_dhcp_network(network="192.168.1.0/24", gateway="192.168.1.1", dns_servers=["8.8.8.8", "8.8.4.4"])
+  create_dhcp_network(network="192.168.1.0/24", gateway="192.168.1.1", dns_servers=["8.8.8.8", "8.8.4.4"])
   ```
 
-## `mikrotik_create_dhcp_pool`
+## `update_dhcp_network`
+Updates fields on an existing DHCP network entry.
+- Parameters:
+  - `network` (required): The network address that identifies the entry
+  - `gateway` (optional): Gateway address
+  - `netmask` (optional): Network mask
+  - `dns_servers` (optional): DNS server list
+  - `domain` (optional): Domain name
+  - `wins_servers` (optional): WINS server list
+  - `ntp_servers` (optional): NTP server list
+  - `dhcp_option` (optional): DHCP options
+  - `comment` (optional): Description
+- Pass an empty list for `dns_servers`, `wins_servers`, `ntp_servers` or `dhcp_option`, or `""` for `domain`, to clear that field.
+- Example:
+  ```
+  update_dhcp_network(network="192.168.1.0/24", dns_servers=["1.1.1.1"])
+  ```
+
+## `remove_dhcp_network`
+Removes a DHCP network entry. Answers "not found" when no entry has that network address.
+- Parameters:
+  - `network` (required): Network address
+- Example:
+  ```
+  remove_dhcp_network(network="192.168.1.0/24")
+  ```
+
+## `create_dhcp_pool`
 Creates a DHCP address pool.
 - Parameters:
   - `name` (required): Pool name
@@ -101,14 +128,14 @@ Creates a DHCP address pool.
   - `comment` (optional): Description
 - Example:
   ```
-  mikrotik_create_dhcp_pool(name="pool-vlan100", ranges="192.168.1.10-192.168.1.250")
+  create_dhcp_pool(name="pool-vlan100", ranges="192.168.1.10-192.168.1.250")
   ```
 
-## `mikrotik_remove_dhcp_server`
+## `remove_dhcp_server`
 Removes a DHCP server from MikroTik device.
 - Parameters:
   - `name` (required): DHCP server name
 - Example:
   ```
-  mikrotik_remove_dhcp_server(name="dhcp-vlan100")
+  remove_dhcp_server(name="dhcp-vlan100")
   ```
