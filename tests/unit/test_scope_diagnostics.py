@@ -25,7 +25,7 @@ class Reply(FakeExecutor):
 
 @pytest.fixture()
 def m():
-    from mcp_mikrotik.scope import diagnostics
+    from mcp_mikrotik.scope.monitoring import diagnostics
     return diagnostics
 
 

@@ -10,7 +10,7 @@ def _run(coro):
 
 
 def test_remove_by_positional_number(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ip_address as m
+    from mcp_mikrotik.scope.ip import address as m
 
     seen = []
 
@@ -29,7 +29,7 @@ def test_remove_by_positional_number(ctx, monkeypatch):
 
 
 def test_remove_by_internal_id(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ip_address as m
+    from mcp_mikrotik.scope.ip import address as m
 
     seen = []
 
@@ -46,7 +46,7 @@ def test_remove_by_internal_id(ctx, monkeypatch):
 
 
 def test_remove_by_address_value(ctx, monkeypatch):
-    from mcp_mikrotik.scope import ip_address as m
+    from mcp_mikrotik.scope.ip import address as m
 
     seen = []
 

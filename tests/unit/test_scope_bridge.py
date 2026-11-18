@@ -17,7 +17,7 @@ def _run(coro):
 
 
 def _patch(monkeypatch, fn):
-    from mcp_mikrotik.scope import bridge
+    from mcp_mikrotik.scope.interfaces import bridge
 
     monkeypatch.setattr(bridge, "execute_mikrotik_command", fn, raising=True)
     return bridge

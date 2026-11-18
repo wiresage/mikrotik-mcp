@@ -20,7 +20,7 @@ class DetailFake(FakeExecutor):
 
 
 def test_dhcp_lease_commands_and_device(ctx, monkeypatch):
-    from mcp_mikrotik.scope import dhcp
+    from mcp_mikrotik.scope.dhcp import dhcp
 
     fake = DetailFake()
     monkeypatch.setattr(dhcp, "execute_mikrotik_command", fake, raising=True)
@@ -45,7 +45,7 @@ def test_dhcp_lease_commands_and_device(ctx, monkeypatch):
 
 
 def test_dhcpv6_binding_commands(ctx, monkeypatch):
-    from mcp_mikrotik.scope import dhcp
+    from mcp_mikrotik.scope.dhcp import dhcp
 
     fake = DetailFake()
     monkeypatch.setattr(dhcp, "execute_mikrotik_command", fake, raising=True)
@@ -67,7 +67,7 @@ def test_dhcpv6_binding_commands(ctx, monkeypatch):
 
 @pytest.mark.parametrize("function_name", ["mikrotik_list_dhcp_leases", "mikrotik_list_dhcpv6_bindings"])
 def test_last_seen_duration_validation(function_name, ctx, monkeypatch):
-    from mcp_mikrotik.scope import dhcp
+    from mcp_mikrotik.scope.dhcp import dhcp
 
     fake = DetailFake()
     monkeypatch.setattr(dhcp, "execute_mikrotik_command", fake, raising=True)
@@ -78,7 +78,7 @@ def test_last_seen_duration_validation(function_name, ctx, monkeypatch):
 
 
 def test_neighbor_commands_and_filters(ctx, monkeypatch):
-    from mcp_mikrotik.scope import neighbors
+    from mcp_mikrotik.scope.ip import neighbors
 
     fake = DetailFake()
     monkeypatch.setattr(neighbors, "execute_mikrotik_command", fake, raising=True)
@@ -114,7 +114,8 @@ def test_client_table_tools_are_read_only():
 
 
 def test_empty_results(ctx, monkeypatch):
-    from mcp_mikrotik.scope import dhcp, neighbors
+    from mcp_mikrotik.scope.dhcp import dhcp
+    from mcp_mikrotik.scope.ip import neighbors
 
     async def empty(command, _ctx, device=None):
         return ""
@@ -135,7 +136,7 @@ def test_empty_results(ctx, monkeypatch):
 def test_dhcp_legend_only_is_treated_as_no_results(function_name, expected, ctx, monkeypatch):
     # RouterOS `print detail` returns a non-empty Flags legend even when no
     # row matches; a bare non-emptiness check would mistake that for a hit.
-    from mcp_mikrotik.scope import dhcp
+    from mcp_mikrotik.scope.dhcp import dhcp
 
     async def legend_only(command, _ctx, device=None):
         return "Flags: X - disabled, D - dynamic"
@@ -150,7 +151,7 @@ def test_dhcp_legend_only_is_treated_as_no_results(function_name, expected, ctx,
     ("mikrotik_list_ipv6_neighbors", "No IPv6 neighbors"),
 ])
 def test_neighbor_legend_only_is_treated_as_no_results(function_name, expected, ctx, monkeypatch):
-    from mcp_mikrotik.scope import neighbors
+    from mcp_mikrotik.scope.ip import neighbors
 
     async def legend_only(command, _ctx, device=None):
         return "Flags: X - disabled, D - dynamic"

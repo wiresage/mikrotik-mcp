@@ -18,7 +18,7 @@ def _cmd(fake, needle):
 # ---------------------------------------------------------------------------
 
 def test_ipv4_targets_the_ip_tree(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -28,7 +28,7 @@ def test_ipv4_targets_the_ip_tree(ctx, monkeypatch):
 
 
 def test_ipv6_targets_the_ipv6_tree(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -44,7 +44,7 @@ def test_ipv6_targets_the_ipv6_tree(ctx, monkeypatch):
 
 def test_ipv6_host_address_gets_128(ctx, monkeypatch):
     """`where address="2001:db8::5"` matches nothing; RouterOS stores /128."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -54,7 +54,7 @@ def test_ipv6_host_address_gets_128(ctx, monkeypatch):
 
 
 def test_ipv6_address_is_lowercased_and_compressed(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -65,7 +65,7 @@ def test_ipv6_address_is_lowercased_and_compressed(ctx, monkeypatch):
 
 
 def test_ipv6_prefix_is_left_alone(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -76,7 +76,7 @@ def test_ipv6_prefix_is_left_alone(ctx, monkeypatch):
 
 
 def test_ipv4_address_is_not_rewritten(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -89,7 +89,7 @@ def test_ipv4_address_is_not_rewritten(ctx, monkeypatch):
 
 def test_is_hostname_classifies_correctly():
     """FQDN detection decides whether an entry may be rewritten at all."""
-    from mcp_mikrotik.scope.firewall_address_list import _is_hostname
+    from mcp_mikrotik.scope.firewall.address_list import _is_hostname
 
     assert _is_hostname("one.one.one.one")
     assert _is_hostname("example.com")
@@ -100,7 +100,7 @@ def test_is_hostname_classifies_correctly():
 
 
 def test_hostname_is_passed_through_unchanged(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -117,7 +117,7 @@ def test_hostname_is_passed_through_unchanged(ctx, monkeypatch):
 def test_trailing_space_in_list_name_is_preserved(ctx, monkeypatch):
     """A real device had a list named "Axigen internal NS " with a trailing
     space; stripping it silently targets a different (nonexistent) list."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -128,7 +128,7 @@ def test_trailing_space_in_list_name_is_preserved(ctx, monkeypatch):
 
 
 def test_list_filter_keeps_the_exact_name(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -142,7 +142,7 @@ def test_list_filter_keeps_the_exact_name(ctx, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_create_minimal(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -154,7 +154,7 @@ def test_create_minimal(ctx, monkeypatch):
 
 
 def test_create_all_options(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -169,7 +169,7 @@ def test_create_all_options(ctx, monkeypatch):
 
 
 def test_create_rejection_is_not_reported_as_success(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def refuses(command, _ctx, device=None):
         return "no such item (4)"
@@ -187,7 +187,7 @@ def test_create_rejection_is_not_reported_as_success(ctx, monkeypatch):
 
 def test_static_only_excludes_dynamic_children(ctx, monkeypatch):
     """A hostname entry spawns dynamic children per resolved address."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -197,7 +197,7 @@ def test_static_only_excludes_dynamic_children(ctx, monkeypatch):
 
 
 def test_dynamic_only(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -208,7 +208,7 @@ def test_dynamic_only(ctx, monkeypatch):
 
 
 def test_partial_filters(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -222,7 +222,7 @@ def test_partial_filters(ctx, monkeypatch):
 
 
 def test_list_empty_result_message(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def empty(command, _ctx, device=None):
         return ""
@@ -238,7 +238,7 @@ def test_list_empty_result_message(ctx, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_get_not_found_on_legend_only_output(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def legend(command, _ctx, device=None):
         return "Flags: X - disabled, D - dynamic"
@@ -251,7 +251,7 @@ def test_get_not_found_on_legend_only_output(ctx, monkeypatch):
 
 
 def test_update_no_fields(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -263,7 +263,7 @@ def test_update_no_fields(ctx, monkeypatch):
 
 
 def test_update_missing_entry_is_not_success(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def absent(command, _ctx, device=None):
         if "count-only" in command:
@@ -279,7 +279,7 @@ def test_update_missing_entry_is_not_success(ctx, monkeypatch):
 
 
 def test_update_sets_and_clears(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -294,7 +294,7 @@ def test_update_sets_and_clears(ctx, monkeypatch):
 
 
 def test_update_rename_looks_up_the_new_list(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -305,7 +305,7 @@ def test_update_rename_looks_up_the_new_list(ctx, monkeypatch):
 
 
 def test_remove_missing_entry(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def absent(command, _ctx, device=None):
         return "0"
@@ -318,7 +318,7 @@ def test_remove_missing_entry(ctx, monkeypatch):
 
 
 def test_remove_existing_entry(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -333,7 +333,7 @@ def test_remove_existing_entry(ctx, monkeypatch):
 
 def test_enable_and_disable_wrappers(ctx, monkeypatch):
     """Must not repeat the positional-ctx bug tracked in #108."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -349,7 +349,7 @@ def test_enable_and_disable_wrappers(ctx, monkeypatch):
 
 
 def test_device_argument_is_forwarded(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -360,7 +360,7 @@ def test_device_argument_is_forwarded(ctx, monkeypatch):
 
 def test_fqdn_survives_ipv6_canonicalisation_on_create(ctx, monkeypatch):
     """An FQDN is a real entry type — it must not gain a /128."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -377,7 +377,7 @@ def test_fqdn_survives_ipv6_canonicalisation_on_create(ctx, monkeypatch):
 
 def test_update_rejects_a_refusal_that_says_neither_failure_nor_error(ctx, monkeypatch):
     """A read-only account answers "not enough permissions (9)"."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def refused(command, _ctx, device=None):
         if "count-only" in command:
@@ -396,7 +396,7 @@ def test_update_rejects_a_refusal_that_says_neither_failure_nor_error(ctx, monke
 
 def test_update_rejects_a_silent_no_op(ctx, monkeypatch):
     """Silent set, but the new value never lands — assert it, do not assume."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def silent_noop(command, _ctx, device=None):
         if "count-only" in command:
@@ -415,7 +415,7 @@ def test_update_rejects_a_silent_no_op(ctx, monkeypatch):
 
 
 def test_disable_inherits_the_update_guard(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def refused(command, _ctx, device=None):
         if "count-only" in command:
@@ -433,7 +433,7 @@ def test_disable_inherits_the_update_guard(ctx, monkeypatch):
 
 
 def test_remove_rejects_a_refusal_that_says_neither_failure_nor_error(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def refused(command, _ctx, device=None):
         if "count-only" in command:
@@ -450,7 +450,7 @@ def test_remove_rejects_a_refusal_that_says_neither_failure_nor_error(ctx, monke
 
 def test_remove_requires_the_entry_to_be_gone(ctx, monkeypatch):
     """Silent remove, entry still there — a false success on a firewall list."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     async def still_there(command, _ctx, device=None):
         if "count-only" in command:
@@ -467,7 +467,7 @@ def test_remove_requires_the_entry_to_be_gone(ctx, monkeypatch):
 
 def test_timeout_is_cleared_with_zero_not_an_unset_flag(ctx, monkeypatch):
     """This menu rejects "!timeout"; the empty value for a duration is 0."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     fake = FakeExecutor()
     monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
@@ -511,7 +511,7 @@ def _device(detail=DETAIL, count="1", after_remove="0", write=""):
 
 
 def test_create_success_response(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
@@ -522,7 +522,7 @@ def test_create_success_response(ctx, monkeypatch):
 
 
 def test_create_falls_back_when_the_entry_cannot_be_read_back(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command",
                         _device(detail="Flags: X - disabled, D - dynamic"), raising=True)
@@ -533,7 +533,7 @@ def test_create_falls_back_when_the_entry_cannot_be_read_back(ctx, monkeypatch):
 
 
 def test_get_success_response(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
@@ -544,7 +544,7 @@ def test_get_success_response(ctx, monkeypatch):
 
 
 def test_get_success_response_names_the_ipv6_family(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
@@ -554,7 +554,7 @@ def test_get_success_response_names_the_ipv6_family(ctx, monkeypatch):
 
 
 def test_update_success_response(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
@@ -565,7 +565,7 @@ def test_update_success_response(ctx, monkeypatch):
 
 
 def test_enable_success_response(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
@@ -576,7 +576,7 @@ def test_enable_success_response(ctx, monkeypatch):
 
 def test_remove_success_response(ctx, monkeypatch):
     """Present before the remove, absent after — the post-check must pass."""
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
@@ -586,7 +586,7 @@ def test_remove_success_response(ctx, monkeypatch):
 
 
 def test_list_success_response_labels_the_family(ctx, monkeypatch):
-    from mcp_mikrotik.scope import firewall_address_list as m
+    from mcp_mikrotik.scope.firewall import address_list as m
 
     monkeypatch.setattr(m, "execute_mikrotik_command", _device(), raising=True)
 
