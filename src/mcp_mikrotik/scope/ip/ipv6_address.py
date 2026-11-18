@@ -6,6 +6,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 from .._shared.selectors import resolve_item_id, item_count
+from .._shared.results import refused
 
 
 def _canonical_ipv6(value: str) -> str:
@@ -69,8 +70,8 @@ async def mikrotik_add_ipv6_address(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to add IPv6 address: {result}"
+    if refused(result):
+        return f"Failed to add IPv6 address: {result.strip()}"
 
     # Confirm by listing the interface's addresses. We deliberately query by
     # interface (not by the input address): with from_pool the stored prefix
@@ -200,7 +201,7 @@ async def mikrotik_remove_ipv6_address(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove IPv6 address: {result}"
+    if refused(result):
+        return f"Failed to remove IPv6 address: {result.strip()}"
 
     return f"IPv6 address '{address_id}' removed successfully."

@@ -4,6 +4,7 @@ from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import has_item_rows
+from .._shared.results import refused, is_missing
 
 
 # ───────────────────────────────────────────────
@@ -128,8 +129,8 @@ async def mikrotik_create_queue_type(
             if has_item_rows(details):
                 return f"Queue type created successfully:\n\n{details}"
             return f"Queue type created with ID: {type_id}"
-        elif "failure:" in result.lower() or "error" in result.lower():
-            return f"Failed to create queue type: {result}"
+        elif refused(result):
+            return f"Failed to create queue type: {result.strip()}"
 
     # Verify by fetching by name
     details_cmd = f'/queue type print detail where name="{name}"'
@@ -198,6 +199,8 @@ async def mikrotik_update_queue_type(
 ) -> str:
     """Updates an existing queue type's discipline-specific settings."""
     await ctx.info(f"Updating queue type: name={name}")
+    if await is_missing("/queue type", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Queue type '{name}' not found."
 
     cmd = f'/queue type set [find name="{name}"]'
 
@@ -235,8 +238,8 @@ async def mikrotik_update_queue_type(
     cmd += " " + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update queue type: {result}"
+    if refused(result):
+        return f"Failed to update queue type: {result.strip()}"
 
     lookup_name = new_name if new_name else name
     details_cmd = f'/queue type print detail where name="{lookup_name}"'
@@ -248,12 +251,14 @@ async def mikrotik_update_queue_type(
 async def mikrotik_remove_queue_type(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Removes a queue type from the MikroTik device."""
     await ctx.info(f"Removing queue type: name={name}")
+    if await is_missing("/queue type", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Queue type '{name}' not found."
 
     cmd = f'/queue type remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove queue type: {result}"
+    if refused(result):
+        return f"Failed to remove queue type: {result.strip()}"
     return f"Queue type '{name}' removed successfully."
 
 
@@ -324,8 +329,8 @@ async def mikrotik_create_queue_tree(
             if has_item_rows(details):
                 return f"Queue tree created successfully:\n\n{details}"
             return f"Queue tree created with ID: {tree_id}"
-        elif "failure:" in result.lower() or "error" in result.lower():
-            return f"Failed to create queue tree: {result}"
+        elif refused(result):
+            return f"Failed to create queue tree: {result.strip()}"
 
     details_cmd = f'/queue tree print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -405,6 +410,8 @@ async def mikrotik_update_queue_tree(
         priority: 1 (highest) – 8 (lowest)
     """
     await ctx.info(f"Updating queue tree: name={name}")
+    if await is_missing("/queue tree", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Queue tree '{name}' not found."
 
     cmd = f'/queue tree set [find name="{name}"]'
 
@@ -442,8 +449,8 @@ async def mikrotik_update_queue_tree(
     cmd += " " + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update queue tree: {result}"
+    if refused(result):
+        return f"Failed to update queue tree: {result.strip()}"
 
     lookup_name = new_name if new_name else name
     details_cmd = f'/queue tree print detail where name="{lookup_name}"'
@@ -455,12 +462,14 @@ async def mikrotik_update_queue_tree(
 async def mikrotik_remove_queue_tree(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Removes a queue tree from the MikroTik device."""
     await ctx.info(f"Removing queue tree: name={name}")
+    if await is_missing("/queue tree", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Queue tree '{name}' not found."
 
     cmd = f'/queue tree remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove queue tree: {result}"
+    if refused(result):
+        return f"Failed to remove queue tree: {result.strip()}"
     return f"Queue tree '{name}' removed successfully."
 
 
@@ -468,12 +477,14 @@ async def mikrotik_remove_queue_tree(ctx: Context, name: str, device: Optional[s
 async def mikrotik_enable_queue_tree(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Enables a queue tree."""
     await ctx.info(f"Enabling queue tree: name={name}")
+    if await is_missing("/queue tree", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Queue tree '{name}' not found."
 
     cmd = f'/queue tree set [find name="{name}"] disabled=no'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable queue tree: {result}"
+    if refused(result):
+        return f"Failed to enable queue tree: {result.strip()}"
 
     details_cmd = f'/queue tree print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -484,12 +495,14 @@ async def mikrotik_enable_queue_tree(ctx: Context, name: str, device: Optional[s
 async def mikrotik_disable_queue_tree(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Disables a queue tree."""
     await ctx.info(f"Disabling queue tree: name={name}")
+    if await is_missing("/queue tree", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Queue tree '{name}' not found."
 
     cmd = f'/queue tree set [find name="{name}"] disabled=yes'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable queue tree: {result}"
+    if refused(result):
+        return f"Failed to disable queue tree: {result.strip()}"
 
     details_cmd = f'/queue tree print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -570,8 +583,8 @@ async def mikrotik_create_simple_queue(
             if has_item_rows(details):
                 return f"Simple queue created successfully:\n\n{details}"
             return f"Simple queue created with ID: {queue_id}"
-        elif "failure:" in result.lower() or "error" in result.lower():
-            return f"Failed to create simple queue: {result}"
+        elif refused(result):
+            return f"Failed to create simple queue: {result.strip()}"
 
     details_cmd = f'/queue simple print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -655,6 +668,8 @@ async def mikrotik_update_simple_queue(
         priority: 1 (highest) – 8 (lowest)
     """
     await ctx.info(f"Updating simple queue: name={name}")
+    if await is_missing("/queue simple", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Simple queue '{name}' not found."
 
     cmd = f'/queue simple set [find name="{name}"]'
 
@@ -696,8 +711,8 @@ async def mikrotik_update_simple_queue(
     cmd += " " + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update simple queue: {result}"
+    if refused(result):
+        return f"Failed to update simple queue: {result.strip()}"
 
     lookup_name = new_name if new_name else name
     details_cmd = f'/queue simple print detail where name="{lookup_name}"'
@@ -709,12 +724,14 @@ async def mikrotik_update_simple_queue(
 async def mikrotik_remove_simple_queue(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Removes a simple queue from the MikroTik device."""
     await ctx.info(f"Removing simple queue: name={name}")
+    if await is_missing("/queue simple", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Simple queue '{name}' not found."
 
     cmd = f'/queue simple remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove simple queue: {result}"
+    if refused(result):
+        return f"Failed to remove simple queue: {result.strip()}"
     return f"Simple queue '{name}' removed successfully."
 
 
@@ -722,12 +739,14 @@ async def mikrotik_remove_simple_queue(ctx: Context, name: str, device: Optional
 async def mikrotik_enable_simple_queue(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Enables a simple queue."""
     await ctx.info(f"Enabling simple queue: name={name}")
+    if await is_missing("/queue simple", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Simple queue '{name}' not found."
 
     cmd = f'/queue simple set [find name="{name}"] disabled=no'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable simple queue: {result}"
+    if refused(result):
+        return f"Failed to enable simple queue: {result.strip()}"
 
     details_cmd = f'/queue simple print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -738,12 +757,14 @@ async def mikrotik_enable_simple_queue(ctx: Context, name: str, device: Optional
 async def mikrotik_disable_simple_queue(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Disables a simple queue."""
     await ctx.info(f"Disabling simple queue: name={name}")
+    if await is_missing("/queue simple", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Simple queue '{name}' not found."
 
     cmd = f'/queue simple set [find name="{name}"] disabled=yes'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable simple queue: {result}"
+    if refused(result):
+        return f"Failed to disable simple queue: {result.strip()}"
 
     details_cmd = f'/queue simple print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)

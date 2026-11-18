@@ -6,6 +6,7 @@ from ...connector import execute_mikrotik_command
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import _ID_RE, has_item_rows, resolve_item_id, item_count
+from .._shared.results import refused, no_such_item
 
 @mcp.tool(name="set_dns_servers", annotations=annotate(WRITE, "Set DNS Servers"))
 async def mikrotik_set_dns_servers(
@@ -276,8 +277,10 @@ async def mikrotik_update_dns_static(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update static DNS entry: {result}"
+    if no_such_item(result):
+        return f"Static DNS entry '{entry_id}' not found."
+    if refused(result):
+        return f"Failed to update static DNS entry: {result.strip()}"
 
     details_cmd = f"/ip dns static print detail where .id={entry_id}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)

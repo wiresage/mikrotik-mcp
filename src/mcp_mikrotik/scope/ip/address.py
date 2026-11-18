@@ -5,6 +5,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows, resolve_item_id, item_count
+from .._shared.results import refused
 
 @mcp.tool(name="add_ip_address", annotations=annotate(WRITE, "Add IP Address"))
 async def mikrotik_add_ip_address(
@@ -38,8 +39,8 @@ async def mikrotik_add_ip_address(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to add IP address: {result}"
+    if refused(result):
+        return f"Failed to add IP address: {result.strip()}"
 
     # Get the created address details
     details_cmd = f'/ip address print detail where address="{address}"'
@@ -125,7 +126,7 @@ async def mikrotik_remove_ip_address(ctx: Context, address_id: str, device: Opti
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove IP address: {result}"
+    if refused(result):
+        return f"Failed to remove IP address: {result.strip()}"
 
     return f"IP address '{address_id}' removed successfully."

@@ -128,6 +128,7 @@ Your module should:
 - Import `mcp`, the appropriate `ToolAnnotations` constant, **and `annotate`** from `...app` (three dots: a module sits two packages below `mcp_mikrotik`)
 - Import `execute_mikrotik_command` from `...connector`
 - Import shared helpers from `.._shared`, for example `from .._shared.selectors import resolve_item_id`
+- Decide whether a write worked from what RouterOS answered, with `refused`, `no_such_item` and `is_missing` from `.._shared.results`: a write that works prints nothing, so any text is a refusal (it does not always say "failure" or "error"), an id that is not there is answered with `no such item`, and a name that is not there makes `[find ...]` silent, so count first. `tests/unit/scope/test_write_tools_tell_the_truth.py` fails a write tool that reports success when it did nothing
 - Register tools using `@mcp.tool()` decorators — **always use `annotate(BASE, "Title")`** (never a bare constant)
 - Follow the existing naming convention: `mikrotik_<action>_<resource>`
 - Use type hints for all parameters (including `Literal` for fixed-value params)

@@ -4,6 +4,7 @@ from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import _ID_RE, resolve_item_id, item_count, item_at_position, move_to_position, has_item_rows
+from .._shared.results import refused, no_such_item
 
 @mcp.tool(name="create_nat_rule", annotations=annotate(WRITE, "Create NAT Rule"))
 async def mikrotik_create_nat_rule(
@@ -272,8 +273,10 @@ async def mikrotik_update_nat_rule(
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     # Check if update was successful
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update NAT rule: {result}"
+    if no_such_item(result):
+        return f"NAT rule '{rule_id}' not found."
+    if refused(result):
+        return f"Failed to update NAT rule: {result.strip()}"
 
     # Get the updated rule details
     details_cmd = f"/ip firewall nat print detail where .id={rule_id}"
