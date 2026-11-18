@@ -1,6 +1,7 @@
 import ipaddress
 from typing import Literal, Optional
 
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
@@ -43,7 +44,7 @@ def _canonical(family: str, address: str) -> str:
 
 
 def _selector(family: str, list_name: str, address: str) -> str:
-    return f'list="{list_name}" address="{_canonical(family, address)}"'
+    return f'list="{ros_quoted(list_name)}" address="{ros_quoted(_canonical(family, address))}"'
 
 
 async def _count(family: str, where: str, ctx: Context, device: Optional[str]) -> str:
@@ -75,11 +76,11 @@ async def mikrotik_create_address_list_entry(
     """
     await ctx.info(f"Creating {family} address list entry: list={list_name}, address={address}")
 
-    cmd = f'{_tree(family)} add list="{list_name}" address={address}'
+    cmd = f'{_tree(family)} add list="{ros_quoted(list_name)}" address={ros_value(address)}'
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if timeout:
-        cmd += f" timeout={timeout}"
+        cmd += f" timeout={ros_value(timeout)}"
     if disabled:
         cmd += " disabled=yes"
 
@@ -122,11 +123,11 @@ async def mikrotik_list_address_list_entries(
 
     filters = []
     if list_filter:
-        filters.append(f'list="{list_filter}"')
+        filters.append(f'list="{ros_quoted(list_filter)}"')
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     if comment_filter:
-        filters.append(f'comment~"{comment_filter}"')
+        filters.append(f'comment~"{ros_quoted(comment_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if dynamic_only:
@@ -192,13 +193,13 @@ async def mikrotik_update_address_list_entry(
     # into `assertions`.
     updates, assertions = [], []
     if new_list_name:
-        updates.append(f'list="{new_list_name}"')
+        updates.append(f'list="{ros_quoted(new_list_name)}"')
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
         if comment:
             assertions.append(f'comment="{ros_quoted(comment)}"')
     if timeout is not None:
-        updates.append("timeout=0" if timeout == "" else f"timeout={timeout}")
+        updates.append("timeout=0" if timeout == "" else f"timeout={ros_value(timeout)}")
     if disabled is not None:
         state = "yes" if disabled else "no"
         updates.append(f"disabled={state}")

@@ -2,6 +2,7 @@ from typing import Optional
 
 from mcp.server.mcpserver import Context
 
+from ._quoting import ros_quoted
 from ..app import mcp, READ, annotate
 from ..connector import execute_mikrotik_command
 
@@ -19,13 +20,13 @@ async def _list_neighbors(
 ) -> str:
     filters = []
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     if mac_filter:
-        filters.append(f'mac-address~"{mac_filter}"')
+        filters.append(f'mac-address~"{ros_quoted(mac_filter)}"')
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
     if status_filter:
-        filters.append(f'status="{status_filter}"')
+        filters.append(f'status="{ros_quoted(status_filter)}"')
     if filters:
         command += " where " + " ".join(filters)
 

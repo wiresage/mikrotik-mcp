@@ -2,7 +2,7 @@ import ipaddress
 from typing import Optional
 
 from ..connector import execute_mikrotik_command
-from ._quoting import ros_quoted
+from ._quoting import ros_quoted, ros_value
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 from ._selectors import resolve_item_id, item_count
@@ -52,14 +52,14 @@ async def mikrotik_add_ipv6_address(
     """
     await ctx.info(f"Adding IPv6 address: address={address}, interface={interface}")
 
-    cmd = f"/ipv6 address add address={address} interface={interface}"
+    cmd = f"/ipv6 address add address={ros_value(address)} interface={ros_value(interface)}"
 
     if advertise is not None:
         cmd += f" advertise={'yes' if advertise else 'no'}"
     if eui_64:
         cmd += " eui-64=yes"
     if from_pool:
-        cmd += f' from-pool="{from_pool}"'
+        cmd += f' from-pool="{ros_quoted(from_pool)}"'
     if no_dad:
         cmd += " no-dad=yes"
     if comment:
@@ -77,7 +77,7 @@ async def mikrotik_add_ipv6_address(
     # comes from the pool, and with eui_64 the host part is derived from the
     # MAC — in both cases the stored address differs from the input, so a
     # by-address lookup would miss the very entry we just created.
-    details_cmd = f'/ipv6 address print detail where interface="{interface}"'
+    details_cmd = f'/ipv6 address print detail where interface="{ros_quoted(interface)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     if details.strip() and "address=" in details:
@@ -111,9 +111,9 @@ async def mikrotik_list_ipv6_addresses(
 
     filters = []
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if dynamic_only:
@@ -158,9 +158,9 @@ async def mikrotik_get_ipv6_address(
     if resolved:
         queries = [f".id={resolved}"]
     elif ":" in address_id:
-        queries = [f'address="{addr}"', f'.id="{address_id}"']
+        queries = [f'address="{ros_quoted(addr)}"', f'.id="{ros_quoted(address_id)}"']
     else:
-        queries = [f'.id="{address_id}"', f'address="{addr}"']
+        queries = [f'.id="{ros_quoted(address_id)}"', f'address="{ros_quoted(addr)}"']
 
     for where in queries:
         result = await execute_mikrotik_command(
@@ -192,11 +192,11 @@ async def mikrotik_remove_ipv6_address(
         cmd = f"{menu} remove {resolved}"
     else:
         addr = _canonical_ipv6(address_id)
-        check_cmd = f'{menu} print count-only where address="{addr}"'
+        check_cmd = f'{menu} print count-only where address="{ros_quoted(addr)}"'
         count = await execute_mikrotik_command(check_cmd, ctx, device=device)
         if count.strip() == "0":
             return f"IPv6 address '{address_id}' not found."
-        cmd = f'{menu} remove [find address="{addr}"]'
+        cmd = f'{menu} remove [find address="{ros_quoted(addr)}"]'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 

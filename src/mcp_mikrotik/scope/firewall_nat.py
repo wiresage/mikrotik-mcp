@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 from mcp.server.mcpserver import Context
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
@@ -45,35 +46,35 @@ async def mikrotik_create_nat_rule(
         return f"Error: Invalid action '{action}' for dstnat. Must be one of: {', '.join(dstnat_actions)}"
 
     # Build the command
-    cmd = f"/ip firewall nat add chain={chain} action={action}"
+    cmd = f"/ip firewall nat add chain={ros_value(chain)} action={ros_value(action)}"
 
     # Add optional parameters
     if src_address:
-        cmd += f" src-address={src_address}"
+        cmd += f" src-address={ros_value(src_address)}"
 
     if dst_address:
-        cmd += f" dst-address={dst_address}"
+        cmd += f" dst-address={ros_value(dst_address)}"
 
     if src_port:
-        cmd += f" src-port={src_port}"
+        cmd += f" src-port={ros_value(src_port)}"
 
     if dst_port:
-        cmd += f" dst-port={dst_port}"
+        cmd += f" dst-port={ros_value(dst_port)}"
 
     if protocol:
-        cmd += f" protocol={protocol}"
+        cmd += f" protocol={ros_value(protocol)}"
 
     if in_interface:
-        cmd += f' in-interface="{in_interface}"'
+        cmd += f' in-interface="{ros_quoted(in_interface)}"'
 
     if out_interface:
-        cmd += f' out-interface="{out_interface}"'
+        cmd += f' out-interface="{ros_quoted(out_interface)}"'
 
     if to_addresses:
-        cmd += f" to-addresses={to_addresses}"
+        cmd += f" to-addresses={ros_value(to_addresses)}"
 
     if to_ports:
-        cmd += f" to-ports={to_ports}"
+        cmd += f" to-ports={ros_value(to_ports)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -97,7 +98,7 @@ async def mikrotik_create_nat_rule(
         if "*" in result or result.strip().isdigit():
             # Success - get the details
             rule_id = result.strip()
-            details_cmd = f"/ip firewall nat print detail where .id={rule_id}"
+            details_cmd = f"/ip firewall nat print detail where .id={ros_value(rule_id)}"
             details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
             if details.strip():
@@ -142,17 +143,17 @@ async def mikrotik_list_nat_rules(
     # Add filters
     filters = []
     if chain_filter:
-        filters.append(f'chain="{chain_filter}"')
+        filters.append(f'chain="{ros_quoted(chain_filter)}"')
     if action_filter:
-        filters.append(f'action="{action_filter}"')
+        filters.append(f'action="{ros_quoted(action_filter)}"')
     if src_address_filter:
-        filters.append(f'src-address~"{src_address_filter}"')
+        filters.append(f'src-address~"{ros_quoted(src_address_filter)}"')
     if dst_address_filter:
-        filters.append(f'dst-address~"{dst_address_filter}"')
+        filters.append(f'dst-address~"{ros_quoted(dst_address_filter)}"')
     if protocol_filter:
-        filters.append(f'protocol="{protocol_filter}"')
+        filters.append(f'protocol="{ros_quoted(protocol_filter)}"')
     if interface_filter:
-        filters.append(f'(in-interface~"{interface_filter}" or out-interface~"{interface_filter}")')
+        filters.append(f'(in-interface~"{ros_quoted(interface_filter)}" or out-interface~"{ros_quoted(interface_filter)}")')
     if disabled_only:
         filters.append("disabled=yes")
     if invalid_only:
@@ -178,7 +179,7 @@ async def mikrotik_get_nat_rule(ctx: Context, rule_id: str, device: Optional[str
     """
     await ctx.info(f"Getting NAT rule details: rule_id={rule_id}")
 
-    cmd = f"/ip firewall nat print detail where .id={rule_id}"
+    cmd = f"/ip firewall nat print detail where .id={ros_value(rule_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -218,59 +219,64 @@ async def mikrotik_update_nat_rule(
     await ctx.info(f"Updating NAT rule: rule_id={rule_id}")
 
     # Build the command
-    cmd = f"/ip firewall nat set {rule_id}"
+    # An id is not free text. Resolving it rejects anything that is not an internal
+    # id or a print position, the same way this module's remove path does.
+    resolved = await resolve_item_id("/ip firewall nat", rule_id, ctx, device, execute_mikrotik_command)
+    if resolved is None:
+        return f"NAT rule with ID '{rule_id}' not found."
+    cmd = f"/ip firewall nat set {resolved}"
 
     # Add parameters to update
     updates = []
     if chain:
-        updates.append(f"chain={chain}")
+        updates.append(f"chain={ros_value(chain)}")
     if action:
-        updates.append(f"action={action}")
+        updates.append(f"action={ros_value(action)}")
     if src_address is not None:
         if src_address == "":
             updates.append("!src-address")
         else:
-            updates.append(f"src-address={src_address}")
+            updates.append(f"src-address={ros_value(src_address)}")
     if dst_address is not None:
         if dst_address == "":
             updates.append("!dst-address")
         else:
-            updates.append(f"dst-address={dst_address}")
+            updates.append(f"dst-address={ros_value(dst_address)}")
     if src_port is not None:
         if src_port == "":
             updates.append("!src-port")
         else:
-            updates.append(f"src-port={src_port}")
+            updates.append(f"src-port={ros_value(src_port)}")
     if dst_port is not None:
         if dst_port == "":
             updates.append("!dst-port")
         else:
-            updates.append(f"dst-port={dst_port}")
+            updates.append(f"dst-port={ros_value(dst_port)}")
     if protocol is not None:
         if protocol == "":
             updates.append("!protocol")
         else:
-            updates.append(f"protocol={protocol}")
+            updates.append(f"protocol={ros_value(protocol)}")
     if in_interface is not None:
         if in_interface == "":
             updates.append("!in-interface")
         else:
-            updates.append(f'in-interface="{in_interface}"')
+            updates.append(f'in-interface="{ros_quoted(in_interface)}"')
     if out_interface is not None:
         if out_interface == "":
             updates.append("!out-interface")
         else:
-            updates.append(f'out-interface="{out_interface}"')
+            updates.append(f'out-interface="{ros_quoted(out_interface)}"')
     if to_addresses is not None:
         if to_addresses == "":
             updates.append("!to-addresses")
         else:
-            updates.append(f"to-addresses={to_addresses}")
+            updates.append(f"to-addresses={ros_value(to_addresses)}")
     if to_ports is not None:
         if to_ports == "":
             updates.append("!to-ports")
         else:
-            updates.append(f"to-ports={to_ports}")
+            updates.append(f"to-ports={ros_value(to_ports)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -292,7 +298,7 @@ async def mikrotik_update_nat_rule(
         return f"Failed to update NAT rule: {result}"
 
     # Get the updated rule details
-    details_cmd = f"/ip firewall nat print detail where .id={rule_id}"
+    details_cmd = f"/ip firewall nat print detail where .id={ros_value(rule_id)}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"NAT rule updated successfully:\n\n{details}"

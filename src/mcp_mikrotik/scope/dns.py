@@ -4,7 +4,7 @@ from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
-from ._quoting import ros_quoted
+from ._quoting import ros_quoted, ros_value
 from ._selectors import _ID_RE, has_item_rows, resolve_item_id, item_count
 
 @mcp.tool(name="set_dns_servers", annotations=annotate(WRITE, "Set DNS Servers"))
@@ -41,10 +41,10 @@ async def mikrotik_set_dns_servers(
         cmd += f" cache-size={cache_size}"
 
     if cache_max_ttl:
-        cmd += f" cache-max-ttl={cache_max_ttl}"
+        cmd += f" cache-max-ttl={ros_value(cache_max_ttl)}"
 
     if use_doh and doh_server:
-        cmd += f' use-doh-server="{doh_server}"'
+        cmd += f' use-doh-server="{ros_quoted(doh_server)}"'
         cmd += f' verify-doh-cert={"yes" if verify_doh_cert else "no"}'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
@@ -96,26 +96,26 @@ async def mikrotik_add_dns_static(
     """
     await ctx.info(f"Adding static DNS entry: name={name}")
 
-    cmd = "/ip dns static add" if regexp else f'/ip dns static add name="{name}"'
+    cmd = "/ip dns static add" if regexp else f'/ip dns static add name="{ros_quoted(name)}"'
 
     if address:
-        cmd += f" address={address}"
+        cmd += f" address={ros_value(address)}"
 
     if cname:
-        cmd += f' cname="{cname}"'
+        cmd += f' cname="{ros_quoted(cname)}"'
 
     if mx_preference is not None and mx_exchange:
-        cmd += f' mx-preference={mx_preference} mx-exchange="{mx_exchange}"'
+        cmd += f' mx-preference={mx_preference} mx-exchange="{ros_quoted(mx_exchange)}"'
 
     if text:
         cmd += f' text="{ros_quoted(text)}"'
 
     if srv_priority is not None and srv_weight is not None and srv_port is not None and srv_target:
         cmd += f" srv-priority={srv_priority} srv-weight={srv_weight} srv-port={srv_port}"
-        cmd += f' srv-target="{srv_target}"'
+        cmd += f' srv-target="{ros_quoted(srv_target)}"'
 
     if ttl:
-        cmd += f" ttl={ttl}"
+        cmd += f" ttl={ros_value(ttl)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -135,7 +135,7 @@ async def mikrotik_add_dns_static(
     if not _ID_RE.fullmatch(entry_id):
         return f"Failed to add static DNS entry: {entry_id or 'no entry ID returned'}"
 
-    details = await execute_mikrotik_command(f"/ip dns static print detail where .id={entry_id}", ctx, device=device)
+    details = await execute_mikrotik_command(f"/ip dns static print detail where .id={ros_value(entry_id)}", ctx, device=device)
     if details.strip():
         return f"Static DNS entry added successfully:\n\n{details}"
     return f"Static DNS entry added with ID: {entry_id}"
@@ -157,11 +157,11 @@ async def mikrotik_list_dns_static(
 
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     if type_filter:
-        filters.append(f'type="{type_filter}"')
+        filters.append(f'type="{ros_quoted(type_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if regexp_only:
@@ -182,7 +182,7 @@ async def mikrotik_get_dns_static(ctx: Context, entry_id: str, device: Optional[
     """Gets details of a specific static DNS entry."""
     await ctx.info(f"Getting static DNS entry details: entry_id={entry_id}")
 
-    cmd = f"/ip dns static print detail where .id={entry_id}"
+    cmd = f"/ip dns static print detail where .id={ros_value(entry_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -213,28 +213,33 @@ async def mikrotik_update_dns_static(
     """Updates a static DNS entry."""
     await ctx.info(f"Updating static DNS entry: entry_id={entry_id}")
 
-    cmd = f"/ip dns static set {entry_id}"
+    # An id is not free text. Resolving it rejects anything that is not an internal
+    # id or a print position, the same way this module's remove path does.
+    resolved = await resolve_item_id("/ip dns static", entry_id, ctx, device, execute_mikrotik_command)
+    if resolved is None:
+        return f"Static DNS entry with ID '{entry_id}' not found."
+    cmd = f"/ip dns static set {resolved}"
 
     updates = []
     if name:
-        updates.append(f'name="{name}"')
+        updates.append(f'name="{ros_quoted(name)}"')
     if address is not None:
         if address == "":
             updates.append("!address")
         else:
-            updates.append(f"address={address}")
+            updates.append(f"address={ros_value(address)}")
     if cname is not None:
         if cname == "":
             updates.append("!cname")
         else:
-            updates.append(f'cname="{cname}"')
+            updates.append(f'cname="{ros_quoted(cname)}"')
     if mx_preference is not None:
         updates.append(f"mx-preference={mx_preference}")
     if mx_exchange is not None:
         if mx_exchange == "":
             updates.append("!mx-exchange")
         else:
-            updates.append(f'mx-exchange="{mx_exchange}"')
+            updates.append(f'mx-exchange="{ros_quoted(mx_exchange)}"')
     if text is not None:
         if text == "":
             updates.append("!text")
@@ -250,12 +255,12 @@ async def mikrotik_update_dns_static(
         if srv_target == "":
             updates.append("!srv-target")
         else:
-            updates.append(f'srv-target="{srv_target}"')
+            updates.append(f'srv-target="{ros_quoted(srv_target)}"')
     if ttl is not None:
         if ttl == "":
             updates.append("!ttl")
         else:
-            updates.append(f"ttl={ttl}")
+            updates.append(f"ttl={ros_value(ttl)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -276,7 +281,7 @@ async def mikrotik_update_dns_static(
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update static DNS entry: {result}"
 
-    details_cmd = f"/ip dns static print detail where .id={entry_id}"
+    details_cmd = f"/ip dns static print detail where .id={ros_value(entry_id)}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"Static DNS entry updated successfully:\n\n{details}"
@@ -413,10 +418,10 @@ async def mikrotik_test_dns_query(
         return (f"Invalid type '{type}': RouterOS :resolve supports A/ipv4, AAAA/ipv6, any, any6 "
                 "(record-type queries such as MX/TXT are not supported).")
 
-    resolve = f':resolve domain-name="{name}"'
+    resolve = f':resolve domain-name="{ros_quoted(name)}"'
 
     if server:
-        resolve += f" server={server}"
+        resolve += f" server={ros_value(server)}"
 
     if t != "ipv4":
         resolve += f" type={t}"
@@ -438,7 +443,7 @@ async def mikrotik_export_dns_config(ctx: Context, filename: Optional[str] = Non
     if not filename:
         filename = "dns_config"
 
-    cmd = f"/ip dns export file={filename}"
+    cmd = f"/ip dns export file={ros_value(filename)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result.strip():

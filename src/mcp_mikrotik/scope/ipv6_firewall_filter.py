@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
@@ -61,41 +62,41 @@ async def mikrotik_create_ipv6_filter_rule(
     cmd = f"/ipv6 firewall filter add chain={chain} action={action}"
 
     if jump_target:
-        cmd += f' jump-target="{jump_target}"'
+        cmd += f' jump-target="{ros_quoted(jump_target)}"'
     if src_address:
-        cmd += f" src-address={src_address}"
+        cmd += f" src-address={ros_value(src_address)}"
     if dst_address:
-        cmd += f" dst-address={dst_address}"
+        cmd += f" dst-address={ros_value(dst_address)}"
     if src_port:
-        cmd += f" src-port={src_port}"
+        cmd += f" src-port={ros_value(src_port)}"
     if dst_port:
-        cmd += f" dst-port={dst_port}"
+        cmd += f" dst-port={ros_value(dst_port)}"
     if protocol:
-        cmd += f" protocol={protocol}"
+        cmd += f" protocol={ros_value(protocol)}"
     if in_interface:
-        cmd += f' in-interface="{in_interface}"'
+        cmd += f' in-interface="{ros_quoted(in_interface)}"'
     if out_interface:
-        cmd += f' out-interface="{out_interface}"'
+        cmd += f' out-interface="{ros_quoted(out_interface)}"'
     if connection_state:
-        cmd += f" connection-state={connection_state}"
+        cmd += f" connection-state={ros_value(connection_state)}"
     if src_address_list:
-        cmd += f' src-address-list="{src_address_list}"'
+        cmd += f' src-address-list="{ros_quoted(src_address_list)}"'
     if dst_address_list:
-        cmd += f' dst-address-list="{dst_address_list}"'
+        cmd += f' dst-address-list="{ros_quoted(dst_address_list)}"'
     if src_address_type:
-        cmd += f" src-address-type={src_address_type}"
+        cmd += f" src-address-type={ros_value(src_address_type)}"
     if dst_address_type:
-        cmd += f" dst-address-type={dst_address_type}"
+        cmd += f" dst-address-type={ros_value(dst_address_type)}"
     if icmp_options:
-        cmd += f" icmp-options={icmp_options}"
+        cmd += f" icmp-options={ros_value(icmp_options)}"
     if hop_limit:
-        cmd += f" hop-limit={hop_limit}"
+        cmd += f" hop-limit={ros_value(hop_limit)}"
     if headers:
-        cmd += f" headers={headers}"
+        cmd += f" headers={ros_value(headers)}"
     if limit:
-        cmd += f" limit={limit}"
+        cmd += f" limit={ros_value(limit)}"
     if tcp_flags:
-        cmd += f" tcp-flags={tcp_flags}"
+        cmd += f" tcp-flags={ros_value(tcp_flags)}"
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
@@ -105,7 +106,7 @@ async def mikrotik_create_ipv6_filter_rule(
         if log_prefix:
             cmd += f' log-prefix="{ros_quoted(log_prefix)}"'
     if place_before:
-        cmd += f" place-before={place_before}"
+        cmd += f" place-before={ros_value(place_before)}"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -168,17 +169,17 @@ async def mikrotik_list_ipv6_filter_rules(
     # (protocol among them), so every `where` term quotes its value.
     filters = []
     if chain_filter:
-        filters.append(f'chain="{chain_filter}"')
+        filters.append(f'chain="{ros_quoted(chain_filter)}"')
     if action_filter:
-        filters.append(f'action="{action_filter}"')
+        filters.append(f'action="{ros_quoted(action_filter)}"')
     if src_address_filter:
-        filters.append(f'src-address~"{src_address_filter}"')
+        filters.append(f'src-address~"{ros_quoted(src_address_filter)}"')
     if dst_address_filter:
-        filters.append(f'dst-address~"{dst_address_filter}"')
+        filters.append(f'dst-address~"{ros_quoted(dst_address_filter)}"')
     if protocol_filter:
-        filters.append(f'protocol="{protocol_filter}"')
+        filters.append(f'protocol="{ros_quoted(protocol_filter)}"')
     if interface_filter:
-        filters.append(f'(in-interface~"{interface_filter}" or out-interface~"{interface_filter}")')
+        filters.append(f'(in-interface~"{ros_quoted(interface_filter)}" or out-interface~"{ros_quoted(interface_filter)}")')
     if disabled_only:
         filters.append("disabled=yes")
     if invalid_only:
@@ -208,7 +209,7 @@ async def mikrotik_get_ipv6_filter_rule(
     """
     await ctx.info(f"Getting IPv6 firewall filter rule details: rule_id={rule_id}")
 
-    cmd = f'/ipv6 firewall filter print detail where .id={rule_id}'
+    cmd = f'/ipv6 firewall filter print detail where .id={ros_value(rule_id)}'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     # `print detail` emits the Flags legend even when nothing matches, so the
@@ -289,7 +290,7 @@ async def mikrotik_update_ipv6_filter_rule(
         updates.append(f"action={action}")
     for field, value in quoted.items():
         if value is not None:
-            updates.append(f"!{field}" if value == "" else f'{field}="{value}"')
+            updates.append(f"!{field}" if value == "" else f'{field}="{ros_quoted(value)}"')
     for field, value in bare.items():
         if value is not None:
             updates.append(f"!{field}" if value == "" else f"{field}={value}")

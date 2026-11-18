@@ -1,5 +1,6 @@
 from typing import List, Literal, Optional, Dict, Any
 
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
@@ -98,7 +99,7 @@ async def mikrotik_create_wireless_interface(
     # Build the command based on interface type
     if interface_type == "/interface wifi":
         # RouterOS v7.x newest wifi syntax - simplified
-        cmd = f"{interface_type} add name={name}"
+        cmd = f"{interface_type} add name={ros_value(name)}"
 
         if ssid:
             cmd += f' ssid="{ros_quoted(ssid)}"'
@@ -109,7 +110,7 @@ async def mikrotik_create_wireless_interface(
 
     elif interface_type == "/interface wifiwave2":
         # RouterOS v7.x wifiwave2 syntax
-        cmd = f"{interface_type} add name={name}"
+        cmd = f"{interface_type} add name={ros_value(name)}"
 
         if ssid:
             cmd += f' ssid="{ros_quoted(ssid)}"'
@@ -123,7 +124,7 @@ async def mikrotik_create_wireless_interface(
         if not radio_name:
             return "Error: radio_name is required for legacy wireless systems. Please specify the radio interface (e.g., 'wlan1')."
 
-        cmd = f"{interface_type} add name={name} radio-name={radio_name} mode={mode or 'ap-bridge'}"
+        cmd = f"{interface_type} add name={ros_value(name)} radio-name={radio_name} mode={mode or 'ap-bridge'}"
 
         if ssid:
             cmd += f' ssid="{ros_quoted(ssid)}"'
@@ -147,7 +148,7 @@ async def mikrotik_create_wireless_interface(
         return f"Failed to create wireless interface: {result}"
 
     # Get the created interface details
-    details_cmd = f'{interface_type} print detail where name="{name}"'
+    details_cmd = f'{interface_type} print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"Wireless interface created successfully using {interface_type}:\n\n{details}"
@@ -183,7 +184,7 @@ async def mikrotik_list_wireless_interfaces(
             # Add filters
             filters = []
             if name_filter:
-                filters.append(f'name~"{name_filter}"')
+                filters.append(f'name~"{ros_quoted(name_filter)}"')
             if disabled_only:
                 filters.append("disabled=yes")
             if running_only:
@@ -240,7 +241,7 @@ async def mikrotik_get_wireless_interface(ctx: Context, name: str, device: Optio
     if not interface_type:
         return "Error: No wireless interface support detected on this device."
 
-    cmd = f'{interface_type} print detail where name="{name}"'
+    cmd = f'{interface_type} print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -268,7 +269,7 @@ async def mikrotik_remove_wireless_interface(ctx: Context, name: str, device: Op
         return f"Wireless interface '{name}' not found."
 
     # Remove the interface
-    cmd = f'{interface_type} remove [find name="{name}"]'
+    cmd = f'{interface_type} remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -288,7 +289,7 @@ async def mikrotik_enable_wireless_interface(ctx: Context, name: str, device: Op
     if not interface_type:
         return "Error: No wireless interface support detected on this device."
 
-    cmd = f'{interface_type} enable [find name="{name}"]'
+    cmd = f'{interface_type} enable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -308,7 +309,7 @@ async def mikrotik_disable_wireless_interface(ctx: Context, name: str, device: O
     if not interface_type:
         return "Error: No wireless interface support detected on this device."
 
-    cmd = f'{interface_type} disable [find name="{name}"]'
+    cmd = f'{interface_type} disable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -334,7 +335,7 @@ async def mikrotik_scan_wireless_networks(
         return "Error: No wireless interface support detected on this device."
 
     # Different scan commands for different versions
-    scan_cmd = f'{interface_type} scan {interface} duration={duration}'
+    scan_cmd = f'{interface_type} scan {ros_value(interface)} duration={duration}'
 
     result = await execute_mikrotik_command(scan_cmd, ctx, device=device)
 
@@ -363,7 +364,7 @@ async def mikrotik_get_wireless_registration_table(
     cmd = f"{interface_type} registration-table print"
 
     if interface:
-        cmd += f' where interface="{interface}"'
+        cmd += f' where interface="{ros_quoted(interface)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -526,7 +527,7 @@ async def mikrotik_update_wireless_interface(
     updates = []
 
     if new_name:
-        updates.append(f"name={new_name}")
+        updates.append(f"name={ros_value(new_name)}")
     if ssid:
         # v7 wifi/wifiwave2 has no top-level ssid property; it lives under
         # configuration.ssid (and setting it inline overrides any profile)
@@ -542,7 +543,7 @@ async def mikrotik_update_wireless_interface(
     if not updates:
         return "No updates specified."
 
-    cmd = f'{interface_type} set [find name="{name}"] {" ".join(updates)}'
+    cmd = f'{interface_type} set [find name="{ros_quoted(name)}"] {" ".join(updates)}'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     result_lower = result.lower()
@@ -554,7 +555,7 @@ async def mikrotik_update_wireless_interface(
 
     # Get updated details
     target_name = new_name or name
-    details_cmd = f'{interface_type} print detail where name="{target_name}"'
+    details_cmd = f'{interface_type} print detail where name="{ros_quoted(target_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"Wireless interface updated successfully:\n\n{details}"

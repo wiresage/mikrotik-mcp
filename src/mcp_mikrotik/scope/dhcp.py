@@ -3,6 +3,7 @@ from typing import List, Literal, Optional
 
 from mcp.server.mcpserver import Context
 
+from ._quoting import ros_quoted, ros_value
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
@@ -32,11 +33,11 @@ async def mikrotik_create_dhcp_server(
     await ctx.info(f"Creating DHCP server: name={name}, interface={interface}")
 
     # Build the command
-    cmd = f"/ip dhcp-server add name={name} interface={interface} lease-time={lease_time}"
+    cmd = f"/ip dhcp-server add name={ros_value(name)} interface={ros_value(interface)} lease-time={ros_value(lease_time)}"
 
     # Add optional parameters
     if address_pool:
-        cmd += f" address-pool={address_pool}"
+        cmd += f" address-pool={ros_value(address_pool)}"
 
     if disabled:
         cmd += " disabled=yes"
@@ -45,7 +46,7 @@ async def mikrotik_create_dhcp_server(
         cmd += f" authoritative={authoritative}"
 
     if delay_threshold:
-        cmd += f" delay-threshold={delay_threshold}"
+        cmd += f" delay-threshold={ros_value(delay_threshold)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -56,7 +57,7 @@ async def mikrotik_create_dhcp_server(
         return f"Failed to create DHCP server: {result}"
 
     # Get the created server details
-    details_cmd = f'/ip dhcp-server print detail where name="{name}"'
+    details_cmd = f'/ip dhcp-server print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"DHCP server created successfully:\n\n{details}"
@@ -79,9 +80,9 @@ async def mikrotik_list_dhcp_servers(
     # Add filters
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if invalid_only:
@@ -131,14 +132,14 @@ async def mikrotik_list_dhcp_leases(
         (class_id_filter, "active-class-id"),
     ):
         if value:
-            filters.append(f'{field}~"{value}"')
+            filters.append(f'{field}~"{ros_quoted(value)}"')
     for value, field in (
         (server_filter, "active-server"),
         (status_filter, "status"),
         (lease_time_filter, "lease-time"),
     ):
         if value:
-            filters.append(f'{field}="{value}"')
+            filters.append(f'{field}="{ros_quoted(value)}"')
     if last_seen_within:
         filters.append(f"last-seen<={last_seen_within}")
         filters.append('last-seen!="never"')
@@ -180,7 +181,7 @@ async def mikrotik_list_dhcpv6_bindings(
     filters = []
     for value, field in ((address_filter, "address"), (duid_filter, "duid")):
         if value:
-            filters.append(f'{field}~"{value}"')
+            filters.append(f'{field}~"{ros_quoted(value)}"')
     for value, field in (
         (iaid_filter, "iaid"),
         (server_filter, "server"),
@@ -188,7 +189,7 @@ async def mikrotik_list_dhcpv6_bindings(
         (lease_time_filter, "life-time"),
     ):
         if value:
-            filters.append(f'{field}="{value}"')
+            filters.append(f'{field}="{ros_quoted(value)}"')
     if last_seen_within:
         filters.append(f"last-seen<={last_seen_within}")
         filters.append('last-seen!="never"')
@@ -207,7 +208,7 @@ async def mikrotik_get_dhcp_server(ctx: Context, name: str, device: Optional[str
     """Gets detailed information about a specific DHCP server."""
     await ctx.info(f"Getting DHCP server details: name={name}")
 
-    cmd = f'/ip dhcp-server print detail where name="{name}"'
+    cmd = f'/ip dhcp-server print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -233,17 +234,17 @@ async def mikrotik_create_dhcp_network(
     await ctx.info(f"Creating DHCP network: network={network}, gateway={gateway}")
 
     # Build the command
-    cmd = f"/ip dhcp-server network add address={network} gateway={gateway}"
+    cmd = f"/ip dhcp-server network add address={ros_value(network)} gateway={ros_value(gateway)}"
 
     # Add optional parameters
     if netmask:
-        cmd += f" netmask={netmask}"
+        cmd += f" netmask={ros_value(netmask)}"
 
     if dns_servers:
         cmd += f" dns-server={','.join(dns_servers)}"
 
     if domain:
-        cmd += f' domain="{domain}"'
+        cmd += f' domain="{ros_quoted(domain)}"'
 
     if wins_servers:
         cmd += f" wins-server={','.join(wins_servers)}"
@@ -263,7 +264,7 @@ async def mikrotik_create_dhcp_network(
         return f"Failed to create DHCP network: {result}"
 
     # Get the created network details
-    details_cmd = f'/ip dhcp-server network print detail where address="{network}"'
+    details_cmd = f'/ip dhcp-server network print detail where address="{ros_quoted(network)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"DHCP network created successfully:\n\n{details}"
@@ -291,25 +292,25 @@ async def mikrotik_update_dhcp_network(
     await ctx.info(f"Updating DHCP network: network={network}")
 
     # First check if the network exists
-    check_cmd = f'/ip dhcp-server network print count-only where address="{network}"'
+    check_cmd = f'/ip dhcp-server network print count-only where address="{ros_quoted(network)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"DHCP network '{network}' not found."
 
     # Build the command
-    cmd = f'/ip dhcp-server network set [find address="{network}"]'
+    cmd = f'/ip dhcp-server network set [find address="{ros_quoted(network)}"]'
 
     # Add parameters to update
     updates = []
     if gateway:
-        updates.append(f"gateway={gateway}")
+        updates.append(f"gateway={ros_value(gateway)}")
     if netmask:
-        updates.append(f"netmask={netmask}")
+        updates.append(f"netmask={ros_value(netmask)}")
     if dns_servers is not None:
         updates.append("!dns-server" if not dns_servers else f"dns-server={','.join(dns_servers)}")
     if domain is not None:
-        updates.append("!domain" if domain == "" else f'domain="{domain}"')
+        updates.append("!domain" if domain == "" else f'domain="{ros_quoted(domain)}"')
     if wins_servers is not None:
         updates.append("!wins-server" if not wins_servers else f"wins-server={','.join(wins_servers)}")
     if ntp_servers is not None:
@@ -330,7 +331,7 @@ async def mikrotik_update_dhcp_network(
         return f"Failed to update DHCP network: {result}"
 
     # Get the updated network details
-    details_cmd = f'/ip dhcp-server network print detail where address="{network}"'
+    details_cmd = f'/ip dhcp-server network print detail where address="{ros_quoted(network)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"DHCP network updated successfully:\n\n{details}"
@@ -341,14 +342,14 @@ async def mikrotik_remove_dhcp_network(ctx: Context, network: str, device: Optio
     await ctx.info(f"Removing DHCP network: network={network}")
 
     # First check if the network exists
-    check_cmd = f'/ip dhcp-server network print count-only where address="{network}"'
+    check_cmd = f'/ip dhcp-server network print count-only where address="{ros_quoted(network)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"DHCP network '{network}' not found."
 
     # Remove the network
-    cmd = f'/ip dhcp-server network remove [find address="{network}"]'
+    cmd = f'/ip dhcp-server network remove [find address="{ros_quoted(network)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -374,11 +375,11 @@ async def mikrotik_create_dhcp_pool(
     await ctx.info(f"Creating DHCP pool: name={name}, ranges={ranges}")
 
     # Build the command
-    cmd = f'/ip pool add name={name} ranges={ranges}'
+    cmd = f'/ip pool add name={ros_value(name)} ranges={ros_value(ranges)}'
 
     # Add optional parameters
     if next_pool:
-        cmd += f" next-pool={next_pool}"
+        cmd += f" next-pool={ros_value(next_pool)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -389,7 +390,7 @@ async def mikrotik_create_dhcp_pool(
         return f"Failed to create DHCP pool: {result}"
 
     # Get the created pool details
-    details_cmd = f'/ip pool print detail where name="{name}"'
+    details_cmd = f'/ip pool print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"DHCP pool created successfully:\n\n{details}"
@@ -400,14 +401,14 @@ async def mikrotik_remove_dhcp_server(ctx: Context, name: str, device: Optional[
     await ctx.info(f"Removing DHCP server: name={name}")
 
     # First check if the server exists
-    check_cmd = f'/ip dhcp-server print count-only where name="{name}"'
+    check_cmd = f'/ip dhcp-server print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"DHCP server '{name}' not found."
 
     # Remove the server
-    cmd = f'/ip dhcp-server remove [find name="{name}"]'
+    cmd = f'/ip dhcp-server remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():

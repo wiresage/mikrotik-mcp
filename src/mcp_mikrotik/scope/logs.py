@@ -3,6 +3,7 @@ import re
 import time
 from typing import Literal, Optional
 from mcp.server.mcpserver import Context
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ..app import mcp, READ, WRITE, annotate
 
@@ -72,15 +73,15 @@ async def mikrotik_get_logs(
     if topics:
         topic_list = [t.strip() for t in topics.split(',') if t.strip()]
         if len(topic_list) > 1:
-            filters.append(f'topics~"({"|".join(topic_list)})"')
+            filters.append(f'topics~"({"|".join(ros_quoted(t) for t in topic_list)})"')
         elif topic_list:
-            filters.append(f'topics~"{topic_list[0]}"')
+            filters.append(f'topics~"{ros_quoted(topic_list[0])}"')
 
     if message_filter:
-        filters.append(f'message~"{message_filter}"')
+        filters.append(f'message~"{ros_quoted(message_filter)}"')
 
     if prefix_filter:
-        filters.append(f'message~"^{_escape_term(prefix_filter)}"')
+        filters.append(f'message~"^{ros_quoted(_escape_term(prefix_filter))}"')
 
     if time_filter:
         try:
@@ -230,7 +231,7 @@ async def mikrotik_get_security_logs(
         "(logged|login|logout|failure|failed|denied|blocked|attack|invalid|unauthorized)"
     )
 
-    cmd = f'/log print where topics~"{topics}" and message~"{keywords}"'
+    cmd = f'/log print where topics~"{ros_quoted(topics)}" and message~"{ros_quoted(keywords)}"'
 
     if time_filter:
         try:
@@ -274,7 +275,7 @@ async def mikrotik_get_log_statistics(ctx: Context, device: Optional[str] = None
 
     topics = ["info", "warning", "error", "system", "dhcp", "firewall", "interface"]
     for topic in topics:
-        count_cmd = f'/log print count-only where topics~"{topic}"'
+        count_cmd = f'/log print count-only where topics~"{ros_quoted(topic)}"'
         count = await execute_mikrotik_command(count_cmd, ctx, device=device)
         if count.strip().isdigit() and int(count.strip()) > 0:
             stats.append(f"{topic.capitalize()}: {count.strip()}")
@@ -304,13 +305,13 @@ async def mikrotik_export_logs(
 
     await ctx.info(f"Exporting logs to file: {filename}")
 
-    cmd = f"/log print file={filename}"
+    cmd = f"/log print file={ros_value(filename)}"
 
     filters = []
     if topics:
         topic_list = [t.strip() for t in topics.split(',') if t.strip()]
         if topic_list:
-            filters.append(f'topics~"({"|".join(topic_list)})"')
+            filters.append(f'topics~"({"|".join(ros_quoted(t) for t in topic_list)})"')
 
     if time_filter:
         try:
@@ -361,7 +362,7 @@ async def mikrotik_monitor_logs(
     if topics:
         topic_list = [t.strip() for t in topics.split(',') if t.strip()]
         if topic_list:
-            cmd += f' where topics~"({"|".join(topic_list)})"'
+            cmd += f' where topics~"({"|".join(ros_quoted(t) for t in topic_list)})"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
     return (

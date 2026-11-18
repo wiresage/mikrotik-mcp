@@ -14,6 +14,7 @@ from typing import Optional
 
 from mcp.server.mcpserver import Context
 
+from ._quoting import ros_quoted
 from ..app import mcp, READ, annotate
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted

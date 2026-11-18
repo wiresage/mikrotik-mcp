@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 from mcp.server.mcpserver import Context
+from ._quoting import ros_quoted, ros_value
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
@@ -54,11 +55,11 @@ async def mikrotik_create_queue_type(
     """
     await ctx.info(f"Creating queue type: name={name}, kind={kind}")
 
-    cmd = f"/queue type add name={name} kind={kind}"
+    cmd = f"/queue type add name={ros_value(name)} kind={kind}"
 
     # CAKE parameters
     if cake_flowmode is not None:
-        cmd += f" cake-flowmode={cake_flowmode}"
+        cmd += f" cake-flowmode={ros_value(cake_flowmode)}"
     if cake_nat is not None:
         cmd += f' cake-nat={"yes" if cake_nat else "no"}'
     if cake_overhead is not None:
@@ -66,23 +67,23 @@ async def mikrotik_create_queue_type(
     if cake_mpu is not None:
         cmd += f" cake-mpu={cake_mpu}"
     if cake_diffserv is not None:
-        cmd += f" cake-diffserv={cake_diffserv}"
+        cmd += f" cake-diffserv={ros_value(cake_diffserv)}"
     if cake_ack_filter is not None:
-        cmd += f" cake-ack-filter={cake_ack_filter}"
+        cmd += f" cake-ack-filter={ros_value(cake_ack_filter)}"
     if cake_rtt is not None:
-        cmd += f" cake-rtt={cake_rtt}"
+        cmd += f" cake-rtt={ros_value(cake_rtt)}"
     if cake_wash is not None:
         cmd += f' cake-wash={"yes" if cake_wash else "no"}'
     if cake_overhead_scheme is not None:
-        cmd += f" cake-overhead-scheme={cake_overhead_scheme}"
+        cmd += f" cake-overhead-scheme={ros_value(cake_overhead_scheme)}"
 
     # PCQ parameters
     if pcq_rate is not None:
-        cmd += f" pcq-rate={pcq_rate}"
+        cmd += f" pcq-rate={ros_value(pcq_rate)}"
     if pcq_limit is not None:
         cmd += f" pcq-limit={pcq_limit}"
     if pcq_classifier is not None:
-        cmd += f" pcq-classifier={pcq_classifier}"
+        cmd += f" pcq-classifier={ros_value(pcq_classifier)}"
 
     # PFIFO/BFIFO parameters
     if pfifo_limit is not None:
@@ -102,9 +103,9 @@ async def mikrotik_create_queue_type(
     if fq_codel_quantum is not None:
         cmd += f" fq-codel-quantum={fq_codel_quantum}"
     if fq_codel_target is not None:
-        cmd += f" fq-codel-target={fq_codel_target}"
+        cmd += f" fq-codel-target={ros_value(fq_codel_target)}"
     if fq_codel_interval is not None:
-        cmd += f" fq-codel-interval={fq_codel_interval}"
+        cmd += f" fq-codel-interval={ros_value(fq_codel_interval)}"
 
     # RED parameters
     if red_limit is not None:
@@ -132,7 +133,7 @@ async def mikrotik_create_queue_type(
             return f"Failed to create queue type: {result}"
 
     # Verify by fetching by name
-    details_cmd = f'/queue type print detail where name="{name}"'
+    details_cmd = f'/queue type print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     if has_item_rows(details):
         return f"Queue type created successfully:\n\n{details}"
@@ -152,9 +153,9 @@ async def mikrotik_list_queue_types(
     cmd = "/queue type print"
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if kind_filter:
-        filters.append(f"kind={kind_filter}")
+        filters.append(f"kind={ros_value(kind_filter)}")
 
     if filters:
         cmd += " where " + " ".join(filters)
@@ -170,7 +171,7 @@ async def mikrotik_get_queue_type(ctx: Context, name: str, device: Optional[str]
     """Gets detailed information about a specific queue type."""
     await ctx.info(f"Getting queue type details: name={name}")
 
-    cmd = f'/queue type print detail where name="{name}"'
+    cmd = f'/queue type print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
     if not has_item_rows(result):
         return f"Queue type '{name}' not found."
@@ -199,13 +200,13 @@ async def mikrotik_update_queue_type(
     """Updates an existing queue type's discipline-specific settings."""
     await ctx.info(f"Updating queue type: name={name}")
 
-    cmd = f'/queue type set [find name="{name}"]'
+    cmd = f'/queue type set [find name="{ros_quoted(name)}"]'
 
     updates = []
     if new_name is not None:
-        updates.append(f"name={new_name}")
+        updates.append(f"name={ros_value(new_name)}")
     if cake_flowmode is not None:
-        updates.append(f"cake-flowmode={cake_flowmode}")
+        updates.append(f"cake-flowmode={ros_value(cake_flowmode)}")
     if cake_nat is not None:
         updates.append(f'cake-nat={"yes" if cake_nat else "no"}')
     if cake_overhead is not None:
@@ -213,21 +214,21 @@ async def mikrotik_update_queue_type(
     if cake_mpu is not None:
         updates.append(f"cake-mpu={cake_mpu}")
     if cake_diffserv is not None:
-        updates.append(f"cake-diffserv={cake_diffserv}")
+        updates.append(f"cake-diffserv={ros_value(cake_diffserv)}")
     if cake_ack_filter is not None:
-        updates.append(f"cake-ack-filter={cake_ack_filter}")
+        updates.append(f"cake-ack-filter={ros_value(cake_ack_filter)}")
     if cake_rtt is not None:
-        updates.append(f"cake-rtt={cake_rtt}")
+        updates.append(f"cake-rtt={ros_value(cake_rtt)}")
     if cake_wash is not None:
         updates.append(f'cake-wash={"yes" if cake_wash else "no"}')
     if cake_overhead_scheme is not None:
-        updates.append(f"cake-overhead-scheme={cake_overhead_scheme}")
+        updates.append(f"cake-overhead-scheme={ros_value(cake_overhead_scheme)}")
     if pcq_rate is not None:
-        updates.append(f"pcq-rate={pcq_rate}")
+        updates.append(f"pcq-rate={ros_value(pcq_rate)}")
     if pcq_limit is not None:
         updates.append(f"pcq-limit={pcq_limit}")
     if pcq_classifier is not None:
-        updates.append(f"pcq-classifier={pcq_classifier}")
+        updates.append(f"pcq-classifier={ros_value(pcq_classifier)}")
 
     if not updates:
         return "No updates specified."
@@ -239,7 +240,7 @@ async def mikrotik_update_queue_type(
         return f"Failed to update queue type: {result}"
 
     lookup_name = new_name if new_name else name
-    details_cmd = f'/queue type print detail where name="{lookup_name}"'
+    details_cmd = f'/queue type print detail where name="{ros_quoted(lookup_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Queue type updated successfully:\n\n{details}"
 
@@ -249,7 +250,7 @@ async def mikrotik_remove_queue_type(ctx: Context, name: str, device: Optional[s
     """Removes a queue type from the MikroTik device."""
     await ctx.info(f"Removing queue type: name={name}")
 
-    cmd = f'/queue type remove [find name="{name}"]'
+    cmd = f'/queue type remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -289,26 +290,26 @@ async def mikrotik_create_queue_tree(
     """
     await ctx.info(f"Creating queue tree: name={name}, parent={parent}")
 
-    cmd = f'/queue tree add name="{name}" parent="{parent}"'
+    cmd = f'/queue tree add name="{ros_quoted(name)}" parent="{ros_quoted(parent)}"'
 
     if queue is not None:
-        cmd += f' queue="{queue}"'
+        cmd += f' queue="{ros_quoted(queue)}"'
     if packet_mark is not None:
-        cmd += f' packet-mark="{packet_mark}"'
+        cmd += f' packet-mark="{ros_quoted(packet_mark)}"'
     if max_limit is not None:
-        cmd += f" max-limit={max_limit}"
+        cmd += f" max-limit={ros_value(max_limit)}"
     if limit_at is not None:
-        cmd += f" limit-at={limit_at}"
+        cmd += f" limit-at={ros_value(limit_at)}"
     if burst_limit is not None:
-        cmd += f" burst-limit={burst_limit}"
+        cmd += f" burst-limit={ros_value(burst_limit)}"
     if burst_threshold is not None:
-        cmd += f" burst-threshold={burst_threshold}"
+        cmd += f" burst-threshold={ros_value(burst_threshold)}"
     if burst_time is not None:
-        cmd += f" burst-time={burst_time}"
+        cmd += f" burst-time={ros_value(burst_time)}"
     if bucket_size is not None:
-        cmd += f" bucket-size={bucket_size}"
+        cmd += f" bucket-size={ros_value(bucket_size)}"
     if priority is not None:
-        cmd += f" priority={priority}"
+        cmd += f" priority={ros_value(priority)}"
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
@@ -327,7 +328,7 @@ async def mikrotik_create_queue_tree(
         elif "failure:" in result.lower() or "error" in result.lower():
             return f"Failed to create queue tree: {result}"
 
-    details_cmd = f'/queue tree print detail where name="{name}"'
+    details_cmd = f'/queue tree print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     if has_item_rows(details):
         return f"Queue tree created successfully:\n\n{details}"
@@ -349,9 +350,9 @@ async def mikrotik_list_queue_trees(
     cmd = "/queue tree print"
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if parent_filter:
-        filters.append(f'parent="{parent_filter}"')
+        filters.append(f'parent="{ros_quoted(parent_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if invalid_only:
@@ -371,7 +372,7 @@ async def mikrotik_get_queue_tree(ctx: Context, name: str, device: Optional[str]
     """Gets detailed information about a specific queue tree."""
     await ctx.info(f"Getting queue tree details: name={name}")
 
-    cmd = f'/queue tree print detail where name="{name}"'
+    cmd = f'/queue tree print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
     if not has_item_rows(result):
         return f"Queue tree '{name}' not found."
@@ -406,31 +407,31 @@ async def mikrotik_update_queue_tree(
     """
     await ctx.info(f"Updating queue tree: name={name}")
 
-    cmd = f'/queue tree set [find name="{name}"]'
+    cmd = f'/queue tree set [find name="{ros_quoted(name)}"]'
 
     updates = []
     if new_name is not None:
-        updates.append(f"name={new_name}")
+        updates.append(f"name={ros_value(new_name)}")
     if parent is not None:
-        updates.append(f"parent={parent}")
+        updates.append(f"parent={ros_value(parent)}")
     if queue is not None:
-        updates.append(f"queue={queue}")
+        updates.append(f"queue={ros_value(queue)}")
     if packet_mark is not None:
-        updates.append(f"packet-mark={packet_mark}")
+        updates.append(f"packet-mark={ros_value(packet_mark)}")
     if max_limit is not None:
-        updates.append(f"max-limit={max_limit}")
+        updates.append(f"max-limit={ros_value(max_limit)}")
     if limit_at is not None:
-        updates.append(f"limit-at={limit_at}")
+        updates.append(f"limit-at={ros_value(limit_at)}")
     if burst_limit is not None:
-        updates.append(f"burst-limit={burst_limit}")
+        updates.append(f"burst-limit={ros_value(burst_limit)}")
     if burst_threshold is not None:
-        updates.append(f"burst-threshold={burst_threshold}")
+        updates.append(f"burst-threshold={ros_value(burst_threshold)}")
     if burst_time is not None:
-        updates.append(f"burst-time={burst_time}")
+        updates.append(f"burst-time={ros_value(burst_time)}")
     if bucket_size is not None:
-        updates.append(f"bucket-size={bucket_size}")
+        updates.append(f"bucket-size={ros_value(bucket_size)}")
     if priority is not None:
-        updates.append(f"priority={priority}")
+        updates.append(f"priority={ros_value(priority)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -446,7 +447,7 @@ async def mikrotik_update_queue_tree(
         return f"Failed to update queue tree: {result}"
 
     lookup_name = new_name if new_name else name
-    details_cmd = f'/queue tree print detail where name="{lookup_name}"'
+    details_cmd = f'/queue tree print detail where name="{ros_quoted(lookup_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Queue tree updated successfully:\n\n{details}"
 
@@ -456,7 +457,7 @@ async def mikrotik_remove_queue_tree(ctx: Context, name: str, device: Optional[s
     """Removes a queue tree from the MikroTik device."""
     await ctx.info(f"Removing queue tree: name={name}")
 
-    cmd = f'/queue tree remove [find name="{name}"]'
+    cmd = f'/queue tree remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -469,13 +470,13 @@ async def mikrotik_enable_queue_tree(ctx: Context, name: str, device: Optional[s
     """Enables a queue tree."""
     await ctx.info(f"Enabling queue tree: name={name}")
 
-    cmd = f'/queue tree set [find name="{name}"] disabled=no'
+    cmd = f'/queue tree set [find name="{ros_quoted(name)}"] disabled=no'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to enable queue tree: {result}"
 
-    details_cmd = f'/queue tree print detail where name="{name}"'
+    details_cmd = f'/queue tree print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Queue tree enabled:\n\n{details}"
 
@@ -485,13 +486,13 @@ async def mikrotik_disable_queue_tree(ctx: Context, name: str, device: Optional[
     """Disables a queue tree."""
     await ctx.info(f"Disabling queue tree: name={name}")
 
-    cmd = f'/queue tree set [find name="{name}"] disabled=yes'
+    cmd = f'/queue tree set [find name="{ros_quoted(name)}"] disabled=yes'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to disable queue tree: {result}"
 
-    details_cmd = f'/queue tree print detail where name="{name}"'
+    details_cmd = f'/queue tree print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Queue tree disabled:\n\n{details}"
 
@@ -531,30 +532,30 @@ async def mikrotik_create_simple_queue(
     """
     await ctx.info(f"Creating simple queue: name={name}, target={target}")
 
-    cmd = f"/queue simple add name={name} target={target}"
+    cmd = f"/queue simple add name={ros_value(name)} target={ros_value(target)}"
 
     if dst is not None:
-        cmd += f" dst={dst}"
+        cmd += f" dst={ros_value(dst)}"
     if max_limit is not None:
-        cmd += f" max-limit={max_limit}"
+        cmd += f" max-limit={ros_value(max_limit)}"
     if limit_at is not None:
-        cmd += f" limit-at={limit_at}"
+        cmd += f" limit-at={ros_value(limit_at)}"
     if burst_limit is not None:
-        cmd += f" burst-limit={burst_limit}"
+        cmd += f" burst-limit={ros_value(burst_limit)}"
     if burst_threshold is not None:
-        cmd += f" burst-threshold={burst_threshold}"
+        cmd += f" burst-threshold={ros_value(burst_threshold)}"
     if burst_time is not None:
-        cmd += f" burst-time={burst_time}"
+        cmd += f" burst-time={ros_value(burst_time)}"
     if bucket_size is not None:
-        cmd += f" bucket-size={bucket_size}"
+        cmd += f" bucket-size={ros_value(bucket_size)}"
     if queue is not None:
-        cmd += f" queue={queue}"
+        cmd += f" queue={ros_value(queue)}"
     if parent is not None:
-        cmd += f" parent={parent}"
+        cmd += f" parent={ros_value(parent)}"
     if priority is not None:
-        cmd += f" priority={priority}"
+        cmd += f" priority={ros_value(priority)}"
     if packet_marks is not None:
-        cmd += f" packet-marks={packet_marks}"
+        cmd += f" packet-marks={ros_value(packet_marks)}"
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
@@ -573,7 +574,7 @@ async def mikrotik_create_simple_queue(
         elif "failure:" in result.lower() or "error" in result.lower():
             return f"Failed to create simple queue: {result}"
 
-    details_cmd = f'/queue simple print detail where name="{name}"'
+    details_cmd = f'/queue simple print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     if has_item_rows(details):
         return f"Simple queue created successfully:\n\n{details}"
@@ -595,9 +596,9 @@ async def mikrotik_list_simple_queues(
     cmd = "/queue simple print"
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if target_filter:
-        filters.append(f'target~"{target_filter}"')
+        filters.append(f'target~"{ros_quoted(target_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if invalid_only:
@@ -617,7 +618,7 @@ async def mikrotik_get_simple_queue(ctx: Context, name: str, device: Optional[st
     """Gets detailed information about a specific simple queue."""
     await ctx.info(f"Getting simple queue details: name={name}")
 
-    cmd = f'/queue simple print detail where name="{name}"'
+    cmd = f'/queue simple print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
     if not has_item_rows(result):
         return f"Simple queue '{name}' not found."
@@ -656,35 +657,35 @@ async def mikrotik_update_simple_queue(
     """
     await ctx.info(f"Updating simple queue: name={name}")
 
-    cmd = f'/queue simple set [find name="{name}"]'
+    cmd = f'/queue simple set [find name="{ros_quoted(name)}"]'
 
     updates = []
     if new_name is not None:
-        updates.append(f"name={new_name}")
+        updates.append(f"name={ros_value(new_name)}")
     if target is not None:
-        updates.append(f"target={target}")
+        updates.append(f"target={ros_value(target)}")
     if dst is not None:
-        updates.append(f"dst={dst}")
+        updates.append(f"dst={ros_value(dst)}")
     if max_limit is not None:
-        updates.append(f"max-limit={max_limit}")
+        updates.append(f"max-limit={ros_value(max_limit)}")
     if limit_at is not None:
-        updates.append(f"limit-at={limit_at}")
+        updates.append(f"limit-at={ros_value(limit_at)}")
     if burst_limit is not None:
-        updates.append(f"burst-limit={burst_limit}")
+        updates.append(f"burst-limit={ros_value(burst_limit)}")
     if burst_threshold is not None:
-        updates.append(f"burst-threshold={burst_threshold}")
+        updates.append(f"burst-threshold={ros_value(burst_threshold)}")
     if burst_time is not None:
-        updates.append(f"burst-time={burst_time}")
+        updates.append(f"burst-time={ros_value(burst_time)}")
     if bucket_size is not None:
-        updates.append(f"bucket-size={bucket_size}")
+        updates.append(f"bucket-size={ros_value(bucket_size)}")
     if queue is not None:
-        updates.append(f"queue={queue}")
+        updates.append(f"queue={ros_value(queue)}")
     if parent is not None:
-        updates.append(f"parent={parent}")
+        updates.append(f"parent={ros_value(parent)}")
     if priority is not None:
-        updates.append(f"priority={priority}")
+        updates.append(f"priority={ros_value(priority)}")
     if packet_marks is not None:
-        updates.append(f"packet-marks={packet_marks}")
+        updates.append(f"packet-marks={ros_value(packet_marks)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -700,7 +701,7 @@ async def mikrotik_update_simple_queue(
         return f"Failed to update simple queue: {result}"
 
     lookup_name = new_name if new_name else name
-    details_cmd = f'/queue simple print detail where name="{lookup_name}"'
+    details_cmd = f'/queue simple print detail where name="{ros_quoted(lookup_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Simple queue updated successfully:\n\n{details}"
 
@@ -710,7 +711,7 @@ async def mikrotik_remove_simple_queue(ctx: Context, name: str, device: Optional
     """Removes a simple queue from the MikroTik device."""
     await ctx.info(f"Removing simple queue: name={name}")
 
-    cmd = f'/queue simple remove [find name="{name}"]'
+    cmd = f'/queue simple remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -723,13 +724,13 @@ async def mikrotik_enable_simple_queue(ctx: Context, name: str, device: Optional
     """Enables a simple queue."""
     await ctx.info(f"Enabling simple queue: name={name}")
 
-    cmd = f'/queue simple set [find name="{name}"] disabled=no'
+    cmd = f'/queue simple set [find name="{ros_quoted(name)}"] disabled=no'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to enable simple queue: {result}"
 
-    details_cmd = f'/queue simple print detail where name="{name}"'
+    details_cmd = f'/queue simple print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Simple queue enabled:\n\n{details}"
 
@@ -739,12 +740,12 @@ async def mikrotik_disable_simple_queue(ctx: Context, name: str, device: Optiona
     """Disables a simple queue."""
     await ctx.info(f"Disabling simple queue: name={name}")
 
-    cmd = f'/queue simple set [find name="{name}"] disabled=yes'
+    cmd = f'/queue simple set [find name="{ros_quoted(name)}"] disabled=yes'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to disable simple queue: {result}"
 
-    details_cmd = f'/queue simple print detail where name="{name}"'
+    details_cmd = f'/queue simple print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
     return f"Simple queue disabled:\n\n{details}"
