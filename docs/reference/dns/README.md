@@ -3,8 +3,8 @@
 #### `set_dns_servers`
 Sets DNS server configuration on MikroTik device.
 - Parameters:
-  - `servers` (required): DNS server list
-  - `allow_remote_requests` (optional): Allow remote requests
+  - `servers` (required): DNS server list (an empty list clears the servers)
+  - `allow_remote_requests` (optional): Allow remote requests (left as it is when omitted)
   - `max_udp_packet_size` (optional): Max UDP packet size
   - `max_concurrent_queries` (optional): Max concurrent queries
   - `cache_size` (optional): Cache size
