@@ -1,5 +1,6 @@
 from typing import Annotated, Literal, Optional
 from pydantic import Field
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
@@ -24,7 +25,7 @@ async def mikrotik_create_vlan_interface(
     await ctx.info(f"Creating VLAN interface: name={name}, vlan_id={vlan_id}, interface={interface}")
 
     # Build the command
-    cmd = f"/interface vlan add name={name} vlan-id={vlan_id} interface={interface}"
+    cmd = f"/interface vlan add name={ros_value(name)} vlan-id={vlan_id} interface={ros_value(interface)}"
 
     # Add optional parameters
     if comment:
@@ -43,7 +44,7 @@ async def mikrotik_create_vlan_interface(
         cmd += f" arp={arp}"
 
     if arp_timeout:
-        cmd += f" arp-timeout={arp_timeout}"
+        cmd += f" arp-timeout={ros_value(arp_timeout)}"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -52,7 +53,7 @@ async def mikrotik_create_vlan_interface(
         # MikroTik returns the ID of created item on success
         if "*" in result or result.strip().isdigit():
             # Success - get the details
-            details_cmd = f"/interface vlan print detail where name={name}"
+            details_cmd = f"/interface vlan print detail where name={ros_value(name)}"
             details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
             if details.strip():
@@ -64,7 +65,7 @@ async def mikrotik_create_vlan_interface(
             return f"Failed to create VLAN interface: {result}"
     else:
         # No output might mean success, let's check
-        details_cmd = f"/interface vlan print detail where name={name}"
+        details_cmd = f"/interface vlan print detail where name={ros_value(name)}"
         details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
         if details.strip():
@@ -90,11 +91,11 @@ async def mikrotik_list_vlan_interfaces(
     # Add filters
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if vlan_id_filter:
         filters.append(f"vlan-id={vlan_id_filter}")
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
 
@@ -114,7 +115,7 @@ async def mikrotik_get_vlan_interface(ctx: Context, name: str, device: Optional[
     """Gets detailed information about a specific VLAN interface."""
     await ctx.info(f"Getting VLAN interface details: name={name}")
 
-    cmd = f'/interface vlan print detail where name="{name}"'
+    cmd = f'/interface vlan print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -141,16 +142,16 @@ async def mikrotik_update_vlan_interface(
     await ctx.info(f"Updating VLAN interface: name={name}")
 
     # Build the command
-    cmd = f'/interface vlan set [find name="{name}"]'
+    cmd = f'/interface vlan set [find name="{ros_quoted(name)}"]'
 
     # Add parameters to update
     updates = []
     if new_name:
-        updates.append(f'name={new_name}')
+        updates.append(f'name={ros_value(new_name)}')
     if vlan_id is not None:
         updates.append(f'vlan-id={vlan_id}')
     if interface:
-        updates.append(f'interface={interface}')
+        updates.append(f'interface={ros_value(interface)}')
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -162,7 +163,7 @@ async def mikrotik_update_vlan_interface(
     if arp:
         updates.append(f'arp={arp}')
     if arp_timeout:
-        updates.append(f'arp-timeout={arp_timeout}')
+        updates.append(f'arp-timeout={ros_value(arp_timeout)}')
 
     if not updates:
         return "No updates specified."
@@ -177,7 +178,7 @@ async def mikrotik_update_vlan_interface(
 
     # Get the updated interface details
     details_name = new_name if new_name else name
-    details_cmd = f'/interface vlan print detail where name="{details_name}"'
+    details_cmd = f'/interface vlan print detail where name="{ros_quoted(details_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"VLAN interface updated successfully:\n\n{details}"
@@ -188,14 +189,14 @@ async def mikrotik_remove_vlan_interface(ctx: Context, name: str, device: Option
     await ctx.info(f"Removing VLAN interface: name={name}")
 
     # First check if the interface exists
-    check_cmd = f'/interface vlan print count-only where name="{name}"'
+    check_cmd = f'/interface vlan print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"VLAN interface '{name}' not found."
 
     # Remove the interface
-    cmd = f'/interface vlan remove [find name="{name}"]'
+    cmd = f'/interface vlan remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():

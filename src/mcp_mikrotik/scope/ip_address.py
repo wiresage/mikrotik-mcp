@@ -1,7 +1,7 @@
 from typing import Optional
 
 from ..connector import execute_mikrotik_command
-from ._quoting import ros_quoted
+from ._quoting import ros_quoted, ros_value
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 from ._selectors import has_item_rows, resolve_item_id, item_count
@@ -21,14 +21,14 @@ async def mikrotik_add_ip_address(
     await ctx.info(f"Adding IP address: address={address}, interface={interface}")
 
     # Build the command
-    cmd = f"/ip address add address={address} interface={interface}"
+    cmd = f"/ip address add address={ros_value(address)} interface={ros_value(interface)}"
 
     # Add optional parameters
     if network:
-        cmd += f" network={network}"
+        cmd += f" network={ros_value(network)}"
 
     if broadcast:
-        cmd += f" broadcast={broadcast}"
+        cmd += f" broadcast={ros_value(broadcast)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -42,7 +42,7 @@ async def mikrotik_add_ip_address(
         return f"Failed to add IP address: {result}"
 
     # Get the created address details
-    details_cmd = f'/ip address print detail where address="{address}"'
+    details_cmd = f'/ip address print detail where address="{ros_quoted(address)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"IP address added successfully:\n\n{details}"
@@ -66,11 +66,11 @@ async def mikrotik_list_ip_addresses(
     # Add filters
     filters = []
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     if network_filter:
-        filters.append(f'network="{network_filter}"')
+        filters.append(f'network="{ros_quoted(network_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if dynamic_only:
@@ -92,12 +92,12 @@ async def mikrotik_get_ip_address(ctx: Context, address_id: str, device: Optiona
     await ctx.info(f"Getting IP address details: address_id={address_id}")
 
     # Try to find by ID first, then by address
-    cmd = f'/ip address print detail where .id="{address_id}"'
+    cmd = f'/ip address print detail where .id="{ros_quoted(address_id)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
         # Try finding by address value
-        cmd = f'/ip address print detail where address="{address_id}"'
+        cmd = f'/ip address print detail where address="{ros_quoted(address_id)}"'
         result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -117,11 +117,11 @@ async def mikrotik_remove_ip_address(ctx: Context, address_id: str, device: Opti
             return f"IP address '{address_id}' not found."
         cmd = f"{menu} remove {resolved}"
     else:
-        check_cmd = f'{menu} print count-only where address="{address_id}"'
+        check_cmd = f'{menu} print count-only where address="{ros_quoted(address_id)}"'
         count = await execute_mikrotik_command(check_cmd, ctx, device=device)
         if count.strip() == "0":
             return f"IP address '{address_id}' not found."
-        cmd = f'{menu} remove [find address="{address_id}"]'
+        cmd = f'{menu} remove [find address="{ros_quoted(address_id)}"]'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 

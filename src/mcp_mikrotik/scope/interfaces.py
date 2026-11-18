@@ -1,4 +1,5 @@
 from typing import Literal, Optional
+from ._quoting import ros_quoted
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, WRITE_IDEMPOTENT, annotate
@@ -31,9 +32,9 @@ async def mikrotik_list_interfaces(
 
     filters = []
     if type_filter:
-        filters.append(f'type="{type_filter}"')
+        filters.append(f'type="{ros_quoted(type_filter)}"')
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if running_only:
         filters.append("running=yes")
     if disabled_only:
@@ -59,7 +60,7 @@ async def mikrotik_get_interface(ctx: Context, name: str, device: Optional[str] 
     """
     await ctx.info(f"Getting interface details: name={name}")
 
-    cmd = f'/interface print detail where name="{name}"'
+    cmd = f'/interface print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -77,14 +78,14 @@ async def mikrotik_enable_interface(ctx: Context, name: str, device: Optional[st
     """
     await ctx.info(f"Enabling interface: name={name}")
 
-    cmd = f'/interface enable [find name="{name}"]'
+    cmd = f'/interface enable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to enable interface '{name}': {result}"
 
     # Verify the change
-    check_cmd = f'/interface print detail where name="{name}"'
+    check_cmd = f'/interface print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if not details.strip():
@@ -102,14 +103,14 @@ async def mikrotik_disable_interface(ctx: Context, name: str, device: Optional[s
     """
     await ctx.info(f"Disabling interface: name={name}")
 
-    cmd = f'/interface disable [find name="{name}"]'
+    cmd = f'/interface disable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to disable interface '{name}': {result}"
 
     # Verify the change
-    check_cmd = f'/interface print detail where name="{name}"'
+    check_cmd = f'/interface print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if not details.strip():

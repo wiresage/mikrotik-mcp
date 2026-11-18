@@ -2,6 +2,7 @@ from typing import Optional, List
 
 from mcp.server.mcpserver import Context
 
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
@@ -24,11 +25,11 @@ async def mikrotik_create_ip_pool(
     await ctx.info(f"Creating IP pool: name={name}, ranges={ranges}")
 
     # Build the command
-    cmd = f"/ip pool add name={name} ranges={ranges}"
+    cmd = f"/ip pool add name={ros_value(name)} ranges={ros_value(ranges)}"
 
     # Add optional parameters
     if next_pool:
-        cmd += f' next-pool="{next_pool}"'
+        cmd += f' next-pool="{ros_quoted(next_pool)}"'
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -40,7 +41,7 @@ async def mikrotik_create_ip_pool(
         # MikroTik returns the ID of created item on success
         if "*" in result or result.strip().isdigit():
             # Success - get the details
-            details_cmd = f'/ip pool print detail where name="{name}"'
+            details_cmd = f'/ip pool print detail where name="{ros_quoted(name)}"'
             details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
             if details.strip():
@@ -52,7 +53,7 @@ async def mikrotik_create_ip_pool(
             return f"Failed to create IP pool: {result}"
     else:
         # No output might mean success, let's check
-        details_cmd = f'/ip pool print detail where name="{name}"'
+        details_cmd = f'/ip pool print detail where name="{ros_quoted(name)}"'
         details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
         if details.strip():
@@ -80,9 +81,9 @@ async def mikrotik_list_ip_pools(
     # Add filters
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if ranges_filter:
-        filters.append(f'ranges~"{ranges_filter}"')
+        filters.append(f'ranges~"{ros_quoted(ranges_filter)}"')
 
     if filters:
         cmd += " where " + " ".join(filters)
@@ -107,7 +108,7 @@ async def mikrotik_list_ip_pools(
                 if name_start > 5 and name_end > name_start:
                     pool_name = line[name_start:name_end]
                     # Get used addresses for this pool
-                    used_cmd = f'/ip pool used print count-only where pool="{pool_name}"'
+                    used_cmd = f'/ip pool used print count-only where pool="{ros_quoted(pool_name)}"'
                     used_count = await execute_mikrotik_command(used_cmd, ctx, device=device)
                     if used_count.strip().isdigit():
                         output_lines.append(f"      used-addresses={used_count.strip()}")
@@ -121,14 +122,14 @@ async def mikrotik_get_ip_pool(ctx: Context, name: str, device: Optional[str] = 
     """Gets detailed information about a specific IP pool including used address count."""
     await ctx.info(f"Getting IP pool details: name={name}")
 
-    cmd = f'/ip pool print detail where name="{name}"'
+    cmd = f'/ip pool print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result or result.strip() == "":
         return f"IP pool '{name}' not found."
 
     # Get used addresses count
-    used_cmd = f'/ip pool used print count-only where pool="{name}"'
+    used_cmd = f'/ip pool used print count-only where pool="{ros_quoted(name)}"'
     used_count = await execute_mikrotik_command(used_cmd, ctx, device=device)
 
     if used_count.strip().isdigit():
@@ -156,19 +157,19 @@ async def mikrotik_update_ip_pool(
     await ctx.info(f"Updating IP pool: name={name}")
 
     # Build the command
-    cmd = f'/ip pool set [find name="{name}"]'
+    cmd = f'/ip pool set [find name="{ros_quoted(name)}"]'
 
     # Add parameters to update
     updates = []
     if new_name:
-        updates.append(f'name={new_name}')
+        updates.append(f'name={ros_value(new_name)}')
     if ranges:
-        updates.append(f'ranges={ranges}')
+        updates.append(f'ranges={ros_value(ranges)}')
     if next_pool is not None:
         if next_pool == "":
             updates.append('!next-pool')
         else:
-            updates.append(f'next-pool="{next_pool}"')
+            updates.append(f'next-pool="{ros_quoted(next_pool)}"')
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
 
@@ -185,7 +186,7 @@ async def mikrotik_update_ip_pool(
 
     # Get the updated pool details
     details_name = new_name if new_name else name
-    details_cmd = f'/ip pool print detail where name="{details_name}"'
+    details_cmd = f'/ip pool print detail where name="{ros_quoted(details_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"IP pool updated successfully:\n\n{details}"
@@ -196,28 +197,28 @@ async def mikrotik_remove_ip_pool(ctx: Context, name: str, device: Optional[str]
     await ctx.info(f"Removing IP pool: name={name}")
 
     # First check if the pool exists
-    check_cmd = f'/ip pool print count-only where name="{name}"'
+    check_cmd = f'/ip pool print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"IP pool '{name}' not found."
 
     # Check if pool is in use
-    pool_used_cmd = f'/ip pool used print count-only where pool="{name}"'
+    pool_used_cmd = f'/ip pool used print count-only where pool="{ros_quoted(name)}"'
     used_count = await execute_mikrotik_command(pool_used_cmd, ctx, device=device)
 
     if used_count.strip() != "0":
         return f"Cannot remove IP pool '{name}': {used_count.strip()} addresses are currently in use."
 
     # Check if pool is referenced by DHCP servers
-    dhcp_check_cmd = f'/ip dhcp-server print count-only where address-pool="{name}"'
+    dhcp_check_cmd = f'/ip dhcp-server print count-only where address-pool="{ros_quoted(name)}"'
     dhcp_count = await execute_mikrotik_command(dhcp_check_cmd, ctx, device=device)
 
     if dhcp_count.strip() != "0":
         return f"Cannot remove IP pool '{name}': It is used by {dhcp_count.strip()} DHCP server(s)."
 
     # Remove the pool
-    cmd = f'/ip pool remove [find name="{name}"]'
+    cmd = f'/ip pool remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -242,13 +243,13 @@ async def mikrotik_list_ip_pool_used(
     # Add filters
     filters = []
     if pool_name:
-        filters.append(f'pool="{pool_name}"')
+        filters.append(f'pool="{ros_quoted(pool_name)}"')
     if address_filter:
-        filters.append(f'address~"{address_filter}"')
+        filters.append(f'address~"{ros_quoted(address_filter)}"')
     if mac_filter:
-        filters.append(f'mac-address~"{mac_filter}"')
+        filters.append(f'mac-address~"{ros_quoted(mac_filter)}"')
     if info_filter:
-        filters.append(f'info~"{info_filter}"')
+        filters.append(f'info~"{ros_quoted(info_filter)}"')
 
     if filters:
         cmd += " where " + " ".join(filters)
@@ -271,7 +272,7 @@ async def mikrotik_expand_ip_pool(ctx: Context, name: str, additional_ranges: st
     await ctx.info(f"Expanding IP pool: name={name}, additional_ranges={additional_ranges}")
 
     # Get current ranges
-    get_cmd = f'/ip pool print detail where name="{name}"'
+    get_cmd = f'/ip pool print detail where name="{ros_quoted(name)}"'
     current = await execute_mikrotik_command(get_cmd, ctx, device=device)
 
     if not current or "no such item" in current:

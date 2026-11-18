@@ -3,7 +3,7 @@ from typing import Optional
 from mcp.server.mcpserver import Context
 
 from ..connector import execute_mikrotik_command
-from ._quoting import ros_quoted
+from ._quoting import ros_quoted, ros_value
 from ._selectors import resolve_item_id, item_count, has_item_rows
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
@@ -26,27 +26,27 @@ async def mikrotik_create_wireguard_interface(
     """Creates a WireGuard interface on the MikroTik device."""
     await ctx.info(f"Creating WireGuard interface: name={name}")
 
-    cmd = f"/interface wireguard add name={name}"
+    cmd = f"/interface wireguard add name={ros_value(name)}"
 
     if listen_port is not None:
-        cmd += f" listen-port={listen_port}"
+        cmd += f" listen-port={ros_value(listen_port)}"
     if private_key:
-        cmd += f' private-key="{private_key}"'
+        cmd += f' private-key="{ros_quoted(private_key)}"'
     if mtu is not None:
-        cmd += f" mtu={mtu}"
+        cmd += f" mtu={ros_value(mtu)}"
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 
     result = await execute_mikrotik_command(
-        cmd, ctx, device=device, redact=[private_key] if private_key else None
+        cmd, ctx, device=device, redact=[private_key, ros_quoted(private_key)] if private_key else None
     )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to create WireGuard interface: {result}"
 
-    details_cmd = f'/interface wireguard print detail where name="{name}"'
+    details_cmd = f'/interface wireguard print detail where name="{ros_quoted(name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     if details.strip():
@@ -69,7 +69,7 @@ async def mikrotik_list_wireguard_interfaces(
 
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
     if running_only:
@@ -91,7 +91,7 @@ async def mikrotik_get_wireguard_interface(ctx: Context, name: str, device: Opti
     """Gets detailed information about a specific WireGuard interface."""
     await ctx.info(f"Getting WireGuard interface details: name={name}")
 
-    cmd = f'/interface wireguard print detail where name="{name}"'
+    cmd = f'/interface wireguard print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -117,13 +117,13 @@ async def mikrotik_update_wireguard_interface(
 
     updates = []
     if new_name:
-        updates.append(f"name={new_name}")
+        updates.append(f"name={ros_value(new_name)}")
     if listen_port is not None:
-        updates.append(f"listen-port={listen_port}")
+        updates.append(f"listen-port={ros_value(listen_port)}")
     if private_key:
-        updates.append(f'private-key="{private_key}"')
+        updates.append(f'private-key="{ros_quoted(private_key)}"')
     if mtu is not None:
-        updates.append(f"mtu={mtu}")
+        updates.append(f"mtu={ros_value(mtu)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -132,16 +132,16 @@ async def mikrotik_update_wireguard_interface(
     if not updates:
         return "No updates specified."
 
-    cmd = f'/interface wireguard set [find name="{name}"] ' + " ".join(updates)
+    cmd = f'/interface wireguard set [find name="{ros_quoted(name)}"] ' + " ".join(updates)
     result = await execute_mikrotik_command(
-        cmd, ctx, device=device, redact=[private_key] if private_key else None
+        cmd, ctx, device=device, redact=[private_key, ros_quoted(private_key)] if private_key else None
     )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update WireGuard interface: {result}"
 
     lookup_name = new_name if new_name else name
-    details_cmd = f'/interface wireguard print detail where name="{lookup_name}"'
+    details_cmd = f'/interface wireguard print detail where name="{ros_quoted(lookup_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"WireGuard interface updated successfully:\n\n{details}"
@@ -152,13 +152,13 @@ async def mikrotik_remove_wireguard_interface(ctx: Context, name: str, device: O
     """Removes a WireGuard interface from the MikroTik device."""
     await ctx.info(f"Removing WireGuard interface: name={name}")
 
-    check_cmd = f'/interface wireguard print count-only where name="{name}"'
+    check_cmd = f'/interface wireguard print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"WireGuard interface '{name}' not found."
 
-    cmd = f'/interface wireguard remove [find name="{name}"]'
+    cmd = f'/interface wireguard remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -172,7 +172,7 @@ async def mikrotik_enable_wireguard_interface(ctx: Context, name: str, device: O
     """Enables a WireGuard interface."""
     await ctx.info(f"Enabling WireGuard interface: name={name}")
 
-    cmd = f'/interface wireguard enable [find name="{name}"]'
+    cmd = f'/interface wireguard enable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -186,7 +186,7 @@ async def mikrotik_disable_wireguard_interface(ctx: Context, name: str, device: 
     """Disables a WireGuard interface."""
     await ctx.info(f"Disabling WireGuard interface: name={name}")
 
-    cmd = f'/interface wireguard disable [find name="{name}"]'
+    cmd = f'/interface wireguard disable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -223,26 +223,26 @@ async def mikrotik_add_wireguard_peer(
     await ctx.info(f"Adding WireGuard peer: interface={interface}, public_key={public_key[:12]}...")
 
     cmd = (
-        f'/interface wireguard peers add interface="{interface}"'
-        f' public-key="{public_key}"'
-        f' allowed-address="{allowed_address}"'
+        f'/interface wireguard peers add interface="{ros_quoted(interface)}"'
+        f' public-key="{ros_quoted(public_key)}"'
+        f' allowed-address="{ros_quoted(allowed_address)}"'
     )
 
     if endpoint_address:
-        cmd += f' endpoint-address="{endpoint_address}"'
+        cmd += f' endpoint-address="{ros_quoted(endpoint_address)}"'
     if endpoint_port is not None:
-        cmd += f" endpoint-port={endpoint_port}"
+        cmd += f" endpoint-port={ros_value(endpoint_port)}"
     if preshared_key:
-        cmd += f' preshared-key="{preshared_key}"'
+        cmd += f' preshared-key="{ros_quoted(preshared_key)}"'
     if persistent_keepalive:
-        cmd += f' persistent-keepalive={persistent_keepalive}'
+        cmd += f' persistent-keepalive={ros_value(persistent_keepalive)}'
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
 
     result = await execute_mikrotik_command(
-        cmd, ctx, device=device, redact=[preshared_key] if preshared_key else None
+        cmd, ctx, device=device, redact=[preshared_key, ros_quoted(preshared_key)] if preshared_key else None
     )
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -250,7 +250,7 @@ async def mikrotik_add_wireguard_peer(
 
     details_cmd = (
         f'/interface wireguard peers print detail where'
-        f' interface="{interface}" public-key="{public_key}"'
+        f' interface="{ros_quoted(interface)}" public-key="{ros_quoted(public_key)}"'
     )
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
@@ -273,7 +273,7 @@ async def mikrotik_list_wireguard_peers(
 
     filters = []
     if interface_filter:
-        filters.append(f'interface="{interface_filter}"')
+        filters.append(f'interface="{ros_quoted(interface_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
 
@@ -297,7 +297,7 @@ async def mikrotik_get_wireguard_peer(ctx: Context, peer_id: str, device: Option
     """
     await ctx.info(f"Getting WireGuard peer details: peer_id={peer_id}")
 
-    cmd = f"/interface wireguard peers print detail where .id={peer_id}"
+    cmd = f"/interface wireguard peers print detail where .id={ros_value(peer_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -331,21 +331,21 @@ async def mikrotik_update_wireguard_peer(
 
     updates = []
     if allowed_address is not None:
-        updates.append(f'allowed-address="{allowed_address}"')
+        updates.append(f'allowed-address="{ros_quoted(allowed_address)}"')
     if endpoint_address is not None:
         if endpoint_address == "":
             updates.append("!endpoint-address")
         else:
-            updates.append(f'endpoint-address="{endpoint_address}"')
+            updates.append(f'endpoint-address="{ros_quoted(endpoint_address)}"')
     if endpoint_port is not None:
-        updates.append(f"endpoint-port={endpoint_port}")
+        updates.append(f"endpoint-port={ros_value(endpoint_port)}")
     if preshared_key is not None:
         if preshared_key == "":
             updates.append("!preshared-key")
         else:
-            updates.append(f'preshared-key="{preshared_key}"')
+            updates.append(f'preshared-key="{ros_quoted(preshared_key)}"')
     if persistent_keepalive is not None:
-        updates.append(f"persistent-keepalive={persistent_keepalive}")
+        updates.append(f"persistent-keepalive={ros_value(persistent_keepalive)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -354,15 +354,15 @@ async def mikrotik_update_wireguard_peer(
     if not updates:
         return "No updates specified."
 
-    cmd = f"/interface wireguard peers set {peer_id} " + " ".join(updates)
+    cmd = f"/interface wireguard peers set {ros_value(peer_id)} " + " ".join(updates)
     result = await execute_mikrotik_command(
-        cmd, ctx, device=device, redact=[preshared_key] if preshared_key else None
+        cmd, ctx, device=device, redact=[preshared_key, ros_quoted(preshared_key)] if preshared_key else None
     )
 
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update WireGuard peer: {result}"
 
-    details_cmd = f"/interface wireguard peers print detail where .id={peer_id}"
+    details_cmd = f"/interface wireguard peers print detail where .id={ros_value(peer_id)}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"WireGuard peer updated successfully:\n\n{details}"
@@ -405,7 +405,7 @@ async def mikrotik_enable_wireguard_peer(ctx: Context, peer_id: str, device: Opt
     """
     await ctx.info(f"Enabling WireGuard peer: peer_id={peer_id}")
 
-    cmd = f"/interface wireguard peers enable {peer_id}"
+    cmd = f"/interface wireguard peers enable {ros_value(peer_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -423,7 +423,7 @@ async def mikrotik_disable_wireguard_peer(ctx: Context, peer_id: str, device: Op
     """
     await ctx.info(f"Disabling WireGuard peer: peer_id={peer_id}")
 
-    cmd = f"/interface wireguard peers disable {peer_id}"
+    cmd = f"/interface wireguard peers disable {ros_value(peer_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():

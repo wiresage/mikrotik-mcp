@@ -1,6 +1,6 @@
 from typing import Optional, List
 from ..connector import execute_mikrotik_command
-from ._quoting import ros_quoted
+from ._quoting import ros_quoted, ros_value
 from mcp.server.mcpserver import Context
 import re
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
@@ -20,13 +20,13 @@ async def mikrotik_add_user(
     """Adds a user to MikroTik device."""
     await ctx.info(f"Adding user: name={name}, group={group}")
 
-    cmd = f'/user add name="{name}" password="{ros_quoted(password)}" group={group}'
+    cmd = f'/user add name="{ros_quoted(name)}" password="{ros_quoted(password)}" group={ros_value(group)}'
     # The connector logs every command; keep the password out of both sinks.
     # What reaches the command line is the escaped form, so blank both.
     redact = [password, ros_quoted(password)]
 
     if address:
-        cmd += f" address={address}"
+        cmd += f" address={ros_value(address)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -39,7 +39,7 @@ async def mikrotik_add_user(
     if result.strip():
         if "*" in result or result.strip().isdigit():
             user_id = result.strip()
-            details_cmd = f"/user print detail where .id={user_id}"
+            details_cmd = f"/user print detail where .id={ros_value(user_id)}"
             details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
             if details.strip():
@@ -51,7 +51,7 @@ async def mikrotik_add_user(
         else:
             return f"Failed to create user: {result}"
     else:
-        details_cmd = f'/user print detail where name="{name}"'
+        details_cmd = f'/user print detail where name="{ros_quoted(name)}"'
         details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
         if details.strip():
@@ -76,9 +76,9 @@ async def mikrotik_list_users(
 
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if group_filter:
-        filters.append(f'group="{group_filter}"')
+        filters.append(f'group="{ros_quoted(group_filter)}"')
     if disabled_only:
         filters.append("disabled=yes")
 
@@ -100,7 +100,7 @@ async def mikrotik_get_user(ctx: Context, name: str, device: Optional[str] = Non
     """Gets detailed information about a specific user."""
     await ctx.info(f"Getting user details: name={name}")
 
-    cmd = f'/user print detail where name="{name}"'
+    cmd = f'/user print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -126,20 +126,20 @@ async def mikrotik_update_user(
     """Updates a user."""
     await ctx.info(f"Updating user: name={name}")
 
-    cmd = f'/user set [find name="{name}"]'
+    cmd = f'/user set [find name="{ros_quoted(name)}"]'
 
     updates = []
     if new_name:
-        updates.append(f'name="{new_name}"')
+        updates.append(f'name="{ros_quoted(new_name)}"')
     if password:
         updates.append(f'password="{ros_quoted(password)}"')
     if group:
-        updates.append(f'group={group}')
+        updates.append(f'group={ros_value(group)}')
     if address is not None:
         if address == "":
             updates.append("!address")
         else:
-            updates.append(f"address={address}")
+            updates.append(f"address={ros_value(address)}")
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -158,7 +158,7 @@ async def mikrotik_update_user(
         return f"Failed to update user: {result}"
 
     details_name = new_name if new_name else name
-    details_cmd = f'/user print detail where name="{details_name}"'
+    details_cmd = f'/user print detail where name="{ros_quoted(details_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     # Remove password from output
@@ -175,13 +175,13 @@ async def mikrotik_remove_user(ctx: Context, name: str, device: Optional[str] = 
     if name.lower() == "admin":
         return "Cannot remove the admin user."
 
-    check_cmd = f'/user print count-only where name="{name}"'
+    check_cmd = f'/user print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"User '{name}' not found."
 
-    cmd = f'/user remove [find name="{name}"]'
+    cmd = f'/user remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -223,10 +223,10 @@ async def mikrotik_add_user_group(
         if p not in valid_policies:
             return f"Invalid policy: {p}. Valid policies: {', '.join(valid_policies)}"
 
-    cmd = f'/user group add name="{name}" policy={",".join(policy)}'
+    cmd = f'/user group add name="{ros_quoted(name)}" policy={ros_value(",".join(policy))}'
 
     if skin:
-        cmd += f' skin="{skin}"'
+        cmd += f' skin="{ros_quoted(skin)}"'
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -236,7 +236,7 @@ async def mikrotik_add_user_group(
     if result.strip():
         if "*" in result or result.strip().isdigit():
             group_id = result.strip()
-            details_cmd = f"/user group print detail where .id={group_id}"
+            details_cmd = f"/user group print detail where .id={ros_value(group_id)}"
             details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
             if details.strip():
@@ -246,7 +246,7 @@ async def mikrotik_add_user_group(
         else:
             return f"Failed to create user group: {result}"
     else:
-        details_cmd = f'/user group print detail where name="{name}"'
+        details_cmd = f'/user group print detail where name="{ros_quoted(name)}"'
         details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
         if details.strip():
@@ -268,9 +268,9 @@ async def mikrotik_list_user_groups(
 
     filters = []
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name~"{ros_quoted(name_filter)}"')
     if policy_filter:
-        filters.append(f'policy~"{policy_filter}"')
+        filters.append(f'policy~"{ros_quoted(policy_filter)}"')
 
     if filters:
         cmd += " where " + " ".join(filters)
@@ -287,7 +287,7 @@ async def mikrotik_get_user_group(ctx: Context, name: str, device: Optional[str]
     """Gets detailed information about a specific user group."""
     await ctx.info(f"Getting user group details: name={name}")
 
-    cmd = f'/user group print detail where name="{name}"'
+    cmd = f'/user group print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result or result.strip() == "":
@@ -312,18 +312,18 @@ async def mikrotik_update_user_group(
     if name in ["read", "write", "full"]:
         return f"Cannot modify built-in group '{name}'."
 
-    cmd = f'/user group set [find name="{name}"]'
+    cmd = f'/user group set [find name="{ros_quoted(name)}"]'
 
     updates = []
     if new_name:
-        updates.append(f'name="{new_name}"')
+        updates.append(f'name="{ros_quoted(new_name)}"')
     if policy:
-        updates.append(f'policy={",".join(policy)}')
+        updates.append(f'policy={ros_value(",".join(policy))}')
     if skin is not None:
         if skin == "":
             updates.append("!skin")
         else:
-            updates.append(f'skin="{skin}"')
+            updates.append(f'skin="{ros_quoted(skin)}"')
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
 
@@ -338,7 +338,7 @@ async def mikrotik_update_user_group(
         return f"Failed to update user group: {result}"
 
     details_name = new_name if new_name else name
-    details_cmd = f'/user group print detail where name="{details_name}"'
+    details_cmd = f'/user group print detail where name="{ros_quoted(details_name)}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"User group updated successfully:\n\n{details}"
@@ -352,20 +352,20 @@ async def mikrotik_remove_user_group(ctx: Context, name: str, device: Optional[s
     if name in ["read", "write", "full"]:
         return f"Cannot remove built-in group '{name}'."
 
-    check_cmd = f'/user group print count-only where name="{name}"'
+    check_cmd = f'/user group print count-only where name="{ros_quoted(name)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"User group '{name}' not found."
 
     # Check if group is in use
-    users_cmd = f'/user print count-only where group="{name}"'
+    users_cmd = f'/user print count-only where group="{ros_quoted(name)}"'
     users_count = await execute_mikrotik_command(users_cmd, ctx, device=device)
 
     if users_count.strip() != "0":
         return f"Cannot remove group '{name}': {users_count.strip()} users are using this group."
 
-    cmd = f'/user group remove [find name="{name}"]'
+    cmd = f'/user group remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -391,7 +391,7 @@ async def mikrotik_disconnect_user(ctx: Context, user_id: str, device: Optional[
     """Disconnects an active user session."""
     await ctx.info(f"Disconnecting user: user_id={user_id}")
 
-    cmd = f"/user active remove {user_id}"
+    cmd = f"/user active remove {ros_value(user_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():
@@ -407,7 +407,7 @@ async def mikrotik_export_user_config(ctx: Context, filename: Optional[str] = No
     if not filename:
         filename = "user_config"
 
-    cmd = f"/user export file={filename}"
+    cmd = f"/user export file={ros_value(filename)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result.strip():
@@ -425,7 +425,7 @@ async def mikrotik_set_user_ssh_keys(
     """Sets SSH keys for a specific user."""
     await ctx.info(f"Setting SSH keys for user: {username}")
 
-    cmd = f'/user ssh-keys import user="{username}" public-key-file="{key_file}"'
+    cmd = f'/user ssh-keys import user="{ros_quoted(username)}" public-key-file="{ros_quoted(key_file)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result.strip() or "imported" in result.lower():
@@ -438,7 +438,7 @@ async def mikrotik_list_user_ssh_keys(ctx: Context, username: str, device: Optio
     """Lists SSH keys for a specific user."""
     await ctx.info(f"Listing SSH keys for user: {username}")
 
-    cmd = f'/user ssh-keys print where user="{username}"'
+    cmd = f'/user ssh-keys print where user="{ros_quoted(username)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result or result.strip() == "":
@@ -451,7 +451,7 @@ async def mikrotik_remove_user_ssh_key(ctx: Context, key_id: str, device: Option
     """Removes an SSH key."""
     await ctx.info(f"Removing SSH key: key_id={key_id}")
 
-    cmd = f"/user ssh-keys remove {key_id}"
+    cmd = f"/user ssh-keys remove {ros_value(key_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if "failure:" in result.lower() or "error" in result.lower():

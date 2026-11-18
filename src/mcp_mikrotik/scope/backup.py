@@ -1,4 +1,5 @@
 from typing import Literal, Optional, List
+from ._quoting import ros_quoted, ros_value
 from ..app import mcp, READ, WRITE, DANGEROUS, annotate
 from ..connector import execute_mikrotik_command, download_file_sync, upload_file_sync
 from .. import config
@@ -26,7 +27,7 @@ async def mikrotik_create_backup(
     await ctx.info(f"Creating backup: name={name}")
 
     # Build the command
-    cmd = f"/system backup save name={name}"
+    cmd = f"/system backup save name={ros_value(name)}"
 
     # Add optional parameters
     if dont_encrypt:
@@ -42,7 +43,7 @@ async def mikrotik_create_backup(
     # Check if backup was successful
     if "saved" in result or not result.strip():
         # Get file details
-        file_cmd = f"/file print detail where name={name}.backup"
+        file_cmd = f"/file print detail where name={ros_value(name + '.backup')}"
         file_details = await execute_mikrotik_command(file_cmd, ctx, device=device)
 
         if file_details:
@@ -71,9 +72,9 @@ async def mikrotik_list_backups(
     # Add name filter
     if name_filter:
         if include_exports:
-            cmd = f'/file print where (type=backup or type=script) and name~"{name_filter}"'
+            cmd = f'/file print where (type=backup or type=script) and name~"{ros_quoted(name_filter)}"'
         else:
-            cmd = f'/file print where type=backup and name~"{name_filter}"'
+            cmd = f'/file print where type=backup and name~"{ros_quoted(name_filter)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -107,7 +108,7 @@ async def mikrotik_create_export(
 
     # Build the command based on export type
     if export_type == "full":
-        cmd = f"/export file={name}"
+        cmd = f"/export file={ros_value(name)}"
     else:
         cmd = f"/export"
 
@@ -123,14 +124,14 @@ async def mikrotik_create_export(
 
     # Add file parameter for non-full exports
     if export_type != "full":
-        cmd += f" file={name}"
+        cmd += f" file={ros_value(name)}"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     # Check if export was successful
     if not result.strip() or "failure:" not in result.lower():
         # Get file details
-        file_cmd = f"/file print detail where name={full_name}"
+        file_cmd = f"/file print detail where name={ros_value(full_name)}"
         file_details = await execute_mikrotik_command(file_cmd, ctx, device=device)
 
         if file_details:
@@ -204,7 +205,7 @@ async def mikrotik_download_file(
     await ctx.info(f"Downloading file: filename={filename}, type={file_type}")
 
     # First, check if the file exists.
-    check_cmd = f'/file print count-only where name="{filename}"'
+    check_cmd = f'/file print count-only where name="{ros_quoted(filename)}"'
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
@@ -255,7 +256,7 @@ async def mikrotik_restore_backup(
     await ctx.info(f"Restoring backup: filename={filename}")
 
     # Check if backup file exists
-    check_cmd = f"/file print count-only where name={filename}"
+    check_cmd = f"/file print count-only where name={ros_value(filename)}"
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
@@ -265,7 +266,7 @@ async def mikrotik_restore_backup(
     # of argument(s) password"), also for a backup that is not encrypted: that one takes an empty
     # password. The value is escaped for a double-quoted string (backslash first, then quote and $).
     secret = (password or "").replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$")
-    cmd = f'/system backup load name={filename} password="{secret}"'
+    cmd = f'/system backup load name={ros_value(filename)} password="{secret}"'
 
     # The logs show the command as sent, which carries the escaped form, so declare both: a password
     # with a quote, a dollar sign or a backslash would otherwise not match and reach the log.
@@ -293,14 +294,14 @@ async def mikrotik_import_configuration(
     await ctx.info(f"Importing configuration: filename={filename}")
 
     # Check if file exists
-    check_cmd = f"/file print count-only where name={filename}"
+    check_cmd = f"/file print count-only where name={ros_value(filename)}"
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"Configuration file '{filename}' not found."
 
     # Build import command
-    cmd = f"/import file={filename}"
+    cmd = f"/import file={ros_value(filename)}"
 
     if run_after_reset:
         cmd += " run-after-reset=yes"
@@ -325,14 +326,14 @@ async def mikrotik_remove_file(
     await ctx.info(f"Removing file: filename={filename}")
 
     # Check if file exists
-    check_cmd = f"/file print count-only where name={filename}"
+    check_cmd = f"/file print count-only where name={ros_value(filename)}"
     count = await execute_mikrotik_command(check_cmd, ctx, device=device)
 
     if count.strip() == "0":
         return f"File '{filename}' not found."
 
     # Remove the file
-    cmd = f"/file remove {filename}"
+    cmd = f"/file remove {ros_value(filename)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result.strip():
@@ -350,7 +351,7 @@ async def mikrotik_backup_info(
     await ctx.info(f"Getting backup info: filename={filename}")
 
     # Get file details
-    cmd = f"/file print detail where name={filename}"
+    cmd = f"/file print detail where name={ros_value(filename)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result or result.strip() == "":

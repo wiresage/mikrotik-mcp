@@ -1,3 +1,6 @@
+import re
+
+
 def ros_quoted(value: str) -> str:
     r"""Escape a value for use inside a RouterOS double-quoted string.
 
@@ -27,3 +30,30 @@ def ros_quoted(value: str) -> str:
         else:
             out.extend(f"\\{byte:02X}" for byte in char.encode("utf-8", errors="replace"))
     return "".join(out)
+
+
+# Characters that cannot end a token, start a command or open a substitution: letters,
+# digits and the punctuation RouterOS values are actually made of — addresses and
+# prefixes (`10.0.0.0/24`), ranges (`10.0.0.1-10.0.0.9`), durations (`1d`), internal ids
+# (`*3`), and the comma-separated lists of `tcp-flags`, `ranges` or `headers`. Absent from
+# it on purpose: whitespace, `;`, `"`, `\`, `$`, `[`, `]`, `{`, `}`, `(`, `)`, `'` and `=`.
+_BARE = re.compile(r"[A-Za-z0-9._:/,!*+-]+")
+
+
+def ros_value(value: str) -> str:
+    r"""A free-text value ready to drop into a command, quoted only when it has to be.
+
+    `ros_quoted` escapes what is already inside quotes. Most interpolations are not: they reach the
+    command bare, as in `/interface vlan add name={name}`, so a value carrying a space, a `;` or a
+    `"` is read as further arguments or further commands.
+
+    A value made only of safe characters is returned as it is, so a command that was already correct
+    keeps its exact shape. That matters beyond the diff: RouterOS fixed "quoted input issues for
+    multi-argument properties" only in 7.24beta2, so quoting a list such as `tcp-flags=syn,!ack`
+    unconditionally would break it on earlier releases. Anything else is escaped and wrapped, and
+    the quotes are added here rather than written into the f-string, so the surrounding literal may
+    be delimited by either quote.
+    """
+    if value and _BARE.fullmatch(value):
+        return value
+    return '"' + ros_quoted(value) + '"'

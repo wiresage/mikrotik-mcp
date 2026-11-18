@@ -1,4 +1,5 @@
 from typing import Optional, List
+from ._quoting import ros_quoted, ros_value
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
 from mcp.server.mcpserver import Context
@@ -32,7 +33,7 @@ async def mikrotik_add_route(
     """
     await ctx.info(f"Adding route: dst={dst_address}, gateway={gateway}")
 
-    cmd = f"/ip route add dst-address={dst_address} gateway={gateway}"
+    cmd = f"/ip route add dst-address={ros_value(dst_address)} gateway={ros_value(gateway)}"
 
     if distance is not None:
         cmd += f" distance={distance}"
@@ -41,24 +42,24 @@ async def mikrotik_add_route(
     if target_scope is not None:
         cmd += f" target-scope={target_scope}"
     if routing_table:
-        cmd += f' routing-table="{routing_table}"'
+        cmd += f' routing-table="{ros_quoted(routing_table)}"'
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
     if disabled:
         cmd += " disabled=yes"
     if vrf_interface:
-        cmd += f' vrf-interface="{vrf_interface}"'
+        cmd += f' vrf-interface="{ros_quoted(vrf_interface)}"'
     if pref_src:
-        cmd += f" pref-src={pref_src}"
+        cmd += f" pref-src={ros_value(pref_src)}"
     if check_gateway:
-        cmd += f" check-gateway={check_gateway}"
+        cmd += f" check-gateway={ros_value(check_gateway)}"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if result.strip():
         if "*" in result or result.strip().isdigit():
             route_id = result.strip()
-            details_cmd = f"/ip route print detail where .id={route_id}"
+            details_cmd = f"/ip route print detail where .id={ros_value(route_id)}"
             details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
             if details.strip():
@@ -68,7 +69,7 @@ async def mikrotik_add_route(
         else:
             return f"Failed to add route: {result}"
     else:
-        details_cmd = f'/ip route print detail where dst-address="{dst_address}" and gateway="{gateway}"'
+        details_cmd = f'/ip route print detail where dst-address="{ros_quoted(dst_address)}" and gateway="{ros_quoted(gateway)}"'
         details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
         if details.strip():
@@ -96,11 +97,11 @@ async def mikrotik_list_routes(
 
     filters = []
     if dst_filter:
-        filters.append(f'dst-address~"{dst_filter}"')
+        filters.append(f'dst-address~"{ros_quoted(dst_filter)}"')
     if gateway_filter:
-        filters.append(f'gateway~"{gateway_filter}"')
+        filters.append(f'gateway~"{ros_quoted(gateway_filter)}"')
     if routing_table_filter:
-        filters.append(f'routing-table="{routing_table_filter}"')
+        filters.append(f'routing-table="{ros_quoted(routing_table_filter)}"')
     if distance_filter is not None:
         filters.append(f"distance={distance_filter}")
     if active_only:
@@ -131,7 +132,7 @@ async def mikrotik_get_route(ctx: Context, route_id: str, device: Optional[str] 
     """
     await ctx.info(f"Getting route details: route_id={route_id}")
 
-    cmd = f"/ip route print detail where .id={route_id}"
+    cmd = f"/ip route print detail where .id={ros_value(route_id)}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
@@ -169,13 +170,18 @@ async def mikrotik_update_route(
     """
     await ctx.info(f"Updating route: route_id={route_id}")
 
-    cmd = f"/ip route set {route_id}"
+    # An id is not free text. Resolving it rejects anything that is not an internal
+    # id or a print position, the same way this module's remove path does.
+    resolved = await resolve_item_id("/ip route", route_id, ctx, device, execute_mikrotik_command)
+    if resolved is None:
+        return f"Route with ID '{route_id}' not found."
+    cmd = f"/ip route set {resolved}"
 
     updates = []
     if dst_address:
-        updates.append(f"dst-address={dst_address}")
+        updates.append(f"dst-address={ros_value(dst_address)}")
     if gateway:
-        updates.append(f"gateway={gateway}")
+        updates.append(f"gateway={ros_value(gateway)}")
     if distance is not None:
         updates.append(f"distance={distance}")
     if scope is not None:
@@ -185,7 +191,7 @@ async def mikrotik_update_route(
     if routing_table is not None:
         # There is no unset: "!routing-table" is a syntax error, and a route
         # always belongs to a table, so clearing means back to "main".
-        updates.append(f'routing-table="{routing_table or "main"}"')
+        updates.append("routing-table=" + ros_value(routing_table or "main"))
     if comment is not None:
         updates.append(f'comment="{ros_quoted(comment)}"')
     if disabled is not None:
@@ -194,14 +200,14 @@ async def mikrotik_update_route(
         if vrf_interface == "":
             updates.append("!vrf-interface")
         else:
-            updates.append(f'vrf-interface="{vrf_interface}"')
+            updates.append(f'vrf-interface="{ros_quoted(vrf_interface)}"')
     if pref_src is not None:
         if pref_src == "":
             updates.append("!pref-src")
         else:
-            updates.append(f"pref-src={pref_src}")
+            updates.append(f"pref-src={ros_value(pref_src)}")
     if check_gateway is not None:
-        updates.append(f"check-gateway={check_gateway}")
+        updates.append(f"check-gateway={ros_value(check_gateway)}")
 
     if not updates:
         return "No updates specified."
@@ -213,7 +219,7 @@ async def mikrotik_update_route(
     if "failure:" in result.lower() or "error" in result.lower():
         return f"Failed to update route: {result}"
 
-    details_cmd = f"/ip route print detail where .id={route_id}"
+    details_cmd = f"/ip route print detail where .id={ros_value(route_id)}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     return f"Route updated successfully:\n\n{details}"
@@ -278,9 +284,9 @@ async def mikrotik_get_routing_table(
 
     filters = []
     if table_name and table_name != "main":
-        filters.append(f'routing-table="{table_name}"')
+        filters.append(f'routing-table="{ros_quoted(table_name)}"')
     if protocol_filter:
-        filters.append(f'protocol="{protocol_filter}"')
+        filters.append(f'protocol="{ros_quoted(protocol_filter)}"')
     if active_only:
         filters.append("active=yes")
 
@@ -306,7 +312,7 @@ async def mikrotik_check_route_path(
     # "once" is required: without it RouterOS keeps streaming status updates
     # and the command never returns. RouterOS 7 takes no other argument here --
     # src-address and routing-mark/-table are all rejected after the address.
-    cmd = f"/ip route check {destination} once"
+    cmd = f"/ip route check {ros_value(destination)} once"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -398,7 +404,7 @@ async def mikrotik_add_blackhole_route(
     # RouterOS 7 spells it as a flag; "type=blackhole" is RouterOS 6 syntax and fails with
     # "expected end of command". The `:put [...]` makes the router echo the new internal id,
     # which doubles as proof that the route was added (a refused add prints an error, no id).
-    cmd = f"/ip route add dst-address={dst_address} blackhole distance={distance}"
+    cmd = f"/ip route add dst-address={ros_value(dst_address)} blackhole distance={distance}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'

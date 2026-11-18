@@ -1,7 +1,15 @@
+import re
 from typing import Optional
+from ._quoting import ros_quoted
 from ..connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ..app import mcp, READ, annotate
+
+
+# RouterOS reads this argument as a list, so the names cannot be wrapped in one pair
+# of quotes the way a single value is. An interface name is not free text either, so
+# each one is checked instead: a value carrying a quote never reaches the command.
+_IFACE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
 @mcp.tool(name="get_poe_monitor", annotations=annotate(READ, "PoE Monitor"))
@@ -19,7 +27,15 @@ async def mikrotik_get_poe_monitor(ctx: Context, interfaces: str, device: Option
 
     # `once` is required — without it the monitor streams continuously and the
     # command never returns (it would hang the SSH session).
-    cmd = f"/interface ethernet poe monitor {interfaces} once"
+    names = [n.strip() for n in interfaces.split(",")]
+    if not all(_IFACE_RE.fullmatch(n) for n in names):
+        example = '"ether1" or "ether1,ether2"'
+        return (
+            f"Invalid interface list {interfaces!r}: expected comma-separated "
+            f"ethernet interface names, e.g. {example}."
+        )
+
+    cmd = f"/interface ethernet poe monitor {','.join(names)} once"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result or not result.strip():
@@ -45,7 +61,7 @@ async def mikrotik_list_poe(ctx: Context, interface_filter: Optional[str] = None
 
     cmd = "/interface ethernet poe print"
     if interface_filter:
-        cmd += f' where name~"{interface_filter}"'
+        cmd += f' where name~"{ros_quoted(interface_filter)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
@@ -70,7 +86,7 @@ async def mikrotik_get_poe_settings(ctx: Context, name: str, device: Optional[st
     """
     await ctx.info(f"Getting PoE settings for: {name}")
 
-    cmd = f'/interface ethernet poe print detail where name="{name}"'
+    cmd = f'/interface ethernet poe print detail where name="{ros_quoted(name)}"'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not result or not result.strip():

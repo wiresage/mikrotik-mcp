@@ -1,5 +1,6 @@
 from typing import Literal, Optional, List
 from mcp.server.mcpserver import Context
+from ._quoting import ros_quoted, ros_value
 from ..app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, DANGEROUS, annotate
 from ..connector import execute_mikrotik_command
 from ._quoting import ros_quoted
@@ -64,49 +65,49 @@ async def mikrotik_create_filter_rule(
 
     # Add optional parameters
     if src_address:
-        cmd += f" src-address={src_address}"
+        cmd += f" src-address={ros_value(src_address)}"
 
     if dst_address:
-        cmd += f" dst-address={dst_address}"
+        cmd += f" dst-address={ros_value(dst_address)}"
 
     if src_port:
-        cmd += f" src-port={src_port}"
+        cmd += f" src-port={ros_value(src_port)}"
 
     if dst_port:
-        cmd += f" dst-port={dst_port}"
+        cmd += f" dst-port={ros_value(dst_port)}"
 
     if protocol:
-        cmd += f" protocol={protocol}"
+        cmd += f" protocol={ros_value(protocol)}"
 
     if in_interface:
-        cmd += f' in-interface="{in_interface}"'
+        cmd += f' in-interface="{ros_quoted(in_interface)}"'
 
     if out_interface:
-        cmd += f' out-interface="{out_interface}"'
+        cmd += f' out-interface="{ros_quoted(out_interface)}"'
 
     if in_interface_list:
-        cmd += f' in-interface-list="{in_interface_list}"'
+        cmd += f' in-interface-list="{ros_quoted(in_interface_list)}"'
 
     if out_interface_list:
-        cmd += f' out-interface-list="{out_interface_list}"'
+        cmd += f' out-interface-list="{ros_quoted(out_interface_list)}"'
 
     if connection_state:
-        cmd += f" connection-state={connection_state}"
+        cmd += f" connection-state={ros_value(connection_state)}"
 
     if connection_nat_state:
-        cmd += f" connection-nat-state={connection_nat_state}"
+        cmd += f" connection-nat-state={ros_value(connection_nat_state)}"
 
     if src_address_list:
-        cmd += f' src-address-list="{src_address_list}"'
+        cmd += f' src-address-list="{ros_quoted(src_address_list)}"'
 
     if dst_address_list:
-        cmd += f' dst-address-list="{dst_address_list}"'
+        cmd += f' dst-address-list="{ros_quoted(dst_address_list)}"'
 
     if limit:
-        cmd += f" limit={limit}"
+        cmd += f" limit={ros_value(limit)}"
 
     if tcp_flags:
-        cmd += f" tcp-flags={tcp_flags}"
+        cmd += f" tcp-flags={ros_value(tcp_flags)}"
 
     if comment:
         cmd += f' comment="{ros_quoted(comment)}"'
@@ -120,7 +121,7 @@ async def mikrotik_create_filter_rule(
             cmd += f' log-prefix="{ros_quoted(log_prefix)}"'
 
     if place_before:
-        cmd += f" place-before={place_before}"
+        cmd += f" place-before={ros_value(place_before)}"
 
     # Wrapping the add in `:put [...]` makes RouterOS echo the new internal
     # id, the durable selector a caller can hold on to afterwards -- the half
@@ -163,17 +164,17 @@ async def mikrotik_list_filter_rules(
     # Add filters
     filters = []
     if chain_filter:
-        filters.append(f'chain="{chain_filter}"')
+        filters.append(f'chain="{ros_quoted(chain_filter)}"')
     if action_filter:
-        filters.append(f'action="{action_filter}"')
+        filters.append(f'action="{ros_quoted(action_filter)}"')
     if src_address_filter:
-        filters.append(f'src-address~"{src_address_filter}"')
+        filters.append(f'src-address~"{ros_quoted(src_address_filter)}"')
     if dst_address_filter:
-        filters.append(f'dst-address~"{dst_address_filter}"')
+        filters.append(f'dst-address~"{ros_quoted(dst_address_filter)}"')
     if protocol_filter:
-        filters.append(f'protocol="{protocol_filter}"')
+        filters.append(f'protocol="{ros_quoted(protocol_filter)}"')
     if interface_filter:
-        filters.append(f'(in-interface~"{interface_filter}" or out-interface~"{interface_filter}")')
+        filters.append(f'(in-interface~"{ros_quoted(interface_filter)}" or out-interface~"{ros_quoted(interface_filter)}")')
     if disabled_only:
         filters.append("disabled=yes")
     if invalid_only:
@@ -299,22 +300,22 @@ async def mikrotik_update_filter_rule(
         if in_interface == "":
             updates.append("!in-interface")
         else:
-            updates.append(f'in-interface="{in_interface}"')
+            updates.append(f'in-interface="{ros_quoted(in_interface)}"')
     if out_interface is not None:
         if out_interface == "":
             updates.append("!out-interface")
         else:
-            updates.append(f'out-interface="{out_interface}"')
+            updates.append(f'out-interface="{ros_quoted(out_interface)}"')
     if in_interface_list is not None:
         if in_interface_list == "":
             updates.append("!in-interface-list")
         else:
-            updates.append(f'in-interface-list="{in_interface_list}"')
+            updates.append(f'in-interface-list="{ros_quoted(in_interface_list)}"')
     if out_interface_list is not None:
         if out_interface_list == "":
             updates.append("!out-interface-list")
         else:
-            updates.append(f'out-interface-list="{out_interface_list}"')
+            updates.append(f'out-interface-list="{ros_quoted(out_interface_list)}"')
     if connection_state is not None:
         if connection_state == "":
             updates.append("!connection-state")
@@ -329,12 +330,12 @@ async def mikrotik_update_filter_rule(
         if src_address_list == "":
             updates.append("!src-address-list")
         else:
-            updates.append(f'src-address-list="{src_address_list}"')
+            updates.append(f'src-address-list="{ros_quoted(src_address_list)}"')
     if dst_address_list is not None:
         if dst_address_list == "":
             updates.append("!dst-address-list")
         else:
-            updates.append(f'dst-address-list="{dst_address_list}"')
+            updates.append(f'dst-address-list="{ros_quoted(dst_address_list)}"')
     if limit is not None:
         if limit == "":
             updates.append("!limit")
