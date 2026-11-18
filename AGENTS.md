@@ -44,7 +44,7 @@ docs/reference/<area>/     one reference page per scope
 
 ## Writing tools
 
-- Name the function `mikrotik_<verb>_<resource>` and register it with `@mcp.tool(name="<verb>_<resource>", annotations=annotate(READ, "Title"))`. Import `Context` from `mcp.server.mcpserver` (the snippets in CONTRIBUTING.md still show the old `mcp.server.fastmcp`).
+- Name the function `mikrotik_<verb>_<resource>` and register it with `@mcp.tool(name="<verb>_<resource>", annotations=annotate(READ, "Title"))`. Import `Context` from `mcp.server.mcpserver`.
 - `ctx: Context` is the first parameter, `device: Optional[str] = None` the last, and it is passed on: `execute_mikrotik_command(cmd, ctx, device=device)`. Start with `await ctx.info(...)`. Return strings.
 - Keep the docstring to one sentence. Docstrings are sent to the model on every `tools/list`, so their length is a recurring token cost. Add a `Notes:` block only for something non-obvious, such as which filters are substring matches and which are exact. Do not repeat the `device` explanation; the server sends it once at initialize.
 - Use `Literal` for fixed value sets and `Annotated[int, Field(ge=..., le=...)]` for ranges.

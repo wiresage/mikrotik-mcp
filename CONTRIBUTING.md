@@ -13,9 +13,14 @@ src/mcp_mikrotik/
 ├── scope/          # Feature modules — each file registers MCP tools via decorators
 ├── app.py          # MCPServer instance and ToolAnnotation constants
 ├── config.py       # Configuration (pydantic-settings, CLI args, env vars)
-├── connector.py    # SSH connection handling
-├── server.py       # Entry point — imports scopes, starts the server
-└── mikrotik_ssh_client.py  # Low-level SSH client
+├── configured_mcp_server.py  # Read-only filtering, sensitive hiding, IP allowlist
+├── connector.py    # Runs one command over a fresh SSH connection
+├── http_security.py  # IP allowlist for the HTTP transports
+├── inventory.py    # Multi-device inventory
+├── mikrotik_ssh_client.py  # Low-level SSH client
+├── safe_mode.py    # RouterOS safe mode sessions
+├── sensitive.py    # Credential redaction
+└── server.py       # Entry point: CLI parsing and transport selection
 
 tests/
 ├── integration/    # Integration tests using testcontainers
@@ -94,34 +99,41 @@ Your scope file should:
 **Example structure**:
 ```python
 from typing import Optional
-from mcp.server.fastmcp import Context
+
+from mcp.server.mcpserver import Context
+
+from ..app import mcp, WRITE, annotate
 from ..connector import execute_mikrotik_command
-from ..app import mcp, READ, WRITE, annotate
+from ._quoting import ros_quoted
+
 
 @mcp.tool(name="create_my_resource", annotations=annotate(WRITE, "Create My Resource"))
 async def mikrotik_create_my_resource(
     ctx: Context,
     name: str,
-    required_param: str,
-    optional_param: Optional[str] = None,
-    comment: Optional[str] = None
+    comment: Optional[str] = None,
+    device: Optional[str] = None,
 ) -> str:
-    """Creates a new resource on the MikroTik device."""
+    """Creates a resource on the MikroTik device."""
     await ctx.info(f"Creating resource: name={name}")
 
-    cmd = f"/my/feature add name={name} param={required_param}"
-
-    if optional_param:
-        cmd += f" optional-param={optional_param}"
+    quoted_name = ros_quoted(name)
+    cmd = f'/my/feature add name="{quoted_name}"'
     if comment:
-        cmd += f' comment="{comment}"'
+        cmd += f' comment="{ros_quoted(comment)}"'
 
-    result = await execute_mikrotik_command(cmd, ctx)
-
-    if "failure:" in result.lower() or "error" in result.lower():
+    # A successful add prints nothing, so any output is a refusal.
+    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    if result.strip():
         return f"Failed to create resource: {result}"
 
-    return f"Resource created successfully:\n\n{result}"
+    count = await execute_mikrotik_command(
+        f'/my/feature print count-only where name="{quoted_name}"', ctx, device=device
+    )
+    if count.strip() == "0":
+        return f"Failed to create resource: '{name}' was not found afterwards."
+
+    return f"Resource '{name}' created."
 ```
 
 ### 2. Choose the Right Tool Annotation
@@ -130,66 +142,52 @@ Import the appropriate annotation constant from `app.py` and pass it via `@mcp.t
 
 | Constant | Use for |
 |---|---|
-| `READ` | Read-only queries (print, list, get, export) |
+| `READ` | Reads that change nothing on the device. `/export file=...` and `/system backup save` write files, so they are not reads |
 | `WRITE` | Non-idempotent writes (add, create) |
-| `WRITE_IDEMPOTENT` | Idempotent writes (set, update, enable, disable) |
-| `DESTRUCTIVE` | Idempotent destructive operations (remove, flush) |
-| `DANGEROUS` | Non-idempotent destructive operations (reset, bulk create) |
+| `WRITE_IDEMPOTENT` | Idempotent writes (set, update, enable, disable, move) |
+| `DESTRUCTIVE` | Removals (remove, flush, disconnect) |
+| `DANGEROUS` | Restore, import, reset, and anything that can lock you out |
+
+`--read-only` exposes only `READ` tools, so this choice is a safety control.
 
 ### 3. Register Your Scope
 
-Update `src/mcp_mikrotik/app.py` to import your new scope module:
+Add your module to the `from mcp_mikrotik.scope import (...)` list in `src/mcp_mikrotik/app.py`. The import triggers the `@mcp.tool()` decorators, which register your tools with the MCP server.
 
-```python
-from mcp_mikrotik.scope import (  # noqa: F401
-    backup, dhcp, dns, firewall_filter, firewall_nat,
-    ip_address, ip_pool, logs, my_feature, routes, users, vlan, wireless,
-)
-```
+Then add:
 
-The import triggers the `@mcp.tool()` decorators, which automatically register your tools with the MCP server. No manual registry is needed.
+- the module name to `SCOPE_MODULES` in `tests/unit/test_scopes_smoke.py`
+- a reference page at `docs/reference/<area>/README.md`, linked from `docs/reference/README.md`
+- the tools to `docs/api-coverage.yml` (see [API Coverage](#api-coverage))
 
 ### 4. Write Tests
 
-Create tests in `tests/` for unit tests or `tests/integration/` for integration tests.
+Put unit tests in `tests/unit/test_scope_<area>.py`. Replace the connector with `FakeExecutor`, assert the exact command, and cover the refusal and "nothing matched" paths as well as success:
 
-Integration tests should:
-- Use testcontainers to spin up a real MikroTik RouterOS container
-- Follow the existing test structure and naming conventions
-- Test complete workflows (create, read, update, delete operations)
-- Include proper cleanup to ensure tests are isolated
-- Use the `@pytest.mark.integration` decorator
-
-**Example structure** (based on `test_mikrotik_user_integration.py`):
 ```python
-"""Integration tests for MikroTik my feature using testcontainers."""
+import asyncio
 
-import pytest
-from mcp_mikrotik.scope.my_feature import (
-    mikrotik_create_my_resource,
-    mikrotik_list_my_resources
-)
+from mcp_mikrotik.scope import my_feature
+from tests.conftest import FakeExecutor
 
-@pytest.mark.integration
-class TestMikroTikMyFeatureIntegration:
-    def test_01_create_resource(self, mikrotik_container):
-        result = mikrotik_create_my_resource(
-            name="test_resource",
-            required_param="test_value"
-        )
-        assert "failed" not in result.lower()
-        assert "test_resource" in result
 
-    def test_02_list_resources(self, mikrotik_container):
-        result = mikrotik_list_my_resources()
-        assert "test_resource" in result
+def test_create_sends_expected_command(ctx, monkeypatch):
+    fake = FakeExecutor()
+    monkeypatch.setattr(my_feature, "execute_mikrotik_command", fake)
+
+    result = asyncio.run(my_feature.mikrotik_create_my_resource(ctx, name="r1"))
+
+    assert fake.commands[0] == '/my/feature add name="r1"'
+    assert "created" in result
 ```
+
+Integration tests go in `tests/integration/`, use the `@pytest.mark.integration` marker, and run against a RouterOS container started with testcontainers. See `tests/integration/test_mikrotik_user_integration.py`.
 
 ### 5. Test Your Implementation
 
 Before submitting, ensure your implementation works:
 
-1. **Run integration tests**: `uv run pytest tests/integration/test_my_feature_integration.py -v`
+1. **Run the unit tests**: `uv run pytest -m "not integration"`
 2. **Use MCP Inspector**: Test your tools interactively using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
    ```bash
    # Test your MCP server (stdio transport)
@@ -263,7 +261,7 @@ Every pull request that targets `master` gets one comment from the **PR demo** w
 
 This project uses [GitVersion](https://gitversion.net/) for automatic semantic versioning based on commit messages. We follow [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
-All pull requests merge directly to `master`. There are no `develop` or `release` branches. Every merge that contains a non-`docs` commit will publish a new package version automatically.
+All pull requests merge directly to `master`. There are no `develop` or `release` branches. A merge publishes a new version only when it changes a shipped file: `src/**`, `pyproject.toml`, `uv.lock`, `Dockerfile`, `.dockerignore`, `docker-entrypoint.sh` or `server.json`.
 
 ### Version Format
 
@@ -274,7 +272,7 @@ Published versions use a **4-part** format: `MAJOR.MINOR.PATCH.BUILD`
 | 1 (MAJOR) | `x.0.0.0` | **Never** — frozen at `0` |
 | 2 (MINOR) | `0.x.0.0` | `feat:` commits |
 | 3 (PATCH) | `0.0.x.0` | `fix:`, `chore:`, and other change commits |
-| 4 (BUILD) | `0.0.0.x` | Auto — commit count since last version tag |
+| 4 (BUILD) | `0.0.0.x` | Always `0` |
 | — | no change | `docs:` commits |
 
 ### Quick Reference Table
@@ -364,7 +362,7 @@ When a PR contains both `feat:` and `docs:` commits, GitVersion picks the **high
 
 ### Version Release Process
 
-1. PR is merged to `master`
+1. PR that changes a shipped file is merged to `master`
 2. GitVersion calculates the new version from commit history
 3. GitHub Actions builds the package with the calculated version
 4. Unit tests run across Python 3.10 / 3.11 / 3.12
@@ -375,14 +373,12 @@ You never need to manually bump version numbers or create tags.
 
 ### Best Practices
 
-1. **Be intentional with commit types** — `feat:` and `fix:` trigger **minor** version bumps automatically
-2. **Default is minor bump** — Any commit to master without `+semver:` tags will bump the minor version
-3. **Use `+semver: none` or `+semver: skip`** — To prevent version bumps for CI/CD, tests, or internal changes
-4. **Use `+semver: patch`** — For documentation, formatting, or minor non-functional changes that should only bump patch version
-5. **Use `+semver: breaking` or `+semver: major`** — For breaking changes that require major version bump
-6. **Write clear commit messages** — They become part of the release history and changelog
-7. **One logical change per commit** — Makes version history clearer and easier to track
-8. **Test before committing** — Failed builds don't get published
+1. **Be intentional with commit types**: `feat:` bumps the minor version, and other change types bump the patch version
+2. **Use `docs:` for documentation-only commits**: they do not bump the version
+3. **Do not use `+semver: breaking` or `+semver: major`** without explicit approval; the major version is frozen at `0`
+4. **Write clear commit messages**: they become part of the release history and changelog
+5. **Keep one logical change per commit**: it makes version history easier to follow
+6. **Test before committing**: failed builds don't get published
 
 ## Branching Strategy
 

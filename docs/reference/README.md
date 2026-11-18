@@ -24,8 +24,14 @@ Complete reference documentation for all MikroTik MCP tools.
 - **[Address Lists](address-list/README.md)** - IPv4 and IPv6 Firewall Address Lists
 - **[Routes](routes/README.md)** - Route Management
 - **[Diagnostics](diagnostics/README.md)** - Ping, Traceroute, Torch, Quick Packet Capture, CPU Profile
+- **[System](system/README.md)** - System Resource, Health, Clock, Packages
+- **[IP Services](services/README.md)** - Management Services Exposure
+- **[Netwatch](netwatch/README.md)** - Netwatch Probes and Liveness
+- **[Scheduler](scheduler/README.md)** - Scheduled Tasks and Scripts
 - **[DNS](dns/README.md)** - DNS Management
 - **[Users](users/README.md)** - User Management
 - **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
+- **[IPsec](ipsec/README.md)** - IPsec VPN Status
+- **[Wireless](wireless/README.md)** - Wireless/WiFi Interface Management
 - **[Queue](queue/README.md)** - Queue Types, Trees, and Simple Queues
 - **[Safe Mode](safe-mode/README.md)** - Safe Mode Session Management

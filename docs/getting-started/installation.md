@@ -1,24 +1,53 @@
 # Installation
 
-## MCP Registry (Recommended)
-
-MikroTik MCP is listed on the [MCP Registry](https://registry.modelcontextprotocol.io) — a community-driven catalog of MCP servers. Registry-aware clients (Claude Desktop, VS Code, Cursor) can install it in one command without manual config file editing.
-
-```bash
-claude mcp add io.github.wiresage/mikrotik-mcp
-```
-
-The client fetches the server metadata from the registry, installs `mcp-server-mikrotik` from PyPI, and prompts you for the required environment variables (`MIKROTIK_HOST`, `MIKROTIK_USERNAME`, `MIKROTIK_PASSWORD`).
-
-> **PyPI install only:** If your client does not support registry-based install, use one of the manual methods below.
-
----
-
 ## Prerequisites
+
 - Python 3.10 or newer
 - A MikroTik RouterOS device reachable over SSH (RouterOS 7 is the tested version)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) for the `uvx` install and for
   running from source; the `pip` and Docker installs do not need it
+
+## Add it to your MCP client
+
+Most clients start the server themselves, so this is the only step you need.
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport stdio mikrotik \
+  --env MIKROTIK_HOST=192.168.88.1 \
+  --env MIKROTIK_USERNAME=admin \
+  --env MIKROTIK_PASSWORD=your_password \
+  -- uvx mcp-server-mikrotik
+```
+
+**Clients configured with JSON** (Claude Desktop, Cursor and others):
+
+```json
+{
+  "mcpServers": {
+    "mikrotik": {
+      "command": "uvx",
+      "args": ["mcp-server-mikrotik"],
+      "env": {
+        "MIKROTIK_HOST": "192.168.88.1",
+        "MIKROTIK_USERNAME": "admin",
+        "MIKROTIK_PASSWORD": "your_password"
+      }
+    }
+  }
+}
+```
+
+See the [integration guides](../integrations/README.md) for SSH keys and client-specific
+steps, and [Inventory](../reference/inventory/README.md) to manage several devices.
+
+### MCP Registry
+
+The server is listed on the [MCP Registry](https://registry.modelcontextprotocol.io) as
+`io.github.wiresage/mikrotik-mcp`. That name identifies the listing and is not something
+`claude mcp add` can install: `claude mcp add io.github.wiresage/mikrotik-mcp` fails with
+`missing required argument 'commandOrUrl'`. Use the command above instead.
 
 ## Install from PyPI
 
@@ -37,6 +66,14 @@ uvx mcp-server-mikrotik --mcp.transport sse
 
 # Run with streamable HTTP transport
 uvx mcp-server-mikrotik --mcp.transport streamable-http
+```
+
+Without connection settings the server targets `127.0.0.1` as `admin` with an empty
+password. Set your router with the [options below](#cli-options) or the matching
+`MIKROTIK_*` [environment variables](#environment-variables):
+
+```bash
+uvx mcp-server-mikrotik --host 192.168.88.1 --username admin --password your_password
 ```
 
 <details>
@@ -88,19 +125,23 @@ tests and changing dependencies.
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--host` | MikroTik device IP/hostname | from config |
-| `--username` | SSH username | from config |
-| `--password` | SSH password | from config |
-| `--key-filename` | SSH key filename | from config |
+| `--host` | MikroTik device IP/hostname | `127.0.0.1` |
+| `--username` | SSH username | `admin` |
+| `--password` | SSH password | _(empty)_ |
+| `--key-filename` | Path to an SSH private key | _(none)_ |
 | `--allow-ssh-agent` | Authenticate with keys offered by the SSH agent through `SSH_AUTH_SOCK` | `false` |
-| `--ssh-agent-key` | Restrict agent authentication to the matching key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint; requires `--allow-ssh-agent` | _(empty)_ |
+| `--ssh-agent-key` | Restrict agent authentication to the matching key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint; requires `--allow-ssh-agent` | _(none)_ |
 | `--port` | SSH port | `22` |
+| `--inventory` | Multiple devices, as an inline YAML or JSON list; takes precedence over `--inventory-file` and the single-device options | _(empty)_ |
+| `--inventory-file` | Path to a YAML file holding the inventory | _(none)_ |
 | `--read-only` | Expose only tools that do not modify RouterOS or its file store | `false` |
 | `--sensitive-hiding` | Redact credentials and private key material from client-visible output | `false` |
 | `--command-timeout` | Seconds a command may wait for the device before the call fails (`MIKROTIK_COMMAND_TIMEOUT`) | `180` |
 | `--mcp.transport` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
 | `--mcp.host` | HTTP server listen address | `0.0.0.0` |
 | `--mcp.port` | HTTP server listen port | `8000` |
+| `--mcp.allowed-hosts` | Comma-separated `Host` header allowlist for HTTP transports | _(empty)_ |
+| `--mcp.allowed-origins` | Comma-separated `Origin` header allowlist for HTTP transports | _(empty)_ |
 | `--mcp.allowed-ips` | Comma-separated client IP addresses and CIDR networks allowed to use HTTP transports | _(empty)_ |
 
 `--read-only` limits the MCP tool catalogue only. Use a restricted RouterOS
@@ -119,7 +160,7 @@ HTTP-based transports (`sse`, `streamable-http`) expose a `GET /health` endpoint
 
 ## Docker Installation
 
-The easiest way to run the MCP MikroTik server is using Docker.
+Use Docker when you want an isolated runtime or a long-running HTTP service.
 
 ### Official prebuilt image (GitHub Container Registry)
 
@@ -130,14 +171,14 @@ can pull it directly instead of building from source:
 # Latest release
 docker pull ghcr.io/wiresage/mikrotik-mcp:latest
 
-# A specific version (matches the PyPI / git tag version)
+# A specific version (matches the git tag, without the leading v)
 docker pull ghcr.io/wiresage/mikrotik-mcp:<version>
 ```
 
 | Tag | Points to |
 |-----|-----------|
 | `latest` | The most recent release |
-| `X.Y.Z` | A specific released version, aligned with the PyPI release |
+| `X.Y.Z` | A specific released version; the matching PyPI version is `X.Y.Z.0` |
 | `X.Y` | The latest patch of a minor line |
 | `sha-<short>` | A specific commit |
 
@@ -196,18 +237,26 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
 
    The server will be available at `http://localhost:8000/sse` (SSE) or `http://localhost:8000/mcp` (streamable HTTP).
 
-   **Environment Variables:**
+   The image's entrypoint takes `--transport`, not `--mcp.transport`. Prefer the
+   environment variables below for other settings.
+
+   #### Environment Variables
+
+   These apply outside Docker too. The defaults shown are the image's; without
+   Docker, `MIKROTIK_HOST` defaults to `127.0.0.1`.
 
    | Variable | Description | Default |
    |----------|-------------|---------|
    | `MIKROTIK_HOST` | MikroTik device IP/hostname | `192.168.88.1` |
    | `MIKROTIK_USERNAME` | SSH username | `admin` |
    | `MIKROTIK_PASSWORD` | SSH password | _(empty)_ |
+   | `MIKROTIK_KEY_FILENAME` | Path to an SSH private key; in Docker, a path inside the container | _(none)_ |
    | `MIKROTIK_ALLOW_SSH_AGENT` | Set to `true` to authenticate with keys offered by the SSH agent through `SSH_AUTH_SOCK` | `false` |
    | `MIKROTIK_SSH_AGENT_KEY` | Restrict agent authentication to the matching key: a full public-key line, its base64 blob, or a `SHA256:` fingerprint. Requires `MIKROTIK_ALLOW_SSH_AGENT=true` | _(empty)_ |
-    | `MIKROTIK_PORT` | SSH port | `22` |
-    | `MIKROTIK_READ_ONLY` | Set to `true` to expose only tools that do not modify RouterOS or its file store | `false` |
-    | `MIKROTIK_SENSITIVE_HIDING` | Set to `true` to redact recognized credentials and private key material | `false` |
+   | `MIKROTIK_PORT` | SSH port | `22` |
+   | `MIKROTIK_READ_ONLY` | Set to `true` to expose only tools that do not modify RouterOS or its file store | `false` |
+   | `MIKROTIK_SENSITIVE_HIDING` | Set to `true` to redact recognized credentials and private key material | `false` |
+   | `MIKROTIK_COMMAND_TIMEOUT` | Seconds a command may wait for the device before the call fails | `180` |
    | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/inventory/README.md). | _(empty)_ |
    | `MIKROTIK_INVENTORY_FILE` | Path **inside the container** to a YAML file holding the inventory — mount it as a volume | _(empty)_ |
    | `MIKROTIK_MCP__TRANSPORT` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
@@ -217,11 +266,11 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_MCP__ALLOWED_ORIGINS` | Comma-separated `Origin` header allowlist for the HTTP transports. | _(empty)_ |
    | `MIKROTIK_MCP__ALLOWED_IPS` | Comma-separated client IP addresses and CIDR networks allowed to use HTTP transports | _(empty; unrestricted)_ |
 
-    > **Read-only deployments:** Set `MIKROTIK_READ_ONLY=true` to keep modifying
-    > tools out of the MCP tool catalogue. Also use a RouterOS account with only
-    > the permissions it needs (ideally read-only): this is the enforcement layer
-    > that protects the router if another SSH client or a server defect bypasses
-    > the MCP catalogue.
+   > **Read-only deployments:** Set `MIKROTIK_READ_ONLY=true` to keep modifying
+   > tools out of the MCP tool catalogue. Also use a RouterOS account with only
+   > the permissions it needs (ideally read-only): this is the enforcement layer
+   > that protects the router if another SSH client or a server defect bypasses
+   > the MCP catalogue.
 
 ### Docker Compose
 
@@ -307,6 +356,9 @@ services:
       MIKROTIK_MCP__PORT: "8000"
 ```
 
+A `key_filename` is a path inside the container, so mount that key as well and
+make it readable by uid 1000.
+
 If a mount is inconvenient, the inventory can go inline in
 `MIKROTIK_INVENTORY` using YAML flow syntax (no escaped quotes; JSON also
 works, since it is a YAML subset), or via the `--inventory` /
@@ -335,11 +387,12 @@ or `http://localhost:8000/sse` (if you set `MIKROTIK_MCP__TRANSPORT: sse`), and
 
 #### Behind a reverse proxy (or any non-localhost access)
 
-The HTTP transports (`sse` / `streamable-http`) apply DNS-rebinding protection,
-which validates the request's `Host` header. When the server is reached on a
-custom domain or a non-localhost IP — e.g. through a reverse proxy — you must
-allowlist that host, otherwise requests to `/mcp` are rejected with **HTTP 421
-"Invalid Host header"** (while `/health` still works, since it is exempt):
+The HTTP transports (`sse` / `streamable-http`) can apply DNS-rebinding
+protection, which validates the request's `Host` header. On a non-localhost bind,
+including the default `0.0.0.0`, the check stays off until you set an allowlist,
+and the server logs a warning. Set one for any deployment reached by a domain or
+through a reverse proxy. Requests to `/mcp` with an unlisted host then get
+**HTTP 421 "Invalid Host header"**, while `/health` still works because it is exempt:
 
 ```yaml
     environment:
@@ -360,8 +413,10 @@ Both accept a **comma-separated** list, e.g.:
 
 - Append `:*` to a host (e.g. `mcp.example.com:*`) to allow it on any port.
 - Set `MIKROTIK_MCP__ALLOWED_HOSTS: "*"` to disable the host check entirely.
-- If you leave it unset on a non-localhost bind, the check is auto-disabled (a
-  warning is logged) so the server still works out of the box.
+- Always set `MIKROTIK_MCP__ALLOWED_HOSTS` together with
+  `MIKROTIK_MCP__ALLOWED_ORIGINS`. Origins alone turn the protection on with an
+  empty host list, which rejects every request.
+- On a localhost bind with no allowlist, only localhost hosts and origins are accepted.
 
 #### Restricting client IP addresses
 

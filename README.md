@@ -48,7 +48,8 @@ https://github.com/user-attachments/assets/185b2c39-8f55-4f26-a74c-2ac459ad38f5
 
 - **[Installation Guide](docs/getting-started/installation.md)** - Get started with MikroTik MCP
 - **[API Coverage](docs/api-coverage.md)** - Implemented and planned RouterOS features
-- **[Testing Guide](docs/getting-started/testing.md)** - Run integration tests
+- **[Testing Guide](docs/getting-started/testing.md)** - Run unit and integration tests
+- **[Claude Code Integration](docs/integrations/claude-code.md)** - Configure for Claude Code
 - **[Claude Desktop Integration](docs/integrations/claude-desktop.md)** - Configure for Claude Desktop
 - **[MCP Inspector](docs/integrations/inspector.md)** - Interactive testing tool
 - **[Contributing Guide](CONTRIBUTING.md)** - Help improve MikroTik MCP
@@ -111,8 +112,3 @@ including walkthroughs of new features and pull requests, live on Bisque:
 [bisque.today/p/wiresage/mikrotik-mcp](https://bisque.today/p/wiresage/mikrotik-mcp).
 
 <a href="https://bisque.today/p/wiresage/mikrotik-mcp"><img src="https://bisque.cloud/poster/AlY6OT2Cd1YpfqlZ5jsfdWcae933/landing-demo/og-slide.png" alt="Watch the MikroTik MCP presentations on Bisque" width="600" /></a>
-
-> [!NOTE]
-> The Presentations section was added on 3 November 2026, after release
-> `v0.26.2`. Releases up to `v0.26.2` don't have it, and it ships with the
-> next release.

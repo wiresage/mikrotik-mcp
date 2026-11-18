@@ -10,7 +10,7 @@
 # Version format: MAJOR.MINOR.PATCH.FIX (assemblySemVer, 4-part PEP 440)
 #   feat:   bumps MINOR  →  0.x.0.0
 #   chore:  bumps PATCH  →  0.0.x.0
-#   fix:    bumps PATCH  →  0.0.x.0  (4th digit tracks commits since last tag)
+#   fix:    bumps PATCH  →  0.0.x.0  (4th digit is always 0; see GitVersion.yml)
 #   docs:   no bump
 #
 # Workflow Steps:
