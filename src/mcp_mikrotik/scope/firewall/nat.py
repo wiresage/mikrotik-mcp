@@ -3,7 +3,7 @@ from mcp.server.mcpserver import Context
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
-from .._shared.selectors import resolve_item_id, item_count, item_at_position, move_to_position, has_item_rows
+from .._shared.selectors import _ID_RE, resolve_item_id, item_count, item_at_position, move_to_position, has_item_rows
 
 @mcp.tool(name="create_nat_rule", annotations=annotate(WRITE, "Create NAT Rule"))
 async def mikrotik_create_nat_rule(
@@ -89,36 +89,20 @@ async def mikrotik_create_nat_rule(
     if place_before:
         cmd += f" place-before={place_before}"
 
-    result = await execute_mikrotik_command(cmd, ctx, device=device)
+    # Wrapping the add in `:put [...]` makes RouterOS echo the new internal id. A plain add prints nothing, and the old
+    # fallback (`print from=<last>`) read item numbers that only exist after a print in the same session, but every command
+    # here has its own connection: the reply ended in "no such item" even though the rule had been created. The id also
+    # is the positive evidence of success, because a refused add prints an error and no id.
+    result = await execute_mikrotik_command(f":put [{cmd}]", ctx, device=device)
 
-    # Check if creation was successful
-    if result.strip():
-        # MikroTik returns the ID of created item on success
-        if "*" in result or result.strip().isdigit():
-            # Success - get the details
-            rule_id = result.strip()
-            details_cmd = f"/ip firewall nat print detail where .id={rule_id}"
-            details = await execute_mikrotik_command(details_cmd, ctx, device=device)
+    new_id = result.strip()
+    if not _ID_RE.fullmatch(new_id):
+        return f"Failed to create NAT rule: {new_id or 'no rule ID returned'}"
 
-            if details.strip():
-                return f"NAT rule created successfully:\n\n{details}"
-            else:
-                return f"NAT rule created with ID: {result}"
-        else:
-            # Error occurred
-            return f"Failed to create NAT rule: {result}"
-    else:
-        # No output might mean success, let's check by getting the last rule
-        details_cmd = "/ip firewall nat print detail count-only"
-        count = await execute_mikrotik_command(details_cmd, ctx, device=device)
-
-        if count.strip().isdigit() and int(count.strip()) > 0:
-            # Get the last rule
-            last_rule_cmd = f"/ip firewall nat print detail from={int(count.strip())-1}"
-            details = await execute_mikrotik_command(last_rule_cmd, ctx, device=device)
-            return f"NAT rule created successfully:\n\n{details}"
-        else:
-            return "NAT rule creation completed but unable to verify."
+    details = await execute_mikrotik_command(f"/ip firewall nat print detail where .id={new_id}", ctx, device=device)
+    if details.strip():
+        return f"NAT rule created successfully (ID {new_id}):\n\n{details}"
+    return f"NAT rule created successfully with ID: {new_id}"
 
 @mcp.tool(name="list_nat_rules", annotations=annotate(READ, "List NAT Rules"))
 async def mikrotik_list_nat_rules(

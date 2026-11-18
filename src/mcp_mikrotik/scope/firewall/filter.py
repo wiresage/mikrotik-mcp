@@ -361,13 +361,18 @@ async def mikrotik_update_filter_rule(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    # Check if update was successful
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update firewall filter rule: {result}"
+    # A set prints nothing when it works. An internal id that does not exist is not caught by the lookup above (an id is
+    # taken as it is), and RouterOS answers it with "no such item", which is neither "failure:" nor "error".
+    if "no such item" in result.lower():
+        return f"Firewall filter rule with ID '{rule_id}' not found."
+    if result.strip():
+        return f"Failed to update firewall filter rule: {result.strip()}"
 
     # Get the updated rule details
     details_cmd = f"/ip firewall filter print detail where .id={resolved}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
+    if "chain=" not in details:
+        return f"Failed to update firewall filter rule: {details.strip() or 'the rule cannot be read back'}"
 
     return f"Firewall filter rule updated successfully:\n\n{details}"
 

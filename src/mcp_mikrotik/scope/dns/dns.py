@@ -11,7 +11,7 @@ from .._shared.selectors import _ID_RE, has_item_rows, resolve_item_id, item_cou
 async def mikrotik_set_dns_servers(
     ctx: Context,
     servers: List[str],
-    allow_remote_requests: bool = False,
+    allow_remote_requests: Optional[bool] = None,
     max_udp_packet_size: Optional[int] = None,
     max_concurrent_queries: Optional[int] = None,
     cache_size: Optional[int] = None,
@@ -24,12 +24,14 @@ async def mikrotik_set_dns_servers(
     """Sets DNS server configuration."""
     await ctx.info(f"Setting DNS servers: {', '.join(servers)}")
 
-    cmd = "/ip dns set servers=" + ",".join(servers)
+    # An empty list clears the servers, and it has to be written as an empty string: a bare `servers=` is read as the start of
+    # the next argument and changes nothing.
+    cmd = '/ip dns set servers=' + (",".join(servers) if servers else '""')
 
-    if allow_remote_requests:
-        cmd += " allow-remote-requests=yes"
-    else:
-        cmd += " allow-remote-requests=no"
+    # Only what the caller asked for: the old default wrote allow-remote-requests=no on every call, which silently
+    # stopped a router from answering the DNS queries of its own clients.
+    if allow_remote_requests is not None:
+        cmd += f" allow-remote-requests={'yes' if allow_remote_requests else 'no'}"
 
     if max_udp_packet_size:
         cmd += f" max-udp-packet-size={max_udp_packet_size}"
@@ -49,12 +51,13 @@ async def mikrotik_set_dns_servers(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if not result.strip() or "failure:" not in result.lower():
-        details_cmd = "/ip dns print"
-        details = await execute_mikrotik_command(details_cmd, ctx, device=device)
-        return f"DNS settings updated successfully:\n\n{details}"
-    else:
-        return f"Failed to update DNS settings: {result}"
+    # A set prints nothing when it works; "invalid value for argument", "input does not match" and the like are refusals too.
+    if result.strip():
+        return f"Failed to update DNS settings: {result.strip()}"
+
+    details_cmd = "/ip dns print"
+    details = await execute_mikrotik_command(details_cmd, ctx, device=device)
+    return f"DNS settings updated successfully:\n\n{details}"
 
 @mcp.tool(name="get_dns_settings", annotations=annotate(READ, "DNS Settings"))
 async def mikrotik_get_dns_settings(ctx: Context, device: Optional[str] = None) -> str:
