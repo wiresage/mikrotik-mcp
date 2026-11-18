@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from mcp_mikrotik.scope import backup as mod
+from mcp_mikrotik.scope.system import backup as mod
 
 BS = chr(92)
 

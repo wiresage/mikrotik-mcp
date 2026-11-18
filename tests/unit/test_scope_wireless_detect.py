@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from mcp_mikrotik.scope import wireless as m
+from mcp_mikrotik.scope.interfaces import wireless as m
 
 
 def _detect(ctx, replies):

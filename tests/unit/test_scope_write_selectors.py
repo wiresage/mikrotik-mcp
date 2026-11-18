@@ -5,14 +5,14 @@ import pytest
 
 
 CASES = [
-    ("routes", "mikrotik_remove_route", "route_id", "/ip route", "remove"),
-    ("dns", "mikrotik_remove_dns_static", "entry_id", "/ip dns static", "remove"),
-    ("firewall_nat", "mikrotik_remove_nat_rule", "rule_id", "/ip firewall nat", "remove"),
-    ("firewall_nat", "mikrotik_move_nat_rule", "rule_id", "/ip firewall nat", "move"),
-    ("wireguard", "mikrotik_remove_wireguard_peer", "peer_id", "/interface wireguard peers", "remove"),
-    ("ipv6_firewall_filter", "mikrotik_update_ipv6_filter_rule", "rule_id", "/ipv6 firewall filter", "set"),
-    ("ipv6_firewall_filter", "mikrotik_remove_ipv6_filter_rule", "rule_id", "/ipv6 firewall filter", "remove"),
-    ("ipv6_firewall_filter", "mikrotik_move_ipv6_filter_rule", "rule_id", "/ipv6 firewall filter", "move"),
+    ("routing.routes", "mikrotik_remove_route", "route_id", "/ip route", "remove"),
+    ("dns.dns", "mikrotik_remove_dns_static", "entry_id", "/ip dns static", "remove"),
+    ("firewall.nat", "mikrotik_remove_nat_rule", "rule_id", "/ip firewall nat", "remove"),
+    ("firewall.nat", "mikrotik_move_nat_rule", "rule_id", "/ip firewall nat", "move"),
+    ("interfaces.wireguard", "mikrotik_remove_wireguard_peer", "peer_id", "/interface wireguard peers", "remove"),
+    ("firewall.ipv6_filter", "mikrotik_update_ipv6_filter_rule", "rule_id", "/ipv6 firewall filter", "set"),
+    ("firewall.ipv6_filter", "mikrotik_remove_ipv6_filter_rule", "rule_id", "/ipv6 firewall filter", "remove"),
+    ("firewall.ipv6_filter", "mikrotik_move_ipv6_filter_rule", "rule_id", "/ipv6 firewall filter", "move"),
 ]
 
 

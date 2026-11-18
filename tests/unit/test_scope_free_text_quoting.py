@@ -13,7 +13,7 @@ import inspect
 
 import pytest
 
-from mcp_mikrotik.scope._quoting import ros_quoted
+from mcp_mikrotik.scope._shared.quoting import ros_quoted
 from tests.conftest import FakeExecutor, make_dummy_value
 
 BS = chr(92)  # one backslash, written this way so the tests do not depend on how a backslash is escaped here
@@ -21,21 +21,21 @@ NASTY = f'say "hi" {BS}b cost $5 [x]; café 日本\tend'
 
 # scope module -> the parameters whose value is free text, and the RouterOS argument each one becomes
 MODULES = [
-    "dhcp",
-    "dns",
-    "firewall_address_list",
-    "firewall_filter",
-    "firewall_nat",
-    "ip_address",
-    "ip_pool",
-    "ipv6_address",
-    "ipv6_firewall_filter",
-    "queue",
-    "routes",
-    "users",
-    "vlan",
-    "wireguard",
-    "wireless",
+    "dhcp.dhcp",
+    "dns.dns",
+    "firewall.address_list",
+    "firewall.filter",
+    "firewall.ipv6_filter",
+    "firewall.nat",
+    "interfaces.vlan",
+    "interfaces.wireguard",
+    "interfaces.wireless",
+    "ip.address",
+    "ip.ipv6_address",
+    "ip.pool",
+    "queue.queue",
+    "routing.routes",
+    "users.users",
 ]
 FREE_TEXT = {"comment": "comment", "log_prefix": "log-prefix", "text": "text", "ssid": "ssid", "password": "password"}
 
@@ -122,13 +122,13 @@ def test_the_tools_that_take_free_text_are_all_covered():
     covered = {p.id for p in free_text_tools()}
     # a new write tool with a comment must show up here, or it ships without the escaping test
     for expected in (
-        "ip_address.mikrotik_add_ip_address",
-        "users.mikrotik_add_user",
-        "users.mikrotik_update_user",
-        "firewall_filter.mikrotik_create_filter_rule",
-        "firewall_nat.mikrotik_create_nat_rule",
-        "wireguard.mikrotik_add_wireguard_peer",
-        "dns.mikrotik_add_dns_static",
+        "ip.address.mikrotik_add_ip_address",
+        "users.users.mikrotik_add_user",
+        "users.users.mikrotik_update_user",
+        "firewall.filter.mikrotik_create_filter_rule",
+        "firewall.nat.mikrotik_create_nat_rule",
+        "interfaces.wireguard.mikrotik_add_wireguard_peer",
+        "dns.dns.mikrotik_add_dns_static",
     ):
         assert expected in covered
     assert len(covered) >= 35
@@ -137,7 +137,7 @@ def test_the_tools_that_take_free_text_are_all_covered():
 # ----------------------------------------------------------------------------------------- passwords in the logs
 @pytest.mark.parametrize("tool", ["mikrotik_add_user", "mikrotik_update_user"])
 def test_a_password_is_declared_in_both_forms_for_the_logs(tool, ctx, monkeypatch):
-    from mcp_mikrotik.scope import users
+    from mcp_mikrotik.scope.users import users
 
     password = f'p"w{BS}d$1'
     recorder = Recorder()

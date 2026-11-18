@@ -30,7 +30,7 @@ class LegendOnly(FakeExecutor):
 
 def test_schedulers_default_withholds_on_event(ctx, monkeypatch):
     """`on-event` carries commands, so by default the proplist must keep it off the wire."""
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fake = Leaky()
     monkeypatch.setattr(scheduler, "execute_mikrotik_command", fake, raising=True)
@@ -45,7 +45,7 @@ def test_schedulers_default_withholds_on_event(ctx, monkeypatch):
 
 
 def test_schedulers_keep_the_fields_that_say_whether_a_job_runs():
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fields = scheduler._SCHEDULER_METADATA.split(",")
     assert len(fields) == len(set(fields))
@@ -54,7 +54,7 @@ def test_schedulers_keep_the_fields_that_say_whether_a_job_runs():
 
 
 def test_schedulers_with_source_ask_for_everything_and_redact(ctx, monkeypatch):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fake = Leaky()
     monkeypatch.setattr(scheduler, "execute_mikrotik_command", fake, raising=True)
@@ -67,7 +67,7 @@ def test_schedulers_with_source_ask_for_everything_and_redact(ctx, monkeypatch):
 
 
 def test_schedulers_no_match_is_not_the_legend(ctx, monkeypatch):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     monkeypatch.setattr(scheduler, "execute_mikrotik_command", LegendOnly(), raising=True)
     assert _run(scheduler.mikrotik_list_schedulers(ctx, name_filter="x")) == (

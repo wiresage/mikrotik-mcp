@@ -27,7 +27,7 @@ class Empty(FakeExecutor):
 
 
 def test_system_commands_and_device(ctx, monkeypatch):
-    from mcp_mikrotik.scope import system
+    from mcp_mikrotik.scope.system import info as system
 
     fake = Canned()
     monkeypatch.setattr(system, "execute_mikrotik_command", fake, raising=True)
@@ -52,7 +52,7 @@ def test_system_commands_and_device(ctx, monkeypatch):
 
 def test_health_absence_is_explained_not_reported_as_failure(ctx, monkeypatch):
     """Most boards carry no sensors; an empty answer is not an error."""
-    from mcp_mikrotik.scope import system
+    from mcp_mikrotik.scope.system import info as system
 
     monkeypatch.setattr(system, "execute_mikrotik_command", Empty(), raising=True)
     out = _run(system.mikrotik_get_system_health(ctx))
@@ -60,7 +60,7 @@ def test_health_absence_is_explained_not_reported_as_failure(ctx, monkeypatch):
 
 
 def test_scripts_withhold_source_by_default(ctx, monkeypatch):
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     fake = Canned()
     monkeypatch.setattr(scheduler, "execute_mikrotik_command", fake, raising=True)
@@ -80,7 +80,7 @@ def test_scripts_withhold_source_by_default(ctx, monkeypatch):
 
 def test_script_and_scheduler_output_is_redacted(ctx, monkeypatch):
     """A credential left in a script body must not come back in clear text."""
-    from mcp_mikrotik.scope import scheduler
+    from mcp_mikrotik.scope.system import scheduler
 
     class WithSecret(FakeExecutor):
         async def __call__(self, command, _ctx, device=None):
@@ -98,7 +98,7 @@ def test_script_and_scheduler_output_is_redacted(ctx, monkeypatch):
 
 
 def test_services_command_and_filters(ctx, monkeypatch):
-    from mcp_mikrotik.scope import services
+    from mcp_mikrotik.scope.ip import services
 
     fake = Canned()
     monkeypatch.setattr(services, "execute_mikrotik_command", fake, raising=True)
@@ -112,7 +112,10 @@ def test_services_command_and_filters(ctx, monkeypatch):
 
 
 def test_new_tools_are_all_read_only(ctx):
-    from mcp_mikrotik.scope import netwatch, scheduler, services, system  # noqa: F401
+    from mcp_mikrotik.scope.monitoring import netwatch  # noqa: F401
+    from mcp_mikrotik.scope.system import scheduler  # noqa: F401
+    from mcp_mikrotik.scope.ip import services  # noqa: F401
+    from mcp_mikrotik.scope.system import info as system  # noqa: F401
     from mcp_mikrotik.app import mcp
 
     names = {

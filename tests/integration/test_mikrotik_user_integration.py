@@ -12,7 +12,7 @@ pytest.importorskip("testcontainers.core.container")
 from testcontainers.core.container import DockerContainer
 
 from mcp_mikrotik import config as mikrotik_config_module
-from mcp_mikrotik.scope.users import mikrotik_add_user, mikrotik_list_users, mikrotik_remove_user
+from mcp_mikrotik.scope.users.users import mikrotik_add_user, mikrotik_list_users, mikrotik_remove_user
 
 
 def _make_ctx():
