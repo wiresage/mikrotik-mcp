@@ -4,6 +4,7 @@ from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, DANGEROUS, a
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import _ID_RE, item_at_position, move_to_position, resolve_item_id
+from .._shared.results import refused
 
 async def _resolve_filter_rule_id(rule_id: str, ctx: Context, device: Optional[str]) -> Optional[str]:
     return await resolve_item_id("/ip firewall filter", rule_id, ctx, device, execute_mikrotik_command)
@@ -400,8 +401,8 @@ async def mikrotik_remove_filter_rule(ctx: Context, rule_id: str, device: Option
     cmd = f"/ip firewall filter remove {resolved}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove firewall filter rule: {result}"
+    if refused(result):
+        return f"Failed to remove firewall filter rule: {result.strip()}"
 
     return f"Firewall filter rule with ID '{rule_id}' removed successfully."
 

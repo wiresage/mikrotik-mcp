@@ -5,6 +5,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows
+from .._shared.results import refused, is_missing
 
 
 async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional[str] = None) -> Optional[str]:
@@ -143,8 +144,8 @@ async def mikrotik_create_wireless_interface(
     await ctx.info(f"Executing command: {cmd}")
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create wireless interface: {result}"
+    if refused(result):
+        return f"Failed to create wireless interface: {result.strip()}"
 
     # Get the created interface details
     details_cmd = f'{interface_type} print detail where name="{name}"'
@@ -271,8 +272,8 @@ async def mikrotik_remove_wireless_interface(ctx: Context, name: str, device: Op
     cmd = f'{interface_type} remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove wireless interface: {result}"
+    if refused(result):
+        return f"Failed to remove wireless interface: {result.strip()}"
 
     return f"Wireless interface '{name}' removed successfully."
 
@@ -288,11 +289,13 @@ async def mikrotik_enable_wireless_interface(ctx: Context, name: str, device: Op
     if not interface_type:
         return "Error: No wireless interface support detected on this device."
 
+    if await is_missing(interface_type, f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Wireless interface '{name}' not found."
     cmd = f'{interface_type} enable [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable wireless interface: {result}"
+    if refused(result):
+        return f"Failed to enable wireless interface: {result.strip()}"
 
     return f"Wireless interface '{name}' enabled successfully."
 
@@ -308,11 +311,13 @@ async def mikrotik_disable_wireless_interface(ctx: Context, name: str, device: O
     if not interface_type:
         return "Error: No wireless interface support detected on this device."
 
+    if await is_missing(interface_type, f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Wireless interface '{name}' not found."
     cmd = f'{interface_type} disable [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable wireless interface: {result}"
+    if refused(result):
+        return f"Failed to disable wireless interface: {result.strip()}"
 
     return f"Wireless interface '{name}' disabled successfully."
 
@@ -545,12 +550,8 @@ async def mikrotik_update_wireless_interface(
     cmd = f'{interface_type} set [find name="{name}"] {" ".join(updates)}'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    result_lower = result.lower()
-    if ("failure:" in result_lower or "error" in result_lower
-            or "expected end of command" in result_lower
-            or "bad command name" in result_lower
-            or "input does not match" in result_lower):
-        return f"Failed to update wireless interface: {result}"
+    if refused(result):
+        return f"Failed to update wireless interface: {result.strip()}"
 
     # Get updated details
     target_name = new_name or name

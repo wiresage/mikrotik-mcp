@@ -5,6 +5,7 @@ from mcp.server.mcpserver import Context
 import re
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows
+from .._shared.results import refused, is_missing, no_such_item
 
 @mcp.tool(name="add_user", annotations=annotate(WRITE, "Add User"))
 async def mikrotik_add_user(
@@ -125,6 +126,8 @@ async def mikrotik_update_user(
 ) -> str:
     """Updates a user."""
     await ctx.info(f"Updating user: name={name}")
+    if await is_missing("/user", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"User '{name}' not found."
 
     cmd = f'/user set [find name="{name}"]'
 
@@ -154,8 +157,8 @@ async def mikrotik_update_user(
         cmd, ctx, device=device, redact=[password, ros_quoted(password)] if password else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update user: {result}"
+    if refused(result):
+        return f"Failed to update user: {result.strip()}"
 
     details_name = new_name if new_name else name
     details_cmd = f'/user print detail where name="{details_name}"'
@@ -184,8 +187,8 @@ async def mikrotik_remove_user(ctx: Context, name: str, device: Optional[str] = 
     cmd = f'/user remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove user: {result}"
+    if refused(result):
+        return f"Failed to remove user: {result.strip()}"
 
     return f"User '{name}' removed successfully."
 
@@ -307,6 +310,8 @@ async def mikrotik_update_user_group(
 ) -> str:
     """Updates a user group."""
     await ctx.info(f"Updating user group: name={name}")
+    if await is_missing("/user group", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"User group '{name}' not found."
 
     # Don't allow modification of built-in groups
     if name in ["read", "write", "full"]:
@@ -334,8 +339,8 @@ async def mikrotik_update_user_group(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update user group: {result}"
+    if refused(result):
+        return f"Failed to update user group: {result.strip()}"
 
     details_name = new_name if new_name else name
     details_cmd = f'/user group print detail where name="{details_name}"'
@@ -368,8 +373,8 @@ async def mikrotik_remove_user_group(ctx: Context, name: str, device: Optional[s
     cmd = f'/user group remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove user group: {result}"
+    if refused(result):
+        return f"Failed to remove user group: {result.strip()}"
 
     return f"User group '{name}' removed successfully."
 
@@ -394,8 +399,10 @@ async def mikrotik_disconnect_user(ctx: Context, user_id: str, device: Optional[
     cmd = f"/user active remove {user_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disconnect user: {result}"
+    if no_such_item(result):
+        return f"User session '{user_id}' not found."
+    if refused(result):
+        return f"Failed to disconnect user: {result.strip()}"
 
     return f"User session {user_id} disconnected successfully."
 
@@ -454,7 +461,9 @@ async def mikrotik_remove_user_ssh_key(ctx: Context, key_id: str, device: Option
     cmd = f"/user ssh-keys remove {key_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove SSH key: {result}"
+    if no_such_item(result):
+        return f"SSH key '{key_id}' not found."
+    if refused(result):
+        return f"Failed to remove SSH key: {result.strip()}"
 
     return f"SSH key {key_id} removed successfully."

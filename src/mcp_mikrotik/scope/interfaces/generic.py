@@ -3,6 +3,7 @@ from ...connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE_IDEMPOTENT, annotate
 from .._shared.selectors import has_item_rows
+from .._shared.results import refused, is_missing
 
 
 @mcp.tool(name="list_interfaces", annotations=annotate(READ, "List Interfaces"))
@@ -76,12 +77,14 @@ async def mikrotik_enable_interface(ctx: Context, name: str, device: Optional[st
         name: exact interface name e.g. "ether1", "bridge", "pppoe-out1"
     """
     await ctx.info(f"Enabling interface: name={name}")
+    if await is_missing("/interface", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Interface '{name}' not found."
 
     cmd = f'/interface enable [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable interface '{name}': {result}"
+    if refused(result):
+        return f"Failed to enable interface '{name}': {result.strip()}"
 
     # Verify the change
     check_cmd = f'/interface print detail where name="{name}"'
@@ -101,12 +104,14 @@ async def mikrotik_disable_interface(ctx: Context, name: str, device: Optional[s
         name: exact interface name e.g. "ether1", "bridge", "pppoe-out1"
     """
     await ctx.info(f"Disabling interface: name={name}")
+    if await is_missing("/interface", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"Interface '{name}' not found."
 
     cmd = f'/interface disable [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable interface '{name}': {result}"
+    if refused(result):
+        return f"Failed to disable interface '{name}': {result.strip()}"
 
     # Verify the change
     check_cmd = f'/interface print detail where name="{name}"'

@@ -5,6 +5,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows
+from .._shared.results import refused, is_missing
 
 @mcp.tool(name="create_vlan_interface", annotations=annotate(WRITE, "Create VLAN"))
 async def mikrotik_create_vlan_interface(
@@ -139,6 +140,8 @@ async def mikrotik_update_vlan_interface(
 ) -> str:
     """Updates an existing VLAN interface's settings on the MikroTik device."""
     await ctx.info(f"Updating VLAN interface: name={name}")
+    if await is_missing("/interface vlan", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"VLAN interface '{name}' not found."
 
     # Build the command
     cmd = f'/interface vlan set [find name="{name}"]'
@@ -172,8 +175,8 @@ async def mikrotik_update_vlan_interface(
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     # Check if update was successful
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update VLAN interface: {result}"
+    if refused(result):
+        return f"Failed to update VLAN interface: {result.strip()}"
 
     # Get the updated interface details
     details_name = new_name if new_name else name
@@ -198,7 +201,7 @@ async def mikrotik_remove_vlan_interface(ctx: Context, name: str, device: Option
     cmd = f'/interface vlan remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove VLAN interface: {result}"
+    if refused(result):
+        return f"Failed to remove VLAN interface: {result.strip()}"
 
     return f"VLAN interface '{name}' removed successfully."

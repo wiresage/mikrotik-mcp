@@ -4,6 +4,7 @@ from mcp.server.mcpserver import Context
 
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
+from .._shared.results import refused, is_missing
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
 @mcp.tool(name="create_ip_pool", annotations=annotate(WRITE, "Add IP Pool"))
@@ -154,6 +155,8 @@ async def mikrotik_update_ip_pool(
         Pass "" for next_pool to clear it.
     """
     await ctx.info(f"Updating IP pool: name={name}")
+    if await is_missing("/ip pool", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"IP pool '{name}' not found."
 
     # Build the command
     cmd = f'/ip pool set [find name="{name}"]'
@@ -180,8 +183,8 @@ async def mikrotik_update_ip_pool(
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     # Check if update was successful
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update IP pool: {result}"
+    if refused(result):
+        return f"Failed to update IP pool: {result.strip()}"
 
     # Get the updated pool details
     details_name = new_name if new_name else name
@@ -220,8 +223,8 @@ async def mikrotik_remove_ip_pool(ctx: Context, name: str, device: Optional[str]
     cmd = f'/ip pool remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove IP pool: {result}"
+    if refused(result):
+        return f"Failed to remove IP pool: {result.strip()}"
 
     return f"IP pool '{name}' removed successfully."
 

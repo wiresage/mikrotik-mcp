@@ -7,6 +7,7 @@ from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import has_item_rows
+from .._shared.results import refused
 
 _DURATION_RE = re.compile(r"(?:\d+[wdhms])+")
 
@@ -52,8 +53,8 @@ async def mikrotik_create_dhcp_server(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create DHCP server: {result}"
+    if refused(result):
+        return f"Failed to create DHCP server: {result.strip()}"
 
     # Get the created server details
     details_cmd = f'/ip dhcp-server print detail where name="{name}"'
@@ -259,8 +260,8 @@ async def mikrotik_create_dhcp_network(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create DHCP network: {result}"
+    if refused(result):
+        return f"Failed to create DHCP network: {result.strip()}"
 
     # Get the created network details
     details_cmd = f'/ip dhcp-server network print detail where address="{network}"'
@@ -326,8 +327,8 @@ async def mikrotik_update_dhcp_network(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update DHCP network: {result}"
+    if refused(result):
+        return f"Failed to update DHCP network: {result.strip()}"
 
     # Get the updated network details
     details_cmd = f'/ip dhcp-server network print detail where address="{network}"'
@@ -351,8 +352,8 @@ async def mikrotik_remove_dhcp_network(ctx: Context, network: str, device: Optio
     cmd = f'/ip dhcp-server network remove [find address="{network}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove DHCP network: {result}"
+    if refused(result):
+        return f"Failed to remove DHCP network: {result.strip()}"
 
     return f"DHCP network '{network}' removed successfully."
 
@@ -385,8 +386,8 @@ async def mikrotik_create_dhcp_pool(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create DHCP pool: {result}"
+    if refused(result):
+        return f"Failed to create DHCP pool: {result.strip()}"
 
     # Get the created pool details
     details_cmd = f'/ip pool print detail where name="{name}"'
@@ -410,7 +411,7 @@ async def mikrotik_remove_dhcp_server(ctx: Context, name: str, device: Optional[
     cmd = f'/ip dhcp-server remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove DHCP server: {result}"
+    if refused(result):
+        return f"Failed to remove DHCP server: {result.strip()}"
 
     return f"DHCP server '{name}' removed successfully."

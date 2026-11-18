@@ -5,6 +5,7 @@ from mcp.server.mcpserver import Context
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import resolve_item_id, item_count, has_item_rows
+from .._shared.results import refused, is_missing, no_such_item
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
 
@@ -43,8 +44,8 @@ async def mikrotik_create_wireguard_interface(
         cmd, ctx, device=device, redact=[private_key] if private_key else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create WireGuard interface: {result}"
+    if refused(result):
+        return f"Failed to create WireGuard interface: {result.strip()}"
 
     details_cmd = f'/interface wireguard print detail where name="{name}"'
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -114,6 +115,8 @@ async def mikrotik_update_wireguard_interface(
 ) -> str:
     """Updates an existing WireGuard interface's settings on the MikroTik device."""
     await ctx.info(f"Updating WireGuard interface: name={name}")
+    if await is_missing("/interface wireguard", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"WireGuard interface '{name}' not found."
 
     updates = []
     if new_name:
@@ -137,8 +140,8 @@ async def mikrotik_update_wireguard_interface(
         cmd, ctx, device=device, redact=[private_key] if private_key else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update WireGuard interface: {result}"
+    if refused(result):
+        return f"Failed to update WireGuard interface: {result.strip()}"
 
     lookup_name = new_name if new_name else name
     details_cmd = f'/interface wireguard print detail where name="{lookup_name}"'
@@ -161,8 +164,8 @@ async def mikrotik_remove_wireguard_interface(ctx: Context, name: str, device: O
     cmd = f'/interface wireguard remove [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove WireGuard interface: {result}"
+    if refused(result):
+        return f"Failed to remove WireGuard interface: {result.strip()}"
 
     return f"WireGuard interface '{name}' removed successfully."
 
@@ -171,12 +174,14 @@ async def mikrotik_remove_wireguard_interface(ctx: Context, name: str, device: O
 async def mikrotik_enable_wireguard_interface(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Enables a WireGuard interface."""
     await ctx.info(f"Enabling WireGuard interface: name={name}")
+    if await is_missing("/interface wireguard", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"WireGuard interface '{name}' not found."
 
     cmd = f'/interface wireguard enable [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable WireGuard interface: {result}"
+    if refused(result):
+        return f"Failed to enable WireGuard interface: {result.strip()}"
 
     return f"WireGuard interface '{name}' enabled successfully."
 
@@ -185,12 +190,14 @@ async def mikrotik_enable_wireguard_interface(ctx: Context, name: str, device: O
 async def mikrotik_disable_wireguard_interface(ctx: Context, name: str, device: Optional[str] = None) -> str:
     """Disables a WireGuard interface."""
     await ctx.info(f"Disabling WireGuard interface: name={name}")
+    if await is_missing("/interface wireguard", f'name="{name}"', ctx, device, execute_mikrotik_command):
+        return f"WireGuard interface '{name}' not found."
 
     cmd = f'/interface wireguard disable [find name="{name}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable WireGuard interface: {result}"
+    if refused(result):
+        return f"Failed to disable WireGuard interface: {result.strip()}"
 
     return f"WireGuard interface '{name}' disabled successfully."
 
@@ -245,8 +252,8 @@ async def mikrotik_add_wireguard_peer(
         cmd, ctx, device=device, redact=[preshared_key] if preshared_key else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to add WireGuard peer: {result}"
+    if refused(result):
+        return f"Failed to add WireGuard peer: {result.strip()}"
 
     details_cmd = (
         f'/interface wireguard peers print detail where'
@@ -359,8 +366,10 @@ async def mikrotik_update_wireguard_peer(
         cmd, ctx, device=device, redact=[preshared_key] if preshared_key else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update WireGuard peer: {result}"
+    if no_such_item(result):
+        return f"WireGuard peer '{peer_id}' not found."
+    if refused(result):
+        return f"Failed to update WireGuard peer: {result.strip()}"
 
     details_cmd = f"/interface wireguard peers print detail where .id={peer_id}"
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
@@ -408,8 +417,10 @@ async def mikrotik_enable_wireguard_peer(ctx: Context, peer_id: str, device: Opt
     cmd = f"/interface wireguard peers enable {peer_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable WireGuard peer: {result}"
+    if no_such_item(result):
+        return f"WireGuard peer '{peer_id}' not found."
+    if refused(result):
+        return f"Failed to enable WireGuard peer: {result.strip()}"
 
     return f"WireGuard peer '{peer_id}' enabled successfully."
 
@@ -426,8 +437,10 @@ async def mikrotik_disable_wireguard_peer(ctx: Context, peer_id: str, device: Op
     cmd = f"/interface wireguard peers disable {peer_id}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable WireGuard peer: {result}"
+    if no_such_item(result):
+        return f"WireGuard peer '{peer_id}' not found."
+    if refused(result):
+        return f"Failed to disable WireGuard peer: {result.strip()}"
 
     return f"WireGuard peer '{peer_id}' disabled successfully."
 
