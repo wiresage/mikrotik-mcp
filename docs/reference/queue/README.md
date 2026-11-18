@@ -93,7 +93,11 @@ Updates an existing custom queue type.
 |---|---|---|
 | `name` | str | Current name |
 | `new_name` | Optional[str] | New name |
-| `cake_flowmode` … | Optional | Same CAKE/PCQ parameters as `create_queue_type` |
+| `cake_flowmode`, `cake_nat`, `cake_overhead`, `cake_mpu`, `cake_diffserv`, `cake_ack_filter`, `cake_rtt`, `cake_wash`, `cake_overhead_scheme` | Optional | Same as `create_queue_type` |
+| `pcq_rate`, `pcq_limit`, `pcq_classifier` | Optional | Same as `create_queue_type` |
+
+`kind` and the `pfifo`, `bfifo`, `sfq`, `fq_codel` and `red` parameters cannot be
+changed here. To change them, create a new queue type with `create_queue_type`.
 
 ---
 
