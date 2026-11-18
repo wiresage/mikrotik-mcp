@@ -37,11 +37,14 @@ _PORTS_RE = re.compile(r"\d{1,5}(-\d{1,5})?(,\d{1,5}(-\d{1,5})?)*")
 _PROTO_RE = re.compile(r"any|[a-z][a-z0-9\-]{0,20}|\d{1,3}")
 _MAC_RE = re.compile(r"[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}(/[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})?")
 _INTERVAL_RE = re.compile(r"\d{1,4}(ms|s)?")
-_CPU_RE = re.compile(r"any|all|total|\d{1,3}")
+_CPU_RE = re.compile(r"all|total|\d{1,3}")
 
 MAX_OUTPUT_LINES = 300
 # Wide enough for torch with IPv6 addresses, ports and the four rate columns.
 TERMINAL_WIDTH = 250
+# RouterOS prints the first frame of torch, and of a profile per core, two seconds in: a run of 1 or 2 seconds ends before
+# it and prints nothing at all (checked on 7.24.6 and 7.25.1), so these always run for at least three.
+FRAME_MIN_SECONDS = 3
 
 
 class _Invalid(ValueError):
@@ -95,8 +98,12 @@ def _refused(result: str) -> bool:
     )
 
 
-async def _run(ctx: Context, what: str, cmd: str, device: Optional[str], last_frame: bool) -> str:
+async def _run(ctx: Context, what: str, cmd: str, device: Optional[str], last_frame: bool, quiet: Optional[str] = None) -> str:
     result = await execute_mikrotik_command(cmd, ctx, device=device, terminal_width=TERMINAL_WIDTH)
+    if quiet and not result.strip():
+        # torch, the sniffer and a per-core profile print a row only for what they saw: nothing printed means nothing matched.
+        # A refusal always prints a text, so this is not a failure.
+        return f"{what.upper()} RESULT:\n\n{quiet}"
     if _refused(result):
         return f"Failed to run {what}: {result.strip() or 'no output'}"
     text = _last_frame(result) if last_frame else result.replace("\r", "").strip("\n")
@@ -227,6 +234,7 @@ async def mikrotik_torch(
         Each filter both filters and breaks the table down by that field: "0.0.0.0/0" (or "::/0") lists
         every address, "any" every protocol/port/VLAN/DSCP. With no filter, flows are broken down by
         IPv4 src/dst address and IP protocol. Torch turns off fasttrack while it runs (higher CPU).
+        RouterOS prints its first frame after two seconds, so a duration under 3 runs for 3.
     """
     await ctx.info(f"Torch on {interface} for {duration}s")
     try:
@@ -251,9 +259,11 @@ async def mikrotik_torch(
     if not any(filters.values()):
         filters.update({"src-address": "0.0.0.0/0", "dst-address": "0.0.0.0/0", "ip-protocol": "any"})
 
-    parts = [f'/tool torch interface="{ros_quoted(interface)}" duration={duration}s']
+    seconds = max(duration, FRAME_MIN_SECONDS)
+    parts = [f'/tool torch interface="{ros_quoted(interface)}" duration={seconds}s']
     parts += [f"{key}={value}" for key, value in filters.items() if value]
-    return await _run(ctx, "torch", " ".join(parts), device, last_frame=True)
+    return await _run(ctx, "torch", " ".join(parts), device, last_frame=True,
+                      quiet=f"No traffic matched on {interface} during the {seconds} seconds.")
 
 
 @mcp.tool(name="sniff_packets", annotations=annotate(_DIAG, "Quick Packet Capture"))
@@ -293,7 +303,8 @@ async def mikrotik_sniff_packets(
         parts.append(f"port={port}")
     if mac_address:
         parts.append(f"mac-address={mac_address}")
-    return await _run(ctx, "packet capture", " ".join(parts), device, last_frame=True)
+    return await _run(ctx, "packet capture", " ".join(parts), device, last_frame=True,
+                      quiet=f"No packet matched during the {duration} seconds.")
 
 
 @mcp.tool(name="profile_cpu", annotations=annotate(READ, "CPU Profile"))
@@ -306,14 +317,17 @@ async def mikrotik_profile_cpu(
     """Shows which RouterOS processes use the CPU, sampled over a few seconds.
 
     Notes:
-        cpu: "total" (default), "all" for one column per core, or a core number.
+        cpu: "total" (default), "all" for one column per core, or a core number (a duration under 3 runs for 3).
     """
     await ctx.info(f"CPU profile for {duration}s")
     try:
         cpu = _check("cpu", cpu, _CPU_RE)
     except _Invalid as exc:
         return f"Failed to run CPU profile: {exc}"
-    cmd = f"/tool profile duration={duration}s"
+    # the total is printed from the first second on, the per-core tables from the third
+    seconds = duration if cpu in (None, "total") else max(duration, FRAME_MIN_SECONDS)
+    cmd = f"/tool profile duration={seconds}s"
     if cpu:
         cmd += f" cpu={cpu}"
-    return await _run(ctx, "CPU profile", cmd, device, last_frame=True)
+    return await _run(ctx, "CPU profile", cmd, device, last_frame=True,
+                      quiet=None if cpu in (None, "total") else f"No process used the selected CPU during the {seconds} seconds.")

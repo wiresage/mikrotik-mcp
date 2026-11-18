@@ -137,6 +137,15 @@ def test_torch_explicit_filters(ctx, monkeypatch, m):
     ]
 
 
+@pytest.mark.parametrize("asked,sent", [(1, 3), (2, 3), (3, 3), (4, 4), (30, 30)])
+def test_torch_runs_long_enough_to_print_a_frame(ctx, monkeypatch, m, asked, sent):
+    """RouterOS prints the first torch frame two seconds in: a run of 1 or 2 seconds prints nothing and the tool
+    answered "Failed to run torch: no output" for two durations its own schema accepts."""
+    fake = _patch(monkeypatch, m, FRAME.format(n=1))
+    _run(m.mikrotik_torch(ctx, interface="ether1", duration=asked))
+    assert f"duration={sent}s " in fake.commands[0]
+
+
 def test_torch_rejects_port_list(ctx, monkeypatch, m):
     fake = _patch(monkeypatch, m)
     out = _run(m.mikrotik_torch(ctx, interface="ether1", port="80,443"))
@@ -180,6 +189,43 @@ def test_empty_output_is_failure(ctx, monkeypatch, m):
     _patch(monkeypatch, m, "")
     out = _run(m.mikrotik_profile_cpu(ctx))
     assert out.startswith("Failed to run CPU profile")
+
+
+def test_empty_output_of_ping_and_traceroute_is_failure(ctx, monkeypatch, m):
+    """They always print a header and a summary, so nothing at all means the command did not run."""
+    _patch(monkeypatch, m, "")
+    assert _run(m.mikrotik_ping(ctx, address="10.0.0.1")).startswith("Failed to run ping")
+    assert _run(m.mikrotik_traceroute(ctx, address="10.0.0.1")).startswith("Failed to run traceroute")
+
+
+@pytest.mark.parametrize("call,heading,message", [
+    (lambda m, ctx: m.mikrotik_torch(ctx, interface="ether1", duration=4), "TORCH RESULT:", "No traffic matched on ether1 during the 4 seconds."),
+    (lambda m, ctx: m.mikrotik_sniff_packets(ctx, port="9", duration=2), "PACKET CAPTURE RESULT:", "No packet matched during the 2 seconds."),
+    (lambda m, ctx: m.mikrotik_profile_cpu(ctx, cpu="all", duration=4), "CPU PROFILE RESULT:", "No process used the selected CPU during the 4 seconds."),
+])
+def test_a_quiet_router_is_an_answer_not_a_failure(ctx, monkeypatch, m, call, heading, message):
+    """Torch, the sniffer and a per-core profile print a row only for what they saw: on a quiet interface RouterOS prints
+    nothing at all, and the tools said "Failed to run ...: no output" about a command that had run fine."""
+    _patch(monkeypatch, m, "")
+    out = _run(call(m, ctx))
+    assert out == f"{heading}\n\n{message}"
+
+
+@pytest.mark.parametrize("cpu,asked,sent", [
+    ("all", 1, 3), ("all", 2, 3), ("all", 5, 5), ("0", 1, 3), ("3", 2, 3),  # a table per core comes after two seconds
+    ("total", 1, 1), (None, 1, 1), ("total", 2, 2),  # the total comes after one
+])
+def test_profile_runs_long_enough_to_print_a_frame(ctx, monkeypatch, m, cpu, asked, sent):
+    fake = _patch(monkeypatch, m, "NAME USAGE\ntotal 1%\n")
+    _run(m.mikrotik_profile_cpu(ctx, duration=asked, cpu=cpu))
+    assert fake.commands[0].startswith(f"/tool profile duration={sent}s")
+
+
+def test_profile_rejects_a_cpu_routeros_does_not_know(ctx, monkeypatch, m):
+    fake = _patch(monkeypatch, m)
+    out = _run(m.mikrotik_profile_cpu(ctx, cpu="any"))
+    assert out.startswith("Failed to run CPU profile: invalid cpu")
+    assert fake.commands == []
 
 
 # --- helpers ----------------------------------------------------------------
