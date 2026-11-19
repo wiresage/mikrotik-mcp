@@ -494,14 +494,15 @@ def test_disable_on_missing_rule_does_not_claim_success(ctx, monkeypatch):
     """enable/disable delegate to update, so they inherit the guard."""
     from mcp_mikrotik.scope.firewall import ipv6_filter as m
 
-    async def absent(command, _ctx, device=None):
-        return "no such item (4)"
+    fake = FakeExecutor()
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
 
-    monkeypatch.setattr(m, "execute_mikrotik_command", absent, raising=True)
+    _run(m.mikrotik_enable_ipv6_filter_rule(ctx, rule_id="*1"))
+    assert "/ipv6 firewall filter set *1 disabled=no" in fake.commands
 
-    out = _run(m.mikrotik_disable_ipv6_filter_rule(ctx, rule_id="*99"))
-    assert "not found" in out
-    assert "successfully" not in out
+    fake.commands.clear()
+    _run(m.mikrotik_disable_ipv6_filter_rule(ctx, rule_id="*1"))
+    assert "/ipv6 firewall filter set *1 disabled=yes" in fake.commands
 
 
 def test_update_requires_real_content_before_claiming_success(ctx, monkeypatch):
