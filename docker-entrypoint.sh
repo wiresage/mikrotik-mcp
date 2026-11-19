@@ -40,7 +40,8 @@ usage() {
     echo "  $0 --host 192.168.88.1 --username admin --password admin123 --transport sse"
     echo "  MIKROTIK_HOST=192.168.88.1 MIKROTIK_MCP__TRANSPORT=sse $0"
     echo "  $0 --inventory-file /config/inventory.yaml --transport streamable-http"
-    exit 1
+    # Asked for with --help, so it is not an error.
+    exit 0
 }
 
 MIKROTIK_MCP__TRANSPORT="${MIKROTIK_MCP__TRANSPORT:-stdio}"
