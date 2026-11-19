@@ -19,6 +19,10 @@ from mcp_mikrotik import config as cfg_mod
 from mcp_mikrotik import inventory as inv_mod
 from mcp_mikrotik.config import DeviceConfig, MikrotikConfig
 from mcp_mikrotik.inventory import reset_inventory
+from mcp_mikrotik.safe_mode import (
+    forget_safe_mode_manager,
+    get_safe_mode_manager,
+)
 from mcp_mikrotik.scope.devices import inventory as scope_inventory
 from tests.conftest import FakeExecutor
 
@@ -258,6 +262,33 @@ def test_removing_the_only_device_leaves_guidance(ctx, monkeypatch, tmp_path):
     assert "add_device" in result
 
 
+def test_removing_a_device_forgets_its_safe_mode_manager(state_file, ctx, monkeypatch):
+    """Re-adding a title must never reuse the old router's live shell."""
+    _add(ctx, monkeypatch, title="BranchA", host="192.0.2.10")
+    before = get_safe_mode_manager("BranchA")
+
+    asyncio.run(scope_inventory.mikrotik_remove_device(ctx, "BranchA"))
+    _add(ctx, monkeypatch, title="BranchA", host="192.0.2.99")
+
+    assert get_safe_mode_manager("BranchA") is not before
+
+
+def test_removing_a_device_with_active_safe_mode_is_refused(state_file, ctx, monkeypatch):
+    _add(ctx, monkeypatch, title="BranchA", host="192.0.2.10")
+    manager = get_safe_mode_manager("BranchA")
+    manager._active = True
+    try:
+        with pytest.raises(ValueError, match="Safe mode is active"):
+            asyncio.run(scope_inventory.mikrotik_remove_device(ctx, "BranchA"))
+
+        entries = yaml.safe_load(state_file.read_text(encoding="utf-8"))
+        assert [e["title"] for e in entries] == ["BranchA"]
+        assert "BranchA" in inv_mod.get_inventory().titles
+    finally:
+        manager._active = False
+        forget_safe_mode_manager("BranchA")
+
+
 # ---------------------------------------------------------------------------
 # Listing and guidance
 # ---------------------------------------------------------------------------
@@ -310,8 +341,10 @@ def test_a_state_file_that_duplicates_a_static_title_stops_startup(state_file):
     state_file.write_text("- title: Seed\n  host: 192.0.2.99\n", encoding="utf-8")
     reset_inventory()
 
-    with pytest.raises(ValueError, match="Duplicate device title 'Seed'"):
+    with pytest.raises(ValueError, match="Duplicate device title 'Seed'") as exc:
         inv_mod.get_inventory()
+
+    assert str(state_file) in str(exc.value)
 
     reset_inventory()
 
