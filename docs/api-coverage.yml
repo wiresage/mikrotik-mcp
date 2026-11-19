@@ -2554,9 +2554,12 @@ server_tools:
   list_devices:
     kind: server
     note: Inventory discovery; no RouterOS command.
-  device_add:
+  add_device:
     kind: server
-    note: Enrolls a device at runtime; registered only with --allow-dynamic-devices.
+    note: Enrolls a device at runtime and persists it; default-on, hidden by --read-only.
+  remove_device:
+    kind: server
+    note: Removes a runtime-enrolled device from the state file.
   safe_mode_status:
     kind: interactive
     note: Reads the persistent safe-mode shell state.

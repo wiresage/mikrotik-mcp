@@ -599,7 +599,8 @@ it does not prove runtime correctness on every RouterOS version.
 These tools do not map to a single RouterOS menu command.
 
 - [x] `list_devices` — server — Inventory discovery; no RouterOS command.
-- [x] `device_add` — server — Enrolls a device at runtime; registered only with --allow-dynamic-devices.
+- [x] `add_device` — server — Enrolls a device at runtime and persists it; default-on, hidden by --read-only.
+- [x] `remove_device` — server — Removes a runtime-enrolled device from the state file.
 - [x] `safe_mode_status` — interactive — Reads the persistent safe-mode shell state.
 - [x] `enable_safe_mode` — interactive — Opens a persistent shell and sends Ctrl-X.
 - [x] `commit_safe_mode` — interactive — Sends Ctrl-X again and closes the safe-mode shell.
