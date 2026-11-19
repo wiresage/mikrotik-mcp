@@ -3,7 +3,6 @@
 MikroTik MCP can manage a fleet of devices from one server. Devices are
 declared in an **inventory**; each entry has a unique `title`, which is the
 identifier tools use to target that device.
-x
 With no inventory configured the server can start with **no devices at all**:
 ask the agent to enroll one with `add_device` and it persists for the next
 start. A single device built from `MIKROTIK_HOST` / `MIKROTIK_USERNAME` / … is
@@ -20,7 +19,9 @@ The inventory is written in **YAML**. Two sources are supported:
 | `MIKROTIK_INVENTORY` | the inventory written inline |
 
 When both are set, **the inline `MIKROTIK_INVENTORY` wins** and the file is
-ignored. When neither is set, the flat single-device settings apply.
+ignored. When neither is set, the flat single-device settings apply if at
+least one of them was supplied; otherwise the server starts with no devices
+and the agent can enroll one.
 
 A broken inventory (missing file, bad YAML, invalid entry) stops the server at
 startup with one clear message, so mistakes surface immediately rather than at
@@ -141,7 +142,7 @@ list_devices()
 ## Runtime device management
 
 **On by default.** The agent can discover adjacent routers with
-[`list_mikrotik_neighbors`](../neighbors/README.md), enroll one, use it, and
+[`list_mikrotik_neighbors`](../ip/neighbors.md), enroll one, use it, and
 remove it again — no YAML edit, no restart:
 
 ```
@@ -169,12 +170,20 @@ therefore survive a restart. Keep it out of version control; the repository's
 - **Only runtime devices can be removed.** A `config` device is refused with a
   message saying it comes from the inventory file or settings, so the agent
   cannot delete configuration a human owns.
+- **Removal is refused while Safe Mode is active on that device.** Commit or
+  roll back first; a removed-and-re-added title would otherwise reuse the old
+  router's live shell. A successful removal drops that device's safe-mode
+  session cache.
 - `--read-only` hides both tools and stops `list_devices` from mentioning them.
-  `--no-allow-dynamic-devices` removes them from the catalogue entirely.
+  `--no-allow-dynamic-devices` removes them from the catalogue entirely **and
+  ignores the state file at startup**, restoring the static inventory or the
+  legacy single-device fallback. Enrollments stay on disk but are not loaded.
 - The password goes into the state file only. It never appears in a tool
   result, a notification or a log line — but the agent receives it in the tool
   call, so it is in the client's conversation transcript. Prefer
-  `key_filename` or SSH-agent authentication when that matters.
+  `key_filename`, which `add_device` accepts. SSH-agent authentication
+  (`allow_ssh_agent` / `ssh_agent_key`) is not exposed by `add_device`; use the
+  static inventory, or hand-edit the state file, for those devices.
 - `host` is an IPv4 address or a hostname. IPv6 and any other syntax are
   refused before anything is written.
 - A title already in the inventory is refused, at enrollment and again at load.

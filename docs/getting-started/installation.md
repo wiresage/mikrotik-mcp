@@ -141,7 +141,7 @@ tests and changing dependencies.
 | `--inventory-file` | Path to a YAML file holding the inventory | _(none)_ |
 | `--read-only` | Expose only tools that do not modify RouterOS or its file store | `false` |
 | `--sensitive-hiding` | Redact credentials and private key material from client-visible output | `false` |
-| `--allow-dynamic-devices` / `--no-allow-dynamic-devices` | Register `add_device` and `remove_device`, so the agent can enroll and forget devices while the server runs (`MIKROTIK_ALLOW_DYNAMIC_DEVICES`) | `true` |
+| `--allow-dynamic-devices` / `--no-allow-dynamic-devices` | Register `add_device`/`remove_device` and load the runtime state file; disabling hides the tools and ignores enrolments (`MIKROTIK_ALLOW_DYNAMIC_DEVICES`) | `true` |
 | `--dynamic-inventory-file` | YAML file that runtime enrollments are written to and reloaded from (`MIKROTIK_DYNAMIC_INVENTORY_FILE`) | `$XDG_CONFIG_HOME/mikrotik-mcp/dynamic-inventory.yaml` |
 | `--command-timeout` | Seconds a command may wait for the device before the call fails (`MIKROTIK_COMMAND_TIMEOUT`) | `180` |
 | `--mcp.transport` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
@@ -267,7 +267,7 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_COMMAND_TIMEOUT` | Seconds a command may wait for the device before the call fails | `180` |
    | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/devices/inventory.md). | _(empty)_ |
    | `MIKROTIK_INVENTORY_FILE` | Path **inside the container** to a YAML file holding the inventory — mount it as a volume | _(empty)_ |
-   | `MIKROTIK_ALLOW_DYNAMIC_DEVICES` | Set to `false` to remove `add_device`/`remove_device`; the agent then only sees devices from the inventory or settings | `true` |
+   | `MIKROTIK_ALLOW_DYNAMIC_DEVICES` | Set to `false` to remove `add_device`/`remove_device` and ignore the runtime state file; the agent then only sees devices from the inventory or settings | `true` |
    | `MIKROTIK_DYNAMIC_INVENTORY_FILE` | Path **inside the container** to the YAML file runtime enrollments are written to and reloaded from. Holds credentials — mount `/config` writable to keep it across a container replacement | `/config/dynamic-inventory.yaml` |
    | `MIKROTIK_MCP__TRANSPORT` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
    | `MIKROTIK_MCP__HOST` | HTTP server listen address | `0.0.0.0` |
