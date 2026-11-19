@@ -17,7 +17,7 @@ import logging
 import os
 import threading
 from contextlib import contextmanager
-from typing import Dict, Iterable, Iterator, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional, Tuple
 
 import yaml
 from pydantic import ValidationError
@@ -245,6 +245,11 @@ class Inventory:
 _inventory: Optional[Inventory] = None
 _inventory_lock = threading.Lock()
 
+_FLAT_FIELDS = frozenset({
+    "host", "username", "password", "port",
+    "key_filename", "allow_ssh_agent", "ssh_agent_key",
+})
+
 
 def _validate_entries(raw, source: str) -> List[DeviceConfig]:
     """Turn parsed YAML/JSON into DeviceConfigs with credential-safe errors.
@@ -328,23 +333,28 @@ def _merge_dynamic(
     return devices
 
 
-def _load_devices() -> List[DeviceConfig]:
+def _load_devices() -> Tuple[List[DeviceConfig], List[str]]:
     """Build the device list from configuration.
 
     Precedence: inline ``MIKROTIK_INVENTORY`` (YAML, or its JSON subset) >
     ``MIKROTIK_INVENTORY_FILE`` (a YAML file) > the flat single-device
-    settings.  The last case keeps every existing single-device deployment
-    working with no configuration change.
+    settings. The flat settings become a device only when one of them was
+    supplied explicitly, or when dynamic management is off; otherwise a fresh
+    server starts with no devices and the agent enrolls them.
 
     The runtime-enrolled ``MIKROTIK_DYNAMIC_INVENTORY_FILE`` is merged on top
-    of whichever of those won, so a fleet survives a restart.
+    of whichever of those won, so a fleet survives a restart. Its titles are
+    returned as well, so only those devices may be removed at runtime.
     """
     cfg = config.mikrotik_config
+    runtime_titles: List[str] = []
 
     if cfg.inventory:
         devices = list(cfg.inventory)
     elif cfg.inventory_file:
         devices = _read_inventory_file(os.path.expanduser(cfg.inventory_file))
+    elif cfg.allow_dynamic_devices and not (cfg.model_fields_set & _FLAT_FIELDS):
+        devices = []
     else:
         # Backwards-compatible single device.
         devices = [
@@ -364,9 +374,11 @@ def _load_devices() -> List[DeviceConfig]:
         path = os.path.expanduser(cfg.dynamic_inventory_file)
         # Absent until the first enrollment creates it.
         if os.path.exists(path):
-            devices = _merge_dynamic(devices, _read_inventory_file(path), path)
+            extra = _read_inventory_file(path)
+            devices = _merge_dynamic(devices, extra, path)
+            runtime_titles.extend(device.title for device in extra)
 
-    return devices
+    return devices, runtime_titles
 
 
 def get_inventory() -> Inventory:
@@ -374,7 +386,8 @@ def get_inventory() -> Inventory:
     if _inventory is None:
         with _inventory_lock:
             if _inventory is None:
-                _inventory = Inventory(_load_devices())
+                devices, runtime_titles = _load_devices()
+                _inventory = Inventory(devices, runtime_titles=runtime_titles)
     return _inventory
 
 
