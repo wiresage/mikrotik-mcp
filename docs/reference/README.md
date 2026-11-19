@@ -1,37 +1,77 @@
 # API Reference
 
-Complete reference documentation for all MikroTik MCP tools.
+Complete reference documentation for all MikroTik MCP tools, grouped by feature area.
+
+The areas are the same ones as the packages under `src/mcp_mikrotik/scope/`, so the code, its unit tests
+(`tests/unit/scope/<area>/`) and its reference pages (`docs/reference/<area>/`) are easy to find from one another.
+An area with several modules has an overview page (its `README.md`) that lists the modules and their pages; in an
+area with a single module the `README.md` is the page itself. See
+[Feature areas](../../CONTRIBUTING.md#feature-areas) for how the areas are laid out and where a new module goes.
 
 ## Available Tool Categories
 
-- **[Inventory](inventory/README.md)** - Managing multiple MikroTik devices
+### [Devices](devices/README.md)
 
-- **[Interfaces](interfaces/README.md)** - All Interface Management (ethernet, bridge, PPPoE, SFP, LTE …)
-- **[PoE](poe/README.md)** - Power over Ethernet monitoring
-- **[VLAN](vlan/README.md)** - VLAN Interface Management
-- **[Bridge](bridge/README.md)** - Bridge VLAN Table and Bridge Port PVID Management
-- **[IP Address](ip-address/README.md)** - IPv4 Address Management
-- **[IPv6 Address](ipv6-address/README.md)** - IPv6 Address Management
+- **[Inventory](devices/inventory.md)** - Managing multiple MikroTik devices
+- **[Safe Mode](devices/safe-mode.md)** - Safe Mode Session Management
+
+### [DHCP](dhcp/README.md)
+
 - **[DHCP](dhcp/README.md)** - DHCP Server Management
-- **[Neighbors](neighbors/README.md)** - ARP, IPv6 and MNDP neighbor discovery
-- **[NAT](nat/README.md)** - NAT Rules Management
-- **[IP Pool](ip-pool/README.md)** - IP Pool Management
-- **[Backup](backup/README.md)** - Backup and Export Management
-- **[Logs](logs/README.md)** - Log Management
-- **[Firewall](firewall/README.md)** - Firewall Filter Rules Management
-- **[IPv6 Firewall](ipv6-firewall/README.md)** - IPv6 Firewall Filter Rules Management
-- **[Firewall Raw](firewall-raw/README.md)** - IPv4 and IPv6 Firewall Raw Rules (pre-conntrack)
-- **[Address Lists](address-list/README.md)** - IPv4 and IPv6 Firewall Address Lists
-- **[Routes](routes/README.md)** - Route Management
-- **[Diagnostics](diagnostics/README.md)** - Ping, Traceroute, Torch, Quick Packet Capture, CPU Profile
-- **[System](system/README.md)** - System Resource, Health, Clock, Packages
-- **[IP Services](services/README.md)** - Management Services Exposure
-- **[Netwatch](netwatch/README.md)** - Netwatch Probes and Liveness
-- **[Scheduler](scheduler/README.md)** - Scheduled Tasks and Scripts
+
+### [DNS](dns/README.md)
+
 - **[DNS](dns/README.md)** - DNS Management
-- **[Users](users/README.md)** - User Management
-- **[WireGuard](wireguard/README.md)** - WireGuard VPN Management
-- **[IPsec](ipsec/README.md)** - IPsec VPN Status
-- **[Wireless](wireless/README.md)** - Wireless/WiFi Interface Management
+
+### [Firewall](firewall/README.md)
+
+- **[Filter rules](firewall/filter.md)** - Firewall Filter Rules Management
+- **[IPv6 filter rules](firewall/ipv6-filter.md)** - IPv6 Firewall Filter Rules Management
+- **[NAT](firewall/nat.md)** - NAT Rules Management
+- **[Raw rules](firewall/raw.md)** - IPv4 and IPv6 Firewall Raw Rules (pre-conntrack)
+- **[Address Lists](firewall/address-list.md)** - IPv4 and IPv6 Firewall Address Lists
+
+### [Interfaces](interfaces/README.md)
+
+- **[Interfaces](interfaces/generic.md)** - All Interface Management (ethernet, bridge, PPPoE, SFP, LTE …)
+- **[VLAN](interfaces/vlan.md)** - VLAN Interface Management
+- **[Bridge](interfaces/bridge.md)** - Bridge VLAN Table and Bridge Port PVID Management
+- **[WireGuard](interfaces/wireguard.md)** - WireGuard VPN Management
+- **[Wireless](interfaces/wireless.md)** - Wireless/WiFi Interface Management
+- **[PoE](interfaces/poe.md)** - Power over Ethernet monitoring
+
+### [IP](ip/README.md)
+
+- **[IP Address](ip/address.md)** - IPv4 Address Management
+- **[IPv6 Address](ip/ipv6-address.md)** - IPv6 Address Management
+- **[IP Pool](ip/pool.md)** - IP Pool Management
+- **[Neighbors](ip/neighbors.md)** - ARP, IPv6 and MNDP neighbor discovery
+- **[IP Services](ip/services.md)** - Management Services Exposure
+
+### [Monitoring](monitoring/README.md)
+
+- **[Logs](monitoring/logs.md)** - Log Management
+- **[Netwatch](monitoring/netwatch.md)** - Netwatch Probes and Liveness
+- **[Diagnostics](monitoring/diagnostics.md)** - Ping, Traceroute, Torch, Quick Packet Capture, CPU Profile
+
+### [Queue](queue/README.md)
+
 - **[Queue](queue/README.md)** - Queue Types, Trees, and Simple Queues
-- **[Safe Mode](safe-mode/README.md)** - Safe Mode Session Management
+
+### [Routing](routing/README.md)
+
+- **[Routes](routing/README.md)** - Route Management
+
+### [System](system/README.md)
+
+- **[System](system/info.md)** - System Resource, Health, Clock, Packages
+- **[Scheduler](system/scheduler.md)** - Scheduled Tasks and Scripts
+- **[Backup](system/backup.md)** - Backup and Export Management
+
+### [Users](users/README.md)
+
+- **[Users](users/README.md)** - User Management
+
+### [VPN](vpn/README.md)
+
+- **[IPsec](vpn/README.md)** - IPsec VPN Status

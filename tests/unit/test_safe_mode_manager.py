@@ -115,7 +115,7 @@ def test_safe_mode_tools_surface_resolution_errors(monkeypatch):
     import asyncio
 
     from mcp_mikrotik.inventory import DeviceNotFoundError
-    from mcp_mikrotik.scope import safe_mode as scope_safe_mode
+    from mcp_mikrotik.scope.devices import safe_mode as scope_safe_mode
     from unittest.mock import AsyncMock, MagicMock
 
     def raising(device=None):

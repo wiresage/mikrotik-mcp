@@ -151,7 +151,7 @@ def _file_creating_tool_names():
     scope_dir = Path(__file__).parents[2] / "src/mcp_mikrotik/scope"
     names = set()
 
-    for path in scope_dir.glob("*.py"):
+    for path in scope_dir.rglob("*.py"):
         source = path.read_text()
         for function in ast.walk(ast.parse(source)):
             if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
