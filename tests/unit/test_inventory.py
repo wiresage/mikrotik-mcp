@@ -73,7 +73,7 @@ def test_unknown_title_lists_available_devices():
 
 
 def test_empty_inventory_resolution_error():
-    with pytest.raises(DeviceNotFoundError, match="No MikroTik devices"):
+    with pytest.raises(DeviceNotFoundError, match="list_devices"):
         Inventory([]).resolve()
 
 
@@ -93,6 +93,49 @@ def test_describe_never_exposes_credentials():
     assert "password" not in blob and "key_filename" not in blob
     assert described[0]["title"] == "RouterA"
     assert described[0]["tags"] == ["eu"] and described[0]["region"] == "NL"
+
+
+def test_describe_marks_devices_that_came_from_the_runtime_file():
+    inv = Inventory(
+        [_dev("Seed"), _dev("Branch", "10.0.0.2")], runtime_titles=["branch"]
+    )
+    assert [d["source"] for d in inv.describe()] == ["config", "runtime"]
+
+
+def test_add_marks_the_new_device_as_runtime():
+    inv = Inventory([_dev("Seed")])
+    inv.add(_dev("Branch", "10.0.0.2"))
+    assert inv.describe()[1]["source"] == "runtime"
+
+
+def test_remove_returns_and_drops_a_runtime_device():
+    inv = Inventory(
+        [_dev("Seed"), _dev("Branch", "10.0.0.2")], runtime_titles=["Branch"]
+    )
+    removed = inv.remove("branch")
+    assert removed.title == "Branch"
+    assert inv.titles == ["Seed"]
+
+
+def test_remove_refuses_a_static_device():
+    inv = Inventory([_dev("Seed")])
+    with pytest.raises(ValueError, match="not enrolled at runtime"):
+        inv.remove("Seed")
+    assert inv.titles == ["Seed"]
+
+
+def test_remove_unknown_device_lists_the_available_titles():
+    inv = Inventory([_dev("Seed")])
+    with pytest.raises(DeviceNotFoundError) as exc:
+        inv.remove("Ghost")
+    assert "Ghost" in str(exc.value) and "Seed" in str(exc.value)
+
+
+def test_remove_the_last_device_leaves_an_empty_inventory():
+    inv = Inventory([_dev("Branch")], runtime_titles=["Branch"])
+    inv.remove("Branch")
+    with pytest.raises(DeviceNotFoundError, match="list_devices"):
+        inv.resolve()
 
 
 # ---------------------------------------------------------------------------

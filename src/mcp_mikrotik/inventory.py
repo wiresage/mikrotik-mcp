@@ -17,7 +17,7 @@ import logging
 import os
 import threading
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional
 
 import yaml
 from pydantic import ValidationError
@@ -36,17 +36,25 @@ class DeviceNotFoundError(LookupError):
 class Inventory:
     """Holds the device definitions, keyed by title.
 
-    The map is not immutable — :meth:`add` enrols devices at runtime — but the
-    inventory still holds no connection state, so a single instance is safe to
-    share across sessions and threads.
+    The map is not immutable — :meth:`add` enrols devices at runtime and
+    :meth:`remove` drops them — but the inventory still holds no connection
+    state, so a single instance is safe to share across sessions and threads.
+
+    Devices that came from the runtime state file are marked as such, so a
+    caller can tell the operator's configuration from what the agent enrolled.
     """
 
     # Class-level: an instance's own dict is asserted to hold nothing but the
     # device map, so the lock that guards it cannot live in that dict.
     _add_lock = threading.Lock()
 
-    def __init__(self, devices: List[DeviceConfig]) -> None:
+    def __init__(
+        self,
+        devices: List[DeviceConfig],
+        runtime_titles: Iterable[str] = (),
+    ) -> None:
         self._devices: Dict[str, DeviceConfig] = {}
+        self._runtime = {str(title).casefold() for title in runtime_titles}
 
         for device in devices:
             key = device.title.casefold()
@@ -73,8 +81,36 @@ class Inventory:
                 )
             # Copy-on-write: a reader iterating the previous dict keeps walking
             # an object nobody mutates, so `list_devices` cannot fail with
-            # "dictionary changed size during iteration" while `device_add` runs.
+            # "dictionary changed size during iteration" while `add_device` runs.
             self._devices = {**self._devices, key: device}
+            self._runtime = self._runtime | {key}
+
+    def remove(self, title: str) -> DeviceConfig:
+        """Drop a runtime-enrolled device and return its definition.
+
+        Devices that came from the inventory file or the flat settings are
+        operator-owned; refusing them here keeps the agent from deleting
+        configuration it cannot restore.
+        """
+        key = str(title).strip().casefold()
+        with self._add_lock:
+            device = self._devices.get(key)
+            if device is None:
+                raise DeviceNotFoundError(
+                    f"Unknown device {title!r}. "
+                    f"Available devices: {', '.join(self.titles)}."
+                )
+            if key not in self._runtime:
+                raise ValueError(
+                    f"Device {device.title!r} is not enrolled at runtime — it "
+                    "comes from the inventory file or the server settings, "
+                    "which the agent does not edit."
+                )
+            self._devices = {
+                k: v for k, v in self._devices.items() if k != key
+            }
+            self._runtime = self._runtime - {key}
+        return device
 
     # ── Introspection ──────────────────────────────────────────────────────
 
@@ -98,6 +134,11 @@ class Inventory:
                 "username": d.username,
                 "tags": d.tags,
                 "region": d.region,
+                "source": (
+                    "runtime"
+                    if d.title.casefold() in self._runtime
+                    else "config"
+                ),
             }
             for d in self._devices.values()
         ]
@@ -114,8 +155,8 @@ class Inventory:
         """
         if not self._devices:
             raise DeviceNotFoundError(
-                "No MikroTik devices are configured. Set MIKROTIK_INVENTORY "
-                "(or the single-device MIKROTIK_HOST settings)."
+                "No MikroTik devices are configured. Call list_devices for how "
+                "to configure one."
             )
 
         if title is None or not str(title).strip():
