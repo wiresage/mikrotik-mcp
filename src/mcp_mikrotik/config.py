@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Annotated, List, Literal, Optional
 
 import yaml
@@ -6,6 +7,7 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
+    Field,
     ValidationInfo,
     field_validator,
     model_validator,
@@ -98,6 +100,14 @@ class DeviceConfig(BaseModel):
         return self
 
 
+def _default_dynamic_inventory_file() -> str:
+    """Per-user state file for devices the agent enrolls at runtime."""
+    base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(
+        os.path.expanduser("~"), ".config"
+    )
+    return os.path.join(base, "mikrotik-mcp", "dynamic-inventory.yaml")
+
+
 class MikrotikConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="MIKROTIK_",
@@ -153,16 +163,16 @@ class MikrotikConfig(BaseSettings):
     inventory_file: Optional[str] = None
 
     # ── Runtime enrollment ────────────────────────────────────────────────
-    # Off by default: with it off `device_add` is not registered at all, so
-    # the tool catalogue of an existing deployment is byte-identical. When it
-    # is on, `device_add` appends each enrolled device to
-    # ``dynamic_inventory_file`` (a YAML list in the same shape as
-    # ``inventory_file``) so the fleet reloads on the next start.
+    # On by default: with no inventory configured the agent enrolls devices
+    # itself and they persist in this file. --no-allow-dynamic-devices restores
+    # the pre-runtime catalogue, where devices come only from YAML/env.
     #
     #   MIKROTIK_ALLOW_DYNAMIC_DEVICES=true
     #   MIKROTIK_DYNAMIC_INVENTORY_FILE=/config/dynamic-inventory.yaml
-    allow_dynamic_devices: bool = False
-    dynamic_inventory_file: Optional[str] = None
+    allow_dynamic_devices: bool = True
+    dynamic_inventory_file: str = Field(
+        default_factory=_default_dynamic_inventory_file
+    )
 
     @field_validator("inventory", mode="before")
     @classmethod
