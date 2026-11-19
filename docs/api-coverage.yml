@@ -938,15 +938,14 @@ menus:
     title: IPv4 firewall filter
     section: IP
     notes: >-
-      The IPv4 create_filter_rule action list includes jump but the tool has no
-      jump_target parameter; the IPv6 tool does. Action is otherwise covered.
+      Action is covered including jump-target.
       Advanced matchers and action options not exposed by the tools are
       recorded in accepted_gaps.
     commands:
       add:
-        status: partial
+        status: implemented
         tools: [create_filter_rule]
-        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
+        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix, place-before]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -968,7 +967,6 @@ menus:
           - ingress-priority
           - ipsec-policy
           - ipv4-options
-          - jump-target
           - layer7-protocol
           - nth
           - out-bridge-port
@@ -991,7 +989,6 @@ menus:
           - tls-host
           - tos
           - ttl
-        notes: jump_target is missing for action="jump".
       print:
         status: implemented
         tools: [list_filter_rules, get_filter_rule]
@@ -999,7 +996,7 @@ menus:
       set:
         status: implemented
         tools: [update_filter_rule]
-        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix]
+        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, in-interface-list, out-interface-list, connection-state, connection-nat-state, src-address-list, dst-address-list, limit, tcp-flags, comment, disabled, log, log-prefix]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -1021,7 +1018,6 @@ menus:
           - ingress-priority
           - ipsec-policy
           - ipv4-options
-          - jump-target
           - layer7-protocol
           - nth
           - out-bridge-port
@@ -1064,7 +1060,7 @@ menus:
       add:
         status: implemented
         tools: [create_nat_rule]
-        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, to-addresses, to-ports, comment, disabled, log, log-prefix, place-before]
+        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, to-addresses, to-ports, comment, disabled, log, log-prefix, place-before]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -1087,7 +1083,6 @@ menus:
           - ingress-priority
           - ipsec-policy
           - ipv4-options
-          - jump-target
           - layer7-protocol
           - limit
           - nth
@@ -1126,7 +1121,7 @@ menus:
       set:
         status: implemented
         tools: [update_nat_rule]
-        params: [chain, action, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, to-addresses, to-ports, comment, disabled, log, log-prefix]
+        params: [chain, action, jump-target, src-address, dst-address, src-port, dst-port, protocol, in-interface, out-interface, to-addresses, to-ports, comment, disabled, log, log-prefix]
         accepted_gaps:
           - address-list
           - address-list-timeout
@@ -1149,7 +1144,6 @@ menus:
           - ingress-priority
           - ipsec-policy
           - ipv4-options
-          - jump-target
           - layer7-protocol
           - limit
           - nth
