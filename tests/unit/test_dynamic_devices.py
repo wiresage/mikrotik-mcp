@@ -1,9 +1,8 @@
-"""Runtime enrollment: the flag-gated `device_add` tool and its state file.
+"""Runtime device management: the default-on add/remove tools and their state file.
 
-Enrollment is off by default, so the tool is absent from `tools/list` and
-nothing about an existing deployment changes. When it is on, an enrolled
-device must survive a restart through the dynamic inventory file, and the
-password used to reach it must never leave that file.
+Devices can be enrolled while the server runs, they survive a restart through
+the dynamic inventory file, and the password used to reach one never leaves
+that file. Removing is limited to runtime enrollments.
 """
 
 import asyncio
@@ -29,10 +28,9 @@ STATE_FILE = "dynamic-inventory.yaml"
 
 
 def _config(**overrides):
-    """Enrollment enabled, one static device, everything else default."""
+    """One static device, everything else default."""
     return MikrotikConfig(
         inventory=[DeviceConfig(title="Seed", host="192.0.2.1")],
-        allow_dynamic_devices=True,
         **overrides,
     )
 
@@ -47,7 +45,7 @@ def state_file(monkeypatch, tmp_path):
 
 
 def _add(ctx, monkeypatch, reply="name=RouterA", **kwargs):
-    """Call device_add with a canned probe reply; returns (result, probe calls)."""
+    """Call add_device with a canned probe reply; returns (result, probe calls)."""
     calls = []
 
     async def fake(command, _ctx, device=None, **_kw):
@@ -55,7 +53,7 @@ def _add(ctx, monkeypatch, reply="name=RouterA", **kwargs):
         return reply
 
     monkeypatch.setattr(scope_inventory, "execute_mikrotik_command", fake, raising=True)
-    result = asyncio.run(scope_inventory.mikrotik_device_add(ctx, **kwargs))
+    result = asyncio.run(scope_inventory.mikrotik_add_device(ctx, **kwargs))
     return result, calls
 
 
@@ -90,28 +88,23 @@ def _catalogue(**env_extra):
 # Registration
 # ---------------------------------------------------------------------------
 
-def test_device_add_is_absent_from_the_default_catalogue():
+def test_dynamic_tools_are_in_the_default_catalogue():
     from mcp_mikrotik.app import mcp
 
     names = {tool.name for tool in asyncio.run(mcp.list_tools())}
-    assert "device_add" not in names
-    assert "list_devices" in names
+    assert {"add_device", "remove_device", "list_devices"} <= names
 
 
-def test_device_add_registers_when_enrollment_is_enabled():
-    names = _catalogue(MIKROTIK_ALLOW_DYNAMIC_DEVICES="true")
-    assert "device_add" in names
-    assert "list_devices" in names
+def test_dynamic_tools_can_be_turned_off():
+    names = _catalogue(MIKROTIK_ALLOW_DYNAMIC_DEVICES="false")
+    assert "add_device" not in names and "remove_device" not in names
+    assert "list_devices" in names and "list_mikrotik_neighbors" in names
 
 
-def test_read_only_hides_device_add_but_keeps_the_read_tools():
-    names = _catalogue(
-        MIKROTIK_ALLOW_DYNAMIC_DEVICES="true",
-        MIKROTIK_READ_ONLY="true",
-    )
-    assert "device_add" not in names
-    assert "list_devices" in names
-    assert "list_mikrotik_neighbors" in names
+def test_read_only_hides_dynamic_tools_but_keeps_the_read_tools():
+    names = _catalogue(MIKROTIK_READ_ONLY="true")
+    assert "add_device" not in names and "remove_device" not in names
+    assert "list_devices" in names and "list_mikrotik_neighbors" in names
 
 
 # ---------------------------------------------------------------------------
@@ -207,6 +200,90 @@ def test_the_password_stays_in_the_state_file_only(state_file, ctx, monkeypatch)
     assert secret not in json.dumps(inv_mod.get_inventory().describe())
 
 
+def test_the_default_state_file_is_created_owner_only(tmp_path, ctx, monkeypatch):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("MIKROTIK_DYNAMIC_INVENTORY_FILE", raising=False)
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[DeviceConfig(title="Seed", host="192.0.2.1")]),
+    )
+    reset_inventory()
+
+    _add(ctx, monkeypatch, title="BranchA", host="192.0.2.10")
+
+    state = tmp_path / "mikrotik-mcp" / "dynamic-inventory.yaml"
+    assert yaml.safe_load(state.read_text(encoding="utf-8"))[0]["title"] == "BranchA"
+    assert oct(state.stat().st_mode & 0o777) == "0o600"
+    assert oct(state.parent.stat().st_mode & 0o777) == "0o700"
+
+
+# ---------------------------------------------------------------------------
+# Removing a runtime enrollment
+# ---------------------------------------------------------------------------
+
+def test_remove_drops_the_device_from_memory_and_the_state_file(state_file, ctx, monkeypatch):
+    _add(ctx, monkeypatch, title="BranchA", host="192.0.2.10")
+
+    result = asyncio.run(scope_inventory.mikrotik_remove_device(ctx, "BranchA"))
+
+    assert "BranchA" in result
+    assert yaml.safe_load(state_file.read_text(encoding="utf-8")) == []
+    assert [d.title for d in inv_mod.get_inventory().all_devices()] == ["Seed"]
+
+
+def test_remove_refuses_a_static_device_and_leaves_the_file(state_file, ctx, monkeypatch):
+    _add(ctx, monkeypatch, title="BranchA", host="192.0.2.10")
+
+    with pytest.raises(ValueError, match="not enrolled at runtime"):
+        asyncio.run(scope_inventory.mikrotik_remove_device(ctx, "Seed"))
+
+    assert [e["title"] for e in yaml.safe_load(state_file.read_text(encoding="utf-8"))] == ["BranchA"]
+
+
+def test_remove_refuses_an_unknown_title_and_lists_the_known_ones(state_file, ctx, monkeypatch):
+    with pytest.raises(LookupError, match="Seed"):
+        asyncio.run(scope_inventory.mikrotik_remove_device(ctx, "Ghost"))
+
+
+def test_removing_the_only_device_leaves_guidance(ctx, monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[], dynamic_inventory_file=str(tmp_path / STATE_FILE)),
+    )
+    reset_inventory()
+    _add(ctx, monkeypatch, title="Only", host="192.0.2.20")
+
+    asyncio.run(scope_inventory.mikrotik_remove_device(ctx, "Only"))
+    result = asyncio.run(scope_inventory.mikrotik_list_devices(ctx))
+    assert "add_device" in result
+
+
+# ---------------------------------------------------------------------------
+# Listing and guidance
+# ---------------------------------------------------------------------------
+
+def test_the_empty_inventory_points_at_add_device(ctx, monkeypatch):
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[], dynamic_inventory_file=""),
+    )
+    reset_inventory()
+
+    result = asyncio.run(scope_inventory.mikrotik_list_devices(ctx))
+    assert "add_device" in result
+
+
+def test_read_only_empty_inventory_does_not_advertise_add_device(ctx, monkeypatch):
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[], read_only=True, dynamic_inventory_file=""),
+    )
+    reset_inventory()
+
+    result = asyncio.run(scope_inventory.mikrotik_list_devices(ctx))
+    assert "add_device" not in result
+
+
 # ---------------------------------------------------------------------------
 # Rejected enrollments change nothing
 # ---------------------------------------------------------------------------
@@ -258,13 +335,15 @@ def test_invalid_host_is_rejected(state_file, ctx, monkeypatch, host):
     assert [d.title for d in inv_mod.get_inventory().all_devices()] == ["Seed"]
 
 
-def test_enrollment_without_a_state_file_is_refused(monkeypatch, ctx):
-    monkeypatch.setattr(cfg_mod, "mikrotik_config", _config())
+def test_blank_state_file_setting_is_refused(monkeypatch, ctx):
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config", _config(dynamic_inventory_file=""),
+    )
     reset_inventory()
 
-    with pytest.raises(ValueError, match="MIKROTIK_DYNAMIC_INVENTORY_FILE"):
+    with pytest.raises(ValueError, match="state file"):
         asyncio.run(
-            scope_inventory.mikrotik_device_add(ctx, title="BranchA", host="192.0.2.10")
+            scope_inventory.mikrotik_add_device(ctx, title="BranchA", host="192.0.2.10")
         )
 
     assert [d.title for d in inv_mod.get_inventory().all_devices()] == ["Seed"]
@@ -272,7 +351,9 @@ def test_enrollment_without_a_state_file_is_refused(monkeypatch, ctx):
 
 def test_unwritable_state_file_path_is_named_in_the_error(monkeypatch, ctx, tmp_path):
     # A read-only Docker mount behaves the same way: the file cannot be written.
-    path = tmp_path / "not-there" / STATE_FILE
+    blocker = tmp_path / "blocked"
+    blocker.write_text("x", encoding="utf-8")
+    path = blocker / "nested" / STATE_FILE
     monkeypatch.setattr(
         cfg_mod, "mikrotik_config", _config(dynamic_inventory_file=str(path)),
     )
@@ -280,7 +361,7 @@ def test_unwritable_state_file_path_is_named_in_the_error(monkeypatch, ctx, tmp_
 
     with pytest.raises(ValueError) as exc:
         asyncio.run(
-            scope_inventory.mikrotik_device_add(ctx, title="BranchA", host="192.0.2.10")
+            scope_inventory.mikrotik_add_device(ctx, title="BranchA", host="192.0.2.10")
         )
 
     assert str(path) in str(exc.value)
@@ -300,7 +381,7 @@ def test_probe_failure_still_enrolls_the_device(state_file, ctx, monkeypatch):
         scope_inventory, "execute_mikrotik_command", unreachable, raising=True,
     )
     result = asyncio.run(
-        scope_inventory.mikrotik_device_add(ctx, title="BranchB", host="192.0.2.13")
+        scope_inventory.mikrotik_add_device(ctx, title="BranchB", host="192.0.2.13")
     )
 
     assert "unreachable" in result
@@ -317,7 +398,7 @@ def test_fake_executor_is_used_for_the_probe(state_file, ctx, monkeypatch):
     fake = FakeExecutor()
     monkeypatch.setattr(scope_inventory, "execute_mikrotik_command", fake, raising=True)
 
-    asyncio.run(scope_inventory.mikrotik_device_add(ctx, title="BranchC", host="192.0.2.14"))
+    asyncio.run(scope_inventory.mikrotik_add_device(ctx, title="BranchC", host="192.0.2.14"))
 
     assert fake.commands == ["/system identity print"]
     assert fake.devices == ["BranchC"]

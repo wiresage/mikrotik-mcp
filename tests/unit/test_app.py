@@ -52,7 +52,7 @@ def test_every_tool_still_accepts_a_device_argument():
     tools = asyncio.run(mcp.list_tools())
     missing = [
         t.name for t in tools
-        if t.name != "list_devices"
+        if t.name not in {"list_devices", "add_device", "remove_device"}
         and "device" not in (t.input_schema.get("properties") or {})
     ]
     assert missing == []
