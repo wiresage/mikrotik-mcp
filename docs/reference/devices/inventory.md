@@ -3,10 +3,12 @@
 MikroTik MCP can manage a fleet of devices from one server. Devices are
 declared in an **inventory**; each entry has a unique `title`, which is the
 identifier tools use to target that device.
-
-With no inventory configured the server behaves exactly as before: a single
-device built from `MIKROTIK_HOST` / `MIKROTIK_USERNAME` / … , and the `device`
-argument can be omitted everywhere.
+x
+With no inventory configured the server can start with **no devices at all**:
+ask the agent to enroll one with `add_device` and it persists for the next
+start. A single device built from `MIKROTIK_HOST` / `MIKROTIK_USERNAME` / … is
+still used whenever any of those settings is supplied, and a configured
+inventory always wins.
 
 ## Configuring the inventory
 
@@ -112,6 +114,8 @@ here too — existing configs keep working unchanged.
 
 Every device-scoped tool accepts an optional `device` argument:
 
+- **No device configured** — `list_devices` says so and, when dynamic
+  management is available, points the agent at `add_device`.
 - **One device configured** — omit `device`; that device is used.
 - **More than one** — pass the `title`. Omitting it returns an error that lists
   the available devices, as does an unknown title, so the caller can correct
@@ -125,45 +129,57 @@ create_vlan_interface(device="TitleB", name="vlan100", vlan_id=100, interface="e
 
 ## `list_devices`
 
-Lists the devices this server manages — title, host, port, username, tags and
-region. **Credentials are never returned.**
+Lists the devices this server manages — title, host, port, username, tags,
+region and whether the device came from configuration or a runtime enrollment.
+**Credentials are never returned.** With no devices configured it explains how
+to add one.
 
 ```
 list_devices()
 ```
 
-## Runtime enrollment (`device_add`)
+## Runtime device management
 
-Off by default, so an existing deployment's tool catalogue does not change.
-With `MIKROTIK_ALLOW_DYNAMIC_DEVICES=true` the server also offers `device_add`,
-which adds a device while the server is running — discover the neighbours with
-[`list_mikrotik_neighbors`](../neighbors/README.md), then enroll each one:
+**On by default.** The agent can discover adjacent routers with
+[`list_mikrotik_neighbors`](../neighbors/README.md), enroll one, use it, and
+remove it again — no YAML edit, no restart:
 
 ```
+list_devices()                                             # empty on a fresh server
 list_mikrotik_neighbors()                                  # what is adjacent
-device_add(title="BranchA", host="10.0.0.1", tags=["branch"])
+add_device(title="BranchA", host="10.0.0.1", username="admin",
+           password="...", tags=["branch"])
 list_interfaces(device="BranchA")                          # now it is reachable
+remove_device(title="BranchA")                             # forget it again
 ```
 
 | Variable / flag | Purpose |
 |---|---|
-| `MIKROTIK_ALLOW_DYNAMIC_DEVICES` (`--allow-dynamic-devices`) | register `device_add`; default `false` |
-| `MIKROTIK_DYNAMIC_INVENTORY_FILE` (`--dynamic-inventory-file`) | the state file enrollments are written to; `device_add` refuses to run without it |
+| `MIKROTIK_ALLOW_DYNAMIC_DEVICES` (`--allow-dynamic-devices` / `--no-allow-dynamic-devices`) | register `add_device` and `remove_device`; default `true` |
+| `MIKROTIK_DYNAMIC_INVENTORY_FILE` (`--dynamic-inventory-file`) | state file enrollments are written to; default `$XDG_CONFIG_HOME/mikrotik-mcp/dynamic-inventory.yaml` (`~/.config/...` without XDG) |
 
-The state file is the same YAML list shape as `MIKROTIK_INVENTORY_FILE`, it is
-read at startup, and enrolled devices therefore survive a restart. It is created
-on the first enrollment with a `# holds credentials — chmod 600` header and
-written with mode `600`; keep it out of version control.
+Enrollments are written to the state file atomically with mode `600`, and the
+file's directory is created `700` when missing. The file is the same YAML list
+shape as `MIKROTIK_INVENTORY_FILE`, is read at startup, and enrolled devices
+therefore survive a restart. Keep it out of version control; the repository's
+`.gitignore` already covers `dynamic-inventory.yaml`.
 
-- `device_add` is a write tool: `--read-only` hides it.
+- `list_devices` marks every device as `source: config` (inventory or settings)
+  or `source: runtime` (enrolled by the agent).
+- **Only runtime devices can be removed.** A `config` device is refused with a
+  message saying it comes from the inventory file or settings, so the agent
+  cannot delete configuration a human owns.
+- `--read-only` hides both tools and stops `list_devices` from mentioning them.
+  `--no-allow-dynamic-devices` removes them from the catalogue entirely.
+- The password goes into the state file only. It never appears in a tool
+  result, a notification or a log line — but the agent receives it in the tool
+  call, so it is in the client's conversation transcript. Prefer
+  `key_filename` or SSH-agent authentication when that matters.
 - `host` is an IPv4 address or a hostname. IPv6 and any other syntax are
   refused before anything is written.
 - A title already in the inventory is refused, at enrollment and again at load.
 - A device that cannot be reached is **still enrolled** and reported as
   unreachable — enrollment and connectivity are independent.
-- The password goes into the state file only. It never appears in a tool
-  result, a notification or a log line, so treat that file exactly like the
-  inventory itself.
 
 ## Docker
 
@@ -195,6 +211,13 @@ services:
 ```
 
 The entrypoint also takes `--inventory '<yaml>'` and `--inventory-file <path>`.
+
+Once `add_device` works in the container, mount `/config` as a writable volume:
+the entrypoint defaults `MIKROTIK_DYNAMIC_INVENTORY_FILE` to
+`/config/dynamic-inventory.yaml`, so one volume keeps both the static inventory
+and the agent's enrollments across a container replacement. Without a volume,
+enrollments live only inside the container's writable layer and disappear when
+it is recreated.
 
 A mounted file is preferable to inline `MIKROTIK_INVENTORY`: environment values
 are visible in `docker inspect`, file contents are not. Two traps the
