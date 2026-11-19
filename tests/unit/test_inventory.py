@@ -532,6 +532,23 @@ def test_legacy_single_device_still_applies_when_dynamic_is_disabled(monkeypatch
     assert runtime == []
 
 
+def test_disabling_dynamic_devices_ignores_the_state_file(monkeypatch, tmp_path):
+    """The kill switch must not leave agent-enrolled devices active."""
+    import mcp_mikrotik.inventory as inv_mod
+    from mcp_mikrotik import config as cfg_mod
+
+    state = tmp_path / "dynamic-inventory.yaml"
+    state.write_text("- title: Branch\n  host: 10.0.0.2\n", encoding="utf-8")
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[], allow_dynamic_devices=False,
+                       dynamic_inventory_file=str(state)),
+    )
+    devices, runtime = inv_mod._load_devices()
+    assert [(d.title, d.host) for d in devices] == [("127.0.0.1", "127.0.0.1")]
+    assert runtime == []
+
+
 def test_runtime_state_file_merges_and_its_titles_are_returned(monkeypatch, tmp_path):
     import mcp_mikrotik.inventory as inv_mod
     from mcp_mikrotik import config as cfg_mod

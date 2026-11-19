@@ -370,7 +370,7 @@ def _load_devices() -> Tuple[List[DeviceConfig], List[str]]:
             )
         ]
 
-    if cfg.dynamic_inventory_file:
+    if cfg.allow_dynamic_devices and cfg.dynamic_inventory_file:
         path = os.path.expanduser(cfg.dynamic_inventory_file)
         # Absent until the first enrollment creates it.
         if os.path.exists(path):

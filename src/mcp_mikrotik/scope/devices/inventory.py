@@ -13,6 +13,7 @@ from ...app import mcp, DESTRUCTIVE, READ, WRITE, annotate
 from ...config import DeviceConfig
 from ...connector import execute_mikrotik_command
 from ...inventory import get_inventory
+from ...safe_mode import forget_safe_mode_manager, get_safe_mode_manager
 
 
 def _dynamic_available() -> bool:
@@ -274,6 +275,15 @@ async def mikrotik_remove_device(ctx: Context, title: str) -> str:
 
     inventory = get_inventory()
     with _persist_lock:
+        # A live safe-mode shell still points at this host. Removing the
+        # device would strand that session, and re-adding the title would
+        # route its commands through the old router.
+        if get_safe_mode_manager(title).is_active:
+            raise ValueError(
+                f"Safe mode is active on {title!r}; use commit_safe_mode or "
+                "rollback_safe_mode before removing the device."
+            )
+
         # Removing from memory first means an unknown or static title is
         # refused before the file is touched. A failed write puts it back.
         device = inventory.remove(title)
@@ -282,6 +292,7 @@ async def mikrotik_remove_device(ctx: Context, title: str) -> str:
         except Exception:
             inventory.add(device)
             raise
+        forget_safe_mode_manager(device.title)
 
     return f"Removed {device.title} ({device.host}:{device.port})."
 
