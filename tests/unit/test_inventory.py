@@ -357,7 +357,7 @@ def test_inventory_file_accepts_tab_whitespace_json(monkeypatch, tmp_path):
         cfg_mod, "mikrotik_config", MikrotikConfig(inventory_file=str(path))
     )
 
-    devices = inv_mod._load_devices()
+    devices, _ = inv_mod._load_devices()
     assert [d.title for d in devices] == ["TitleA"]
 
 
@@ -402,7 +402,7 @@ def test_inventory_file_accepts_yaml(monkeypatch, tmp_path):
         cfg_mod, "mikrotik_config", MikrotikConfig(inventory_file=str(path))
     )
 
-    devices = inv_mod._load_devices()
+    devices, _ = inv_mod._load_devices()
     assert [d.title for d in devices] == ["TitleA", "TitleB"]
     assert devices[0].port == 2222
     assert devices[0].tags == ["lab", "primary"]
@@ -420,7 +420,7 @@ def test_inline_inventory_wins_over_file(monkeypatch, tmp_path):
         cfg_mod, "mikrotik_config", MikrotikConfig(inventory_file=str(path))
     )
 
-    devices = inv_mod._load_devices()
+    devices, _ = inv_mod._load_devices()
     assert [d.title for d in devices] == ["Inline"]
 
 
@@ -462,7 +462,7 @@ def test_shipped_example_inventory_is_valid(monkeypatch):
         cfg_mod, "mikrotik_config", MikrotikConfig(inventory_file=str(example))
     )
 
-    devices = inv_mod._load_devices()
+    devices, _ = inv_mod._load_devices()
     assert [d.title for d in devices] == ["TitleA", "TitleB"]
     assert devices[0].password == "change-me"
     assert devices[1].key_filename == "/config/keys/id_ed25519"
@@ -498,11 +498,56 @@ def test_falls_back_to_single_device_config(monkeypatch):
         MikrotikConfig(host="192.168.88.1", username="u", password="p", port=2022),
     )
 
-    devices = inv_mod._load_devices()
+    devices, _ = inv_mod._load_devices()
     assert len(devices) == 1
     assert devices[0].host == "192.168.88.1"
     assert devices[0].port == 2022
     assert devices[0].username == "u"
+
+
+def test_no_configuration_starts_with_no_devices(monkeypatch):
+    import mcp_mikrotik.inventory as inv_mod
+    from mcp_mikrotik import config as cfg_mod
+
+    monkeypatch.delenv("MIKROTIK_INVENTORY", raising=False)
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[], dynamic_inventory_file=""),
+    )
+    assert inv_mod._load_devices() == ([], [])
+
+
+def test_legacy_single_device_still_applies_when_dynamic_is_disabled(monkeypatch):
+    import mcp_mikrotik.inventory as inv_mod
+    from mcp_mikrotik import config as cfg_mod
+
+    monkeypatch.delenv("MIKROTIK_INVENTORY", raising=False)
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(inventory=[], allow_dynamic_devices=False,
+                       dynamic_inventory_file=""),
+    )
+    devices, runtime = inv_mod._load_devices()
+    assert [(d.title, d.host) for d in devices] == [("127.0.0.1", "127.0.0.1")]
+    assert runtime == []
+
+
+def test_runtime_state_file_merges_and_its_titles_are_returned(monkeypatch, tmp_path):
+    import mcp_mikrotik.inventory as inv_mod
+    from mcp_mikrotik import config as cfg_mod
+
+    state = tmp_path / "dynamic-inventory.yaml"
+    state.write_text("- title: Branch\n  host: 10.0.0.2\n", encoding="utf-8")
+    monkeypatch.setattr(
+        cfg_mod, "mikrotik_config",
+        MikrotikConfig(
+            inventory=[DeviceConfig(title="Seed", host="10.0.0.1")],
+            dynamic_inventory_file=str(state),
+        ),
+    )
+    devices, runtime = inv_mod._load_devices()
+    assert [d.title for d in devices] == ["Seed", "Branch"]
+    assert runtime == ["Branch"]
 
 
 def test_connect_appends_terminal_width_login_option(monkeypatch):
