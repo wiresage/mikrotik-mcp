@@ -383,7 +383,7 @@ When an inventory is set it takes precedence and `MIKROTIK_HOST` /
 `MIKROTIK_ALLOW_SSH_AGENT` / `MIKROTIK_SSH_AGENT_KEY` are ignored, so you
 can drop them. The entrypoint also stops applying its `192.168.88.1` default
 in that case, rather than injecting a host nobody asked for. Tools then take
-a `device` argument naming the title to target; see
+a `device_name` argument naming the title to target; see
 [Inventory](../reference/devices/inventory.md).
 
 The server is then reachable at `http://localhost:8000/mcp` (streamable HTTP)

@@ -4,7 +4,7 @@ from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import _ID_RE, resolve_item_id, item_count, item_at_position, move_to_position, has_item_rows
-from .._shared.results import refused, no_such_item
+from .._shared.results import refused, no_such_item, raise_if_routeros_error
 
 @mcp.tool(name="create_nat_rule", annotations=annotate(WRITE, "Create NAT Rule"))
 async def mikrotik_create_nat_rule(
@@ -167,6 +167,7 @@ async def mikrotik_get_nat_rule(ctx: Context, rule_id: str, device: Optional[str
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"NAT rule with ID '{rule_id}' not found."
 
     return f"NAT RULE DETAILS:\n\n{result}"

@@ -5,7 +5,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows
-from .._shared.results import refused, is_missing
+from .._shared.results import refused, is_missing, raise_if_routeros_error
 
 @mcp.tool(name="create_vlan_interface", annotations=annotate(WRITE, "Create VLAN"))
 async def mikrotik_create_vlan_interface(
@@ -119,6 +119,7 @@ async def mikrotik_get_vlan_interface(ctx: Context, name: str, device: Optional[
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"VLAN interface '{name}' not found."
 
     return f"VLAN INTERFACE DETAILS:\n\n{result}"

@@ -2,6 +2,7 @@ import ipaddress
 from typing import Literal, Optional
 
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
@@ -160,6 +161,7 @@ async def mikrotik_get_address_list_entry(
 
     # `print detail` emits the Flags legend even when nothing matches.
     if not result or "address=" not in result:
+        raise_if_routeros_error(result)
         return f"Address list entry '{address}' not found in '{list_name}'."
 
     return f"{family.upper()} ADDRESS LIST ENTRY:\n\n{result}"

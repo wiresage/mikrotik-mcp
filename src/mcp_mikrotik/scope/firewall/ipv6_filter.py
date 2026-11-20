@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
@@ -214,6 +215,7 @@ async def mikrotik_get_ipv6_filter_rule(
     # `print detail` emits the Flags legend even when nothing matches, so the
     # presence of an actual field decides whether a rule was found.
     if not result or "chain=" not in result:
+        raise_if_routeros_error(result)
         return f"IPv6 firewall filter rule with ID '{rule_id}' not found."
 
     return f"IPV6 FIREWALL FILTER RULE DETAILS:\n\n{result}"

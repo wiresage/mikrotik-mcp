@@ -2,6 +2,7 @@ import asyncio
 from typing import Optional
 
 from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
 
 from ...app import mcp, DESTRUCTIVE, READ, WRITE, annotate
 from ...inventory import DeviceNotFoundError
@@ -15,7 +16,7 @@ async def mikrotik_safe_mode_status(ctx: Context, device: Optional[str] = None) 
     try:
         manager = get_safe_mode_manager(device)
     except DeviceNotFoundError as exc:
-        return f"Error: {exc}"
+        raise ToolError(f"Error: {exc}") from None
     return manager.status()
 
 
@@ -26,7 +27,7 @@ async def mikrotik_enable_safe_mode(ctx: Context, device: Optional[str] = None) 
     try:
         manager = get_safe_mode_manager(device)
     except DeviceNotFoundError as exc:
-        return f"Error: {exc}"
+        raise ToolError(f"Error: {exc}") from None
     return await asyncio.to_thread(manager.enable)
 
 
@@ -37,7 +38,7 @@ async def mikrotik_commit_safe_mode(ctx: Context, device: Optional[str] = None) 
     try:
         manager = get_safe_mode_manager(device)
     except DeviceNotFoundError as exc:
-        return f"Error: {exc}"
+        raise ToolError(f"Error: {exc}") from None
     return await asyncio.to_thread(manager.commit)
 
 
@@ -48,5 +49,5 @@ async def mikrotik_rollback_safe_mode(ctx: Context, device: Optional[str] = None
     try:
         manager = get_safe_mode_manager(device)
     except DeviceNotFoundError as exc:
-        return f"Error: {exc}"
+        raise ToolError(f"Error: {exc}") from None
     return await asyncio.to_thread(manager.rollback)

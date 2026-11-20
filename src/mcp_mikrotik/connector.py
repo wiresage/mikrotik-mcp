@@ -3,6 +3,7 @@ import logging
 from typing import Optional, Sequence
 
 from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
 
 from .inventory import DeviceNotFoundError, get_inventory
 from .sensitive import REDACTED, redact_if_enabled
@@ -110,12 +111,18 @@ async def execute_mikrotik_command(
 
     # Resolve the target first so a bad/missing device is reported clearly and
     # never silently executed somewhere else.
+    #
+    # Failures to pick a device or to reach it raise ToolError rather than
+    # returning an "Error: ..." string: tools inspect the output for a data
+    # marker, and an error string lacks it, so it used to be reported as
+    # "No ... found" — indistinguishable from a device with nothing to show.
+    # Raised, it reaches the client as an error result carrying this text.
     try:
         target = get_inventory().resolve(device)
     except DeviceNotFoundError as exc:
         msg = f"Error: {exc}"
         await ctx.error(msg)
-        return msg
+        raise ToolError(msg) from None
 
     safe_mgr = get_safe_mode_manager(target.title)
     if safe_mgr.is_active:
@@ -123,18 +130,20 @@ async def execute_mikrotik_command(
         try:
             result = await asyncio.to_thread(safe_mgr.execute, command)
         except Exception as e:
-            result = f"Error executing command in safe mode session: {str(e)}"
+            result = f"Error executing command in safe mode session on '{target.title}': {str(e)}"
     else:
         await ctx.info(_shown(f"Executing on '{target.title}': {command}", redact))
         try:
             extra = {"terminal_width": terminal_width} if terminal_width else {}
             result = await asyncio.to_thread(_execute_sync, command, target.title, redact, **extra)
         except ConnectionError as e:
-            result = f"Error: {str(e)}"
+            result = f"Error connecting to '{target.title}': {str(e)}"
         except Exception as e:
-            result = f"Error executing command: {str(e)}"
+            result = f"Error executing command on '{target.title}': {str(e)}"
 
     logger.info("Command result: %r", _shown(result, redact))
     if result.startswith("Error"):
-        await ctx.error(_shown(result, redact))
+        shown = _shown(result, redact)
+        await ctx.error(shown)
+        raise ToolError(shown)
     return result

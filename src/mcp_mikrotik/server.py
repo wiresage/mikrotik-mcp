@@ -142,6 +142,17 @@ def main():
         sys.exit(1)
     logger.info(f"Managing {len(inventory)} device(s): {', '.join(inventory.titles)}")
 
+    default_device = getattr(config.mikrotik_config, "default_device", None)
+    if default_device:
+        from mcp_mikrotik.inventory import DeviceNotFoundError
+
+        try:
+            inventory.resolve(default_device)
+        except DeviceNotFoundError as e:
+            logger.error(f"Invalid MIKROTIK_DEFAULT_DEVICE: {e}")
+            sys.exit(1)
+        logger.info(f"Default device: {default_device}")
+
     _warn_if_plaintext_password_in_container(config.mikrotik_config, logger)
 
     try:
