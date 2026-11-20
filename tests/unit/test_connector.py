@@ -188,8 +188,10 @@ def test_execute_mikrotik_command_logs_error(ctx, monkeypatch):
         lambda cmd, device=None, redact=None: "Error: nope",
     )
 
-    result = asyncio.run(connector.execute_mikrotik_command("/bad", ctx))
-    assert result == "Error: nope"
+    from mcp.server.mcpserver.exceptions import ToolError
+
+    with pytest.raises(ToolError, match="Error: nope"):
+        asyncio.run(connector.execute_mikrotik_command("/bad", ctx))
     assert ctx.error.await_count == 1
 
 
@@ -198,8 +200,10 @@ def test_execute_mikrotik_command_unknown_device_is_reported(ctx, monkeypatch):
     client = DummyClient()
     connector = _patch_inventory(monkeypatch, FakeInventory({"RouterA": client}))
 
-    result = asyncio.run(connector.execute_mikrotik_command("/x", ctx, device="Ghost"))
-    assert "Unknown device" in result
+    from mcp.server.mcpserver.exceptions import ToolError
+
+    with pytest.raises(ToolError, match="Unknown device"):
+        asyncio.run(connector.execute_mikrotik_command("/x", ctx, device="Ghost"))
     assert client.commands == []          # nothing ran anywhere
     assert ctx.error.await_count == 1
 

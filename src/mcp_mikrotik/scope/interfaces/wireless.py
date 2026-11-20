@@ -3,9 +3,10 @@ from typing import List, Literal, Optional, Dict, Any
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows
-from .._shared.results import refused, is_missing
+from .._shared.results import refused, is_missing, raise_if_routeros_error
 
 
 async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional[str] = None) -> Optional[str]:
@@ -59,6 +60,8 @@ async def mikrotik_detect_wireless_interface_type(ctx: Context, device: Optional
                     await ctx.info(f"Detected wireless interface type: {interface_type}")
                     return interface_type
 
+        except ToolError:
+            raise  # device selection / connection failure: not a missing package
         except Exception as e:
             await ctx.debug(f"Interface type {interface_type} failed with exception: {e}")
             continue
@@ -204,6 +207,8 @@ async def mikrotik_list_wireless_interfaces(
                 working_types.append(interface_type)
                 all_results.append(f"=== {interface_type.upper()} ===\n{result}")
 
+        except ToolError:
+            raise  # device selection / connection failure: not a missing package
         except Exception as e:
             await ctx.debug(f"Interface type {interface_type} failed: {e}")
             continue
@@ -226,6 +231,8 @@ ALL INTERFACES ON DEVICE:
 
 NOTE: If you see wireless interfaces above, they might be using a different command structure."""
 
+    except ToolError:
+        raise
     except Exception:
         return "No wireless interfaces found matching the criteria."
 
@@ -245,6 +252,7 @@ async def mikrotik_get_wireless_interface(ctx: Context, name: str, device: Optio
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"Wireless interface '{name}' not found."
 
     return f"WIRELESS INTERFACE DETAILS:\n\n{result}"

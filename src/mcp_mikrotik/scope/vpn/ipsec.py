@@ -12,6 +12,7 @@ from mcp.server.mcpserver import Context
 
 from ...app import mcp, READ, annotate
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 from .._shared.quoting import ros_quoted
 
 
@@ -39,6 +40,7 @@ async def _print_detail(
     # `print detail` prints the Flags legend (non-empty) even when no row
     # matches, so emptiness is decided by real entry data, not by length.
     if not result or data_marker not in result:
+        raise_if_routeros_error(result)
         return empty_message
     return f"{heading}:\n\n{result}"
 

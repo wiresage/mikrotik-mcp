@@ -21,6 +21,7 @@ from mcp.server.mcpserver import Context
 
 from ...app import mcp, READ, annotate
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 from .._shared.quoting import ros_quoted
 from ...sensitive import redact_sensitive_text
 
@@ -128,6 +129,7 @@ async def mikrotik_list_netwatch(
     # `print detail` prints the Flags legend (non-empty) even when no row
     # matches, so emptiness is decided by real entry data, not by length.
     if not result or "host=" not in result:
+        raise_if_routeros_error(result)
         return "No netwatch probes found matching the criteria."
 
     heading = "NETWATCH PROBES (with scripts)" if include_source else "NETWATCH PROBES"

@@ -4,7 +4,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.selectors import _ID_RE, has_item_rows, resolve_item_id, item_count
-from .._shared.results import refused, no_such_item
+from .._shared.results import refused, no_such_item, raise_if_routeros_error
 
 @mcp.tool(name="add_route", annotations=annotate(WRITE, "Add Route"))
 async def mikrotik_add_route(
@@ -136,6 +136,7 @@ async def mikrotik_get_route(ctx: Context, route_id: str, device: Optional[str] 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"Route with ID '{route_id}' not found."
 
     return f"ROUTE DETAILS:\n\n{result}"

@@ -6,7 +6,7 @@ from ...connector import execute_mikrotik_command
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import _ID_RE, has_item_rows, resolve_item_id, item_count
-from .._shared.results import refused, no_such_item
+from .._shared.results import refused, no_such_item, raise_if_routeros_error
 
 @mcp.tool(name="set_dns_servers", annotations=annotate(WRITE, "Set DNS Servers"))
 async def mikrotik_set_dns_servers(
@@ -177,6 +177,7 @@ async def mikrotik_list_dns_static(
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return "No static DNS entries found matching the criteria."
 
     return f"STATIC DNS ENTRIES:\n\n{result}"
@@ -190,6 +191,7 @@ async def mikrotik_get_dns_static(ctx: Context, entry_id: str, device: Optional[
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"Static DNS entry with ID '{entry_id}' not found."
 
     return f"STATIC DNS ENTRY DETAILS:\n\n{result}"

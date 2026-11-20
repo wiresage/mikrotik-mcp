@@ -685,7 +685,7 @@ Use these commands to verify your configurations:
 # Multi-Device Examples (Inventory)
 
 The examples above target a single router. With an [inventory](../reference/devices/inventory.md)
-configured, one MCP server manages a whole fleet: every tool accepts a `device`
+configured, one MCP server manages a whole fleet: every tool accepts a `device_name`
 argument naming the inventory `title` to target, and a `list_devices` tool lets
 the AI discover the fleet on its own.
 
@@ -723,8 +723,8 @@ RouterOS version, and which interfaces are actually running.
 
 **What AI Will Do**:
 1. Call `list_devices` to discover the fleet (titles, hosts, tags, regions)
-2. Call `list_interfaces(device="office-core")` and filter for running interfaces
-3. Call `list_interfaces(device="branch-berlin")` and do the same
+2. Call `list_interfaces(device_name="office-core")` and filter for running interfaces
+3. Call `list_interfaces(device_name="branch-berlin")` and do the same
 4. Export the system identity from each device
 5. Summarize the fleet in one table: title, host, identity, version, running interfaces
 
@@ -755,9 +755,9 @@ them failed.
 **What AI Will Do**:
 1. Call `list_devices` and select the devices whose tags include "office"
 2. For each matching device (here only office-core):
-   - `create_vlan_interface(device="office-core", name="vlan40-voip", vlan_id=40, interface="ether2")`
-   - `add_ip_address(device="office-core", address="10.40.0.1/24", interface="vlan40-voip")`
-3. Verify with `list_vlan_interfaces(device="office-core")` and `list_ip_addresses(device="office-core")`
+   - `create_vlan_interface(device_name="office-core", name="vlan40-voip", vlan_id=40, interface="ether2")`
+   - `add_ip_address(device_name="office-core", address="10.40.0.1/24", interface="vlan40-voip")`
+3. Verify with `list_vlan_interfaces(device_name="office-core")` and `list_ip_addresses(device_name="office-core")`
 4. Report per-device success or failure instead of assuming the writes landed
 
 **Manual Commands**:
@@ -781,8 +781,8 @@ branch-berlin that allows traffic office-core would drop.
 ```
 
 **What AI Will Do**:
-1. Call `list_filter_rules(device="office-core")`
-2. Call `list_filter_rules(device="branch-berlin")`
+1. Call `list_filter_rules(device_name="office-core")`
+2. Call `list_filter_rules(device_name="branch-berlin")`
 3. Diff the two rule sets by chain, action, and match criteria
 4. Highlight rules present on only one device
 5. Call out permissive rules on branch-berlin that contradict office-core policy
@@ -812,14 +812,14 @@ if the rule looks correct. office-core must not be touched.
 ```
 
 **What AI Will Do**:
-1. Call `enable_safe_mode(device="branch-berlin")` — safe mode is tracked per
+1. Call `enable_safe_mode(device_name="branch-berlin")` — safe mode is tracked per
    device, so office-core is unaffected
-2. Create the rule with `create_filter_rule(device="branch-berlin", chain="forward", action="drop", dst_address="203.0.113.0/24")`
-3. Verify with `list_filter_rules(device="branch-berlin")`
-4. If correct: `commit_safe_mode(device="branch-berlin")` to persist
-5. If wrong: `rollback_safe_mode(device="branch-berlin")` and the router reverts
+2. Create the rule with `create_filter_rule(device_name="branch-berlin", chain="forward", action="drop", dst_address="203.0.113.0/24")`
+3. Verify with `list_filter_rules(device_name="branch-berlin")`
+4. If correct: `commit_safe_mode(device_name="branch-berlin")` to persist
+5. If wrong: `rollback_safe_mode(device_name="branch-berlin")` and the router reverts
    the change automatically
-6. Confirm `safe_mode_status(device="office-core")` still reports inactive
+6. Confirm `safe_mode_status(device_name="office-core")` still reports inactive
 
 **Manual Commands**:
 ```bash

@@ -7,11 +7,12 @@ from .configured_mcp_server import ConfiguredMCPServer
 # Sent once, in the initialize response, instead of being repeated in all 192
 # tool descriptions — the same guidance costs ~60 tokens here rather than ~4k.
 INSTRUCTIONS = (
-    "This server manages one or more MikroTik devices. Every tool accepts an "
-    "optional `device` argument: the title of the target device, as listed by "
-    "`list_devices`. Omit it when a single device is configured; when several "
-    "are, it is required. Titles match case-insensitively, and an omitted or "
-    "unknown device returns an error naming the valid titles."
+    "This server manages one or more MikroTik devices (routers, switches, access "
+    "points). Every tool accepts an optional `device_name` argument: the title of "
+    "the target device, as listed by `list_devices`. Omit it when a single device "
+    "is configured (or the server sets a default); otherwise it is required. "
+    "Titles match case-insensitively, and an omitted or unknown device_name "
+    "returns an error naming the valid titles."
 )
 
 mcp = ConfiguredMCPServer("mcp-mikrotik", instructions=INSTRUCTIONS)

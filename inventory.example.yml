@@ -12,7 +12,7 @@
 #     ghcr.io/wiresage/mikrotik-mcp:latest
 #
 # Each entry is one device. `title` is the identifier the LLM passes as the
-# `device` argument of every tool; it must be unique (matching is
+# `device_name` argument of every tool; it must be unique (matching is
 # case-insensitive). `host` is the only other required field.
 #
 # This file holds credentials — treat the whole file as a secret:
@@ -23,7 +23,7 @@
 # `ssh_agent_key` to the matching public key line, base64 blob,
 # or a `SHA256:` fingerprint.
 
-- title: TitleA                 # required, unique — used as the `device` argument
+- title: TitleA                 # required, unique — used as the `device_name` argument
   host: 192.168.88.1            # required — IP or hostname
   port: 22                      # optional, default 22
   username: admin               # optional, default admin

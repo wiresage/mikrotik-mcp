@@ -13,6 +13,7 @@ from mcp.server.mcpserver import Context
 
 from ...app import mcp, READ, annotate
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 from .._shared.quoting import ros_quoted
 
 
@@ -51,5 +52,6 @@ async def mikrotik_list_ip_services(
 
     result = await execute_mikrotik_command(command, ctx, device=device)
     if not result or "name=" not in result:
+        raise_if_routeros_error(result)
         return "No IP services found matching the criteria."
     return f"IP SERVICES:\n\n{result}"

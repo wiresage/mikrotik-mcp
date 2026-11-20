@@ -5,7 +5,7 @@ from mcp.server.mcpserver import Context
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import resolve_item_id, item_count, has_item_rows
-from .._shared.results import refused, is_missing, no_such_item
+from .._shared.results import refused, is_missing, no_such_item, raise_if_routeros_error
 from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 
 
@@ -96,6 +96,7 @@ async def mikrotik_get_wireguard_interface(ctx: Context, name: str, device: Opti
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"WireGuard interface '{name}' not found."
 
     return f"WIREGUARD INTERFACE DETAILS:\n\n{result}"
@@ -308,6 +309,7 @@ async def mikrotik_get_wireguard_peer(ctx: Context, peer_id: str, device: Option
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"WireGuard peer with ID '{peer_id}' not found."
 
     return f"WIREGUARD PEER DETAILS:\n\n{result}"

@@ -45,17 +45,55 @@ def test_device_guidance_lives_in_server_instructions_not_every_tool():
     assert repeated == [], f"device guidance duplicated into tool descriptions: {repeated}"
 
 
-def test_every_tool_still_accepts_a_device_argument():
-    """Dropping the prose must not drop the parameter."""
+def test_every_tool_advertises_device_name_not_device():
+    """The target is advertised as `device_name`: hosts may strip a top-level `device`."""
     from mcp_mikrotik.app import mcp
 
     tools = asyncio.run(mcp.list_tools())
     missing = [
         t.name for t in tools
         if t.name != "list_devices"
-        and "device" not in (t.input_schema.get("properties") or {})
+        and "device_name" not in (t.input_schema.get("properties") or {})
     ]
+    leaked = [t.name for t in tools if "device" in (t.input_schema.get("properties") or {})]
     assert missing == []
+    assert leaked == []
+
+
+def test_device_name_reaches_the_tool_as_device(monkeypatch):
+    from mcp_mikrotik.configured_mcp_server import normalize_device_argument
+    from mcp.server.mcpserver.exceptions import ToolError
+
+    assert normalize_device_argument({"device_name": "branch-office", "x": 1}) == {
+        "device": "branch-office", "x": 1,
+    }
+    # the deprecated alias still works on its own
+    assert normalize_device_argument({"device": "A"}) == {"device": "A"}
+    # same target named both ways is fine, case-insensitively
+    assert normalize_device_argument({"device_name": "a", "device": "A"})["device"] == "a"
+    with pytest.raises(ToolError):
+        normalize_device_argument({"device_name": "A", "device": "B"})
+
+
+def test_device_name_end_to_end(monkeypatch):
+    """A call with `device_name` runs on that device; list_tools shows no `device`."""
+    from mcp_mikrotik.app import mcp
+    from mcp_mikrotik.scope.system import info
+
+    seen = {}
+
+    async def fake_execute(command, ctx, device=None, **kw):
+        seen["device"] = device
+        return "uptime: 1d"
+
+    from unittest.mock import AsyncMock
+    from mcp.server.mcpserver import Context
+
+    monkeypatch.setattr(Context, "info", AsyncMock())
+    monkeypatch.setattr(info, "execute_mikrotik_command", fake_execute)
+    result = asyncio.run(mcp.call_tool("get_system_resource", {"device_name": "branch-office"}))
+    assert seen["device"] == "branch-office"
+    assert "uptime" in str(result)
 
 
 def test_read_only_server_registers_only_read_tools(monkeypatch):
