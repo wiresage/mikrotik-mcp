@@ -67,11 +67,13 @@ def test_rollback_safe_mode_returns_string(ctx, mock_manager):
     mock_manager.rollback.assert_called_once()
 
 
-def test_enable_safe_mode_error_propagates(ctx, mock_manager):
+def test_enable_safe_mode_error_is_a_tool_error(ctx, mock_manager):
+    from mcp.server.mcpserver.exceptions import ToolError
+
     mock_manager.enable.return_value = "Error: Failed to connect to MikroTik device for safe mode session."
     with patch("mcp_mikrotik.scope.devices.safe_mode.get_safe_mode_manager", return_value=mock_manager):
-        result = asyncio.run(mikrotik_enable_safe_mode(ctx))
-    assert "Error" in result
+        with pytest.raises(ToolError, match="Failed to connect"):
+            asyncio.run(mikrotik_enable_safe_mode(ctx))
 
 
 def test_commit_safe_mode_when_not_active(ctx, mock_manager):
