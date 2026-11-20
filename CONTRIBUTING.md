@@ -130,7 +130,7 @@ Your module should:
 - Import shared helpers from `.._shared`, for example `from .._shared.selectors import resolve_item_id`
 - Decide whether a write worked from what RouterOS answered, with `refused`, `no_such_item` and `is_missing` from `.._shared.results`: a write that works prints nothing, so any text is a refusal (it does not always say "failure" or "error"), an id that is not there is answered with `no such item`, and a name that is not there makes `[find ...]` silent, so count first. `tests/unit/scope/test_write_tools_tell_the_truth.py` fails a write tool that reports success when it did nothing
 - Register tools using `@mcp.tool()` decorators — **always use `annotate(BASE, "Title")`** (never a bare constant)
-- Follow the existing naming convention: `mikrotik_<action>_<resource>`
+- Name the function `mikrotik_<action>_<resource>` and register it under the short name `<action>_<resource>` with `name=`, as in the example below; the short name is what clients see
 - Use type hints for all parameters (including `Literal` for fixed-value params)
 - Keep docstrings **concise** — a single sentence is ideal; avoid re-documenting every parameter
 - Handle errors gracefully and return meaningful messages
