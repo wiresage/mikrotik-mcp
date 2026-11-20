@@ -145,3 +145,38 @@ def test_flat_ssh_agent_key_ignored_with_inventory_file():
         inventory_file="inventory.yml",
     )
     assert cfg.ssh_agent_key == "SHA256:abc"
+
+
+def test_dynamic_devices_are_on_by_default(monkeypatch):
+    from mcp_mikrotik.config import MikrotikConfig
+
+    monkeypatch.delenv("MIKROTIK_ALLOW_DYNAMIC_DEVICES", raising=False)
+    assert MikrotikConfig().allow_dynamic_devices is True
+
+
+def test_dynamic_devices_can_be_disabled(monkeypatch):
+    from mcp_mikrotik.config import MikrotikConfig
+
+    monkeypatch.setenv("MIKROTIK_ALLOW_DYNAMIC_DEVICES", "false")
+    assert MikrotikConfig().allow_dynamic_devices is False
+
+
+def test_default_dynamic_inventory_file_lives_under_xdg(monkeypatch, tmp_path):
+    from mcp_mikrotik.config import MikrotikConfig
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delenv("MIKROTIK_DYNAMIC_INVENTORY_FILE", raising=False)
+    assert MikrotikConfig().dynamic_inventory_file == str(
+        tmp_path / "mikrotik-mcp" / "dynamic-inventory.yaml"
+    )
+
+
+def test_default_dynamic_inventory_file_falls_back_to_home(monkeypatch, tmp_path):
+    from mcp_mikrotik.config import MikrotikConfig
+
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("MIKROTIK_DYNAMIC_INVENTORY_FILE", raising=False)
+    assert MikrotikConfig().dynamic_inventory_file == str(
+        tmp_path / ".config" / "mikrotik-mcp" / "dynamic-inventory.yaml"
+    )

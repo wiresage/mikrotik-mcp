@@ -45,7 +45,7 @@ area with a single module the `README.md` is the page itself. See
 - **[IP Address](ip/address.md)** - IPv4 Address Management
 - **[IPv6 Address](ip/ipv6-address.md)** - IPv6 Address Management
 - **[IP Pool](ip/pool.md)** - IP Pool Management
-- **[Neighbors](ip/neighbors.md)** - ARP and IPv6 Neighbor Discovery
+- **[Neighbors](ip/neighbors.md)** - ARP, IPv6 and MNDP neighbor discovery
 - **[IP Services](ip/services.md)** - Management Services Exposure
 
 ### [Monitoring](monitoring/README.md)

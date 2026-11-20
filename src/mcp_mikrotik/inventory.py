@@ -17,7 +17,7 @@ import logging
 import os
 import threading
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional, Tuple
 
 import yaml
 from pydantic import ValidationError
@@ -36,12 +36,25 @@ class DeviceNotFoundError(LookupError):
 class Inventory:
     """Holds the device definitions, keyed by title.
 
-    The inventory is immutable after construction and holds no connection
+    The map is not immutable — :meth:`add` enrols devices at runtime and
+    :meth:`remove` drops them — but the inventory still holds no connection
     state, so a single instance is safe to share across sessions and threads.
+
+    Devices that came from the runtime state file are marked as such, so a
+    caller can tell the operator's configuration from what the agent enrolled.
     """
 
-    def __init__(self, devices: List[DeviceConfig]) -> None:
+    # Class-level: an instance's own dict is asserted to hold nothing but the
+    # device map, so the lock that guards it cannot live in that dict.
+    _add_lock = threading.Lock()
+
+    def __init__(
+        self,
+        devices: List[DeviceConfig],
+        runtime_titles: Iterable[str] = (),
+    ) -> None:
         self._devices: Dict[str, DeviceConfig] = {}
+        self._runtime = {str(title).casefold() for title in runtime_titles}
 
         for device in devices:
             key = device.title.casefold()
@@ -51,6 +64,53 @@ class Inventory:
                     "titles must be unique."
                 )
             self._devices[key] = device
+
+    def add(self, device: DeviceConfig) -> None:
+        """Insert a device discovered at runtime.
+
+        Titles stay unique case-insensitively, with the same error the
+        constructor raises, so a title already in the inventory is refused
+        rather than shadowed.
+        """
+        key = device.title.casefold()
+        with self._add_lock:
+            if key in self._devices:
+                raise ValueError(
+                    f"Duplicate device title {device.title!r} in inventory — "
+                    "titles must be unique."
+                )
+            # Copy-on-write: a reader iterating the previous dict keeps walking
+            # an object nobody mutates, so `list_devices` cannot fail with
+            # "dictionary changed size during iteration" while `add_device` runs.
+            self._devices = {**self._devices, key: device}
+            self._runtime = self._runtime | {key}
+
+    def remove(self, title: str) -> DeviceConfig:
+        """Drop a runtime-enrolled device and return its definition.
+
+        Devices that came from the inventory file or the flat settings are
+        operator-owned; refusing them here keeps the agent from deleting
+        configuration it cannot restore.
+        """
+        key = str(title).strip().casefold()
+        with self._add_lock:
+            device = self._devices.get(key)
+            if device is None:
+                raise DeviceNotFoundError(
+                    f"Unknown device {title!r}. "
+                    f"Available devices: {', '.join(self.titles)}."
+                )
+            if key not in self._runtime:
+                raise ValueError(
+                    f"Device {device.title!r} is not enrolled at runtime — it "
+                    "comes from the inventory file or the server settings, "
+                    "which the agent does not edit."
+                )
+            self._devices = {
+                k: v for k, v in self._devices.items() if k != key
+            }
+            self._runtime = self._runtime - {key}
+        return device
 
     # ── Introspection ──────────────────────────────────────────────────────
 
@@ -74,6 +134,11 @@ class Inventory:
                 "username": d.username,
                 "tags": d.tags,
                 "region": d.region,
+                "source": (
+                    "runtime"
+                    if d.title.casefold() in self._runtime
+                    else "config"
+                ),
             }
             for d in self._devices.values()
         ]
@@ -90,8 +155,8 @@ class Inventory:
         """
         if not self._devices:
             raise DeviceNotFoundError(
-                "No MikroTik devices are configured. Set MIKROTIK_INVENTORY "
-                "(or the single-device MIKROTIK_HOST settings)."
+                "No MikroTik devices are configured. Call list_devices for how "
+                "to configure one."
             )
 
         if title is None or not str(title).strip():
@@ -180,6 +245,11 @@ class Inventory:
 _inventory: Optional[Inventory] = None
 _inventory_lock = threading.Lock()
 
+_FLAT_FIELDS = frozenset({
+    "host", "username", "password", "port",
+    "key_filename", "allow_ssh_agent", "ssh_agent_key",
+})
+
 
 def _validate_entries(raw, source: str) -> List[DeviceConfig]:
     """Turn parsed YAML/JSON into DeviceConfigs with credential-safe errors.
@@ -217,60 +287,98 @@ def _validate_entries(raw, source: str) -> List[DeviceConfig]:
     return devices
 
 
-def _load_devices() -> List[DeviceConfig]:
+def _read_inventory_file(path: str) -> List[DeviceConfig]:
+    """Read one inventory file into validated devices."""
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError as exc:
+        raise ValueError(
+            f"Cannot read inventory file {path!r}: {exc.strerror or exc}"
+        ) from exc
+    # JSON first: PyYAML's scanner rejects tab whitespace, which is legal
+    # in JSON, so yaml.safe_load alone would break previously working
+    # tab-indented inventory.json files.
+    try:
+        raw = json.loads(text)
+    except json.JSONDecodeError:
+        try:
+            raw = yaml.safe_load(text)
+        except yaml.YAMLError as exc:
+            mark = getattr(exc, "problem_mark", None)
+            where = (
+                f" (line {mark.line + 1}, column {mark.column + 1})"
+                if mark else ""
+            )
+            raise ValueError(
+                f"Inventory file {path!r} is not valid YAML{where}"
+            ) from exc
+    return _validate_entries(raw, source=path)
+
+
+def _merge_dynamic(
+    devices: List[DeviceConfig], extra: List[DeviceConfig], source: str
+) -> List[DeviceConfig]:
+    """Append runtime-enrolled devices, refusing a title already taken."""
+    known = {device.title.casefold() for device in devices}
+    for device in extra:
+        if device.title.casefold() in known:
+            raise ValueError(
+                f"Duplicate device title {device.title!r} in inventory — "
+                f"titles must be unique, and {source} repeats a title that is "
+                "already configured."
+            )
+        known.add(device.title.casefold())
+        devices.append(device)
+    return devices
+
+
+def _load_devices() -> Tuple[List[DeviceConfig], List[str]]:
     """Build the device list from configuration.
 
     Precedence: inline ``MIKROTIK_INVENTORY`` (YAML, or its JSON subset) >
     ``MIKROTIK_INVENTORY_FILE`` (a YAML file) > the flat single-device
-    settings.  The last case keeps every existing single-device deployment
-    working with no configuration change.
+    settings. The flat settings become a device only when one of them was
+    supplied explicitly, or when dynamic management is off; otherwise a fresh
+    server starts with no devices and the agent enrolls them.
+
+    The runtime-enrolled ``MIKROTIK_DYNAMIC_INVENTORY_FILE`` is merged on top
+    of whichever of those won, so a fleet survives a restart. Its titles are
+    returned as well, so only those devices may be removed at runtime.
     """
     cfg = config.mikrotik_config
+    runtime_titles: List[str] = []
 
     if cfg.inventory:
-        return list(cfg.inventory)
+        devices = list(cfg.inventory)
+    elif cfg.inventory_file:
+        devices = _read_inventory_file(os.path.expanduser(cfg.inventory_file))
+    elif cfg.allow_dynamic_devices and not (cfg.model_fields_set & _FLAT_FIELDS):
+        devices = []
+    else:
+        # Backwards-compatible single device.
+        devices = [
+            DeviceConfig(
+                title=cfg.host,
+                host=cfg.host,
+                port=cfg.port,
+                username=cfg.username,
+                password=cfg.password,
+                key_filename=cfg.key_filename,
+                allow_ssh_agent=cfg.allow_ssh_agent,
+                ssh_agent_key=cfg.ssh_agent_key,
+            )
+        ]
 
-    if cfg.inventory_file:
-        path = os.path.expanduser(cfg.inventory_file)
-        try:
-            with open(path, "r", encoding="utf-8") as fh:
-                text = fh.read()
-        except OSError as exc:
-            raise ValueError(
-                f"Cannot read inventory file {path!r}: {exc.strerror or exc}"
-            ) from exc
-        # JSON first: PyYAML's scanner rejects tab whitespace, which is legal
-        # in JSON, so yaml.safe_load alone would break previously working
-        # tab-indented inventory.json files.
-        try:
-            raw = json.loads(text)
-        except json.JSONDecodeError:
-            try:
-                raw = yaml.safe_load(text)
-            except yaml.YAMLError as exc:
-                mark = getattr(exc, "problem_mark", None)
-                where = (
-                    f" (line {mark.line + 1}, column {mark.column + 1})"
-                    if mark else ""
-                )
-                raise ValueError(
-                    f"Inventory file {path!r} is not valid YAML{where}"
-                ) from exc
-        return _validate_entries(raw, source=path)
+    if cfg.allow_dynamic_devices and cfg.dynamic_inventory_file:
+        path = os.path.expanduser(cfg.dynamic_inventory_file)
+        # Absent until the first enrollment creates it.
+        if os.path.exists(path):
+            extra = _read_inventory_file(path)
+            devices = _merge_dynamic(devices, extra, path)
+            runtime_titles.extend(device.title for device in extra)
 
-    # Backwards-compatible single device.
-    return [
-        DeviceConfig(
-            title=cfg.host,
-            host=cfg.host,
-            port=cfg.port,
-            username=cfg.username,
-            password=cfg.password,
-            key_filename=cfg.key_filename,
-            allow_ssh_agent=cfg.allow_ssh_agent,
-            ssh_agent_key=cfg.ssh_agent_key,
-        )
-    ]
+    return devices, runtime_titles
 
 
 def get_inventory() -> Inventory:
@@ -278,7 +386,8 @@ def get_inventory() -> Inventory:
     if _inventory is None:
         with _inventory_lock:
             if _inventory is None:
-                _inventory = Inventory(_load_devices())
+                devices, runtime_titles = _load_devices()
+                _inventory = Inventory(devices, runtime_titles=runtime_titles)
     return _inventory
 
 

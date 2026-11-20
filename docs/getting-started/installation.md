@@ -130,7 +130,7 @@ tests and changing dependencies.
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--host` | MikroTik device IP/hostname | `127.0.0.1` |
+| `--host` | MikroTik device IP/hostname; supplying any single-device setting creates that device. Without one, the server starts with no devices and the agent enrolls them | `127.0.0.1` |
 | `--username` | SSH username | `admin` |
 | `--password` | SSH password | _(empty)_ |
 | `--key-filename` | Path to an SSH private key | _(none)_ |
@@ -141,6 +141,8 @@ tests and changing dependencies.
 | `--inventory-file` | Path to a YAML file holding the inventory | _(none)_ |
 | `--read-only` | Expose only tools that do not modify RouterOS or its file store | `false` |
 | `--sensitive-hiding` | Redact credentials and private key material from client-visible output | `false` |
+| `--allow-dynamic-devices` / `--no-allow-dynamic-devices` | Register `add_device`/`remove_device` and load the runtime state file; disabling hides the tools and ignores enrolments (`MIKROTIK_ALLOW_DYNAMIC_DEVICES`) | `true` |
+| `--dynamic-inventory-file` | YAML file that runtime enrollments are written to and reloaded from (`MIKROTIK_DYNAMIC_INVENTORY_FILE`) | `$XDG_CONFIG_HOME/mikrotik-mcp/dynamic-inventory.yaml` |
 | `--command-timeout` | Seconds a command may wait for the device before the call fails (`MIKROTIK_COMMAND_TIMEOUT`) | `180` |
 | `--mcp.transport` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
 | `--mcp.host` | HTTP server listen address | `0.0.0.0` |
@@ -248,7 +250,8 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    #### Environment Variables
 
    These apply outside Docker too. The defaults shown are the image's; without
-   Docker, `MIKROTIK_HOST` defaults to `127.0.0.1`.
+   Docker there is no device unless `MIKROTIK_HOST` (or another single-device
+   setting) is supplied.
 
    | Variable | Description | Default |
    |----------|-------------|---------|
@@ -264,6 +267,8 @@ In the examples below, substitute `ghcr.io/wiresage/mikrotik-mcp:latest` for
    | `MIKROTIK_COMMAND_TIMEOUT` | Seconds a command may wait for the device before the call fails | `180` |
    | `MIKROTIK_INVENTORY` | Multiple devices, written inline in YAML (or its JSON subset). Takes precedence over `MIKROTIK_INVENTORY_FILE` and the flat single-device settings above. See [Inventory](../reference/devices/inventory.md). | _(empty)_ |
    | `MIKROTIK_INVENTORY_FILE` | Path **inside the container** to a YAML file holding the inventory — mount it as a volume | _(empty)_ |
+   | `MIKROTIK_ALLOW_DYNAMIC_DEVICES` | Set to `false` to remove `add_device`/`remove_device` and ignore the runtime state file; the agent then only sees devices from the inventory or settings | `true` |
+   | `MIKROTIK_DYNAMIC_INVENTORY_FILE` | Path **inside the container** to the YAML file runtime enrollments are written to and reloaded from. Holds credentials — mount `/config` writable to keep it across a container replacement | `/config/dynamic-inventory.yaml` |
    | `MIKROTIK_MCP__TRANSPORT` | Transport type: `stdio`, `sse`, `streamable-http` | `stdio` |
    | `MIKROTIK_MCP__HOST` | HTTP server listen address | `0.0.0.0` |
    | `MIKROTIK_MCP__PORT` | HTTP server listen port | `8000` |
@@ -382,8 +387,9 @@ When an inventory is set it takes precedence and `MIKROTIK_HOST` /
 `MIKROTIK_USERNAME` / `MIKROTIK_PASSWORD` / `MIKROTIK_PORT` /
 `MIKROTIK_ALLOW_SSH_AGENT` / `MIKROTIK_SSH_AGENT_KEY` are ignored, so you
 can drop them. The entrypoint also stops applying its `192.168.88.1` default
-in that case, rather than injecting a host nobody asked for. Tools then take
-a `device` argument naming the title to target; see
+in that case, rather than injecting a host nobody asked for. Runtime
+enrollments written by `add_device` are merged on top of either source. Tools
+then take a `device` argument naming the title to target; see
 [Inventory](../reference/devices/inventory.md).
 
 The server is then reachable at `http://localhost:8000/mcp` (streamable HTTP)
