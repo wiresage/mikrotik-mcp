@@ -1,8 +1,9 @@
 import logging
 import re
+import secrets
 import threading
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from .mikrotik_ssh_client import MikroTikSSHClient
 
@@ -36,18 +37,53 @@ _TERMINAL_QUERIES = (
     ('\x1b[c', '\x1b[?6c'),        # DA: device attributes
 )
 
-# End-of-command sentinel for the safe-mode shell (see execute()).  The echoed
-# command line contains it inside quotes; the output occurrence stands alone.
-_EOC = "__MCP_SAFE_MODE_EOC__"
-_EOC_LINE_RE = re.compile(rf'^{_EOC}\s*$', re.MULTILINE)
+# Output markers for the safe-mode shell (see execute()).  Each command is sent
+# as  :put "<BEGIN>"; <command>; :put "<END>"  with a fresh nonce, and its
+# output is exactly the lines between the BEGIN and END lines that :put prints.
+# The echoed command line also contains both markers, but inside quotes and
+# with the command around them, so an echo line never consists of a marker
+# alone, not even when the console wraps a long echo across several lines.
+_MARKER_PREFIX = "__MCP_SAFE_MODE_"
 
 # A redraw can leave a prompt fragment without its trailing "> " on its own
 # line; treat those as prompt noise too when cleaning command output.
 _PROMPT_NOISE_RE = re.compile(r'^\[.+?@.+?\] (?:<SAFE> ?)?>? ?$')
 
+# The "[user@identity]" part of a prompt, wherever it appears on a line (an
+# echo line carries the prompt in front of the command).
+_PROMPT_HEAD_RE = re.compile(r'\[[^\]\n]+@[^\]\n]+\]')
+
+# A console error that stops a command line: a parse error means nothing on
+# the line ran (not even the BEGIN marker), a runtime error ends the script
+# before the END marker.
+_CONSOLE_ERROR_RE = re.compile(
+    r'^\s*(?:bad command name|syntax error|expected |input does not match|'
+    r'invalid value|ambiguous value|not enough permissions|no such command|'
+    r'failure:|error:)|\(line \d+ column \d+\)',
+    re.IGNORECASE | re.MULTILINE,
+)
+
+# What RouterOS prints when Ctrl+X gives the safe-mode session back
+# ("[Safe Mode released]" on 6.x, "Releasing Safe Mode... Success!" on 7.25).
+_RELEASE_RE = re.compile(r'safe ?mode[^\n]*releas|releas[^\n]*safe ?mode', re.IGNORECASE)
+
 
 def _strip_ansi(text: str) -> str:
     return _ANSI_RE.sub('', text)
+
+
+def _normalise(text: str) -> str:
+    return _strip_ansi(text).replace('\r\n', '\n').replace('\r', '\n')
+
+
+def _markers() -> tuple[str, str, str]:
+    """Return (nonce, begin, end) markers unique to one command."""
+    nonce = secrets.token_hex(4)
+    return nonce, f"{_MARKER_PREFIX}BEGIN_{nonce}__", f"{_MARKER_PREFIX}END_{nonce}__"
+
+
+def _standalone(marker: str) -> re.Pattern:
+    return re.compile(rf'^[ \t]*{re.escape(marker)}[ \t]*$', re.MULTILINE)
 
 
 class SafeModeManager:
@@ -151,34 +187,86 @@ class SafeModeManager:
     def execute(self, command: str) -> str:
         """Execute a command through the safe-mode persistent shell session.
 
-        The command is chained with ``:put`` of a sentinel, and the read runs
-        until that sentinel arrives on a line of its own.  Matching the
-        rendered prompt instead is a race: the console redraws prompt + echo
-        the moment the command is sent, so a prompt-shaped fragment can end a
-        chunk long before the command's real output has arrived.
+        The command is bracketed by ``:put`` of a BEGIN and an END marker that
+        carry a per-call nonce, and its output is exactly what arrives between
+        the two printed markers.  Matching the rendered prompt instead is a
+        race (the console redraws prompt + echo the moment the command is
+        sent), and recognising the echo by its text breaks as soon as a long
+        command wraps at the terminal width and splits the echo across lines.
         """
         if not self._active or not self._channel:
             raise RuntimeError("Safe mode session is not active.")
 
         with self._lock:
-            self._channel.send(f'{command}; :put "{_EOC}"\n')
-            raw = self._read_until_marker()
-            return self._extract_output(raw, command)
+            _, begin, end = _markers()
+            self._channel.send(f':put "{begin}"; {command}; :put "{end}"\n')
+            raw = self._read_until_marker(begin, end)
+            return self._extract_output(raw, begin, end)
 
     def commit(self) -> str:
-        """Send Ctrl+X again to exit Safe Mode and persist all changes."""
+        """Send Ctrl+X again to exit Safe Mode and persist all changes.
+
+        RouterOS keeps the changes only if the safe-mode session is *released*
+        before the connection closes; closing the channel while the session
+        still holds safe mode reverts everything.  So the channel is closed
+        only after a fresh prompt, rendered after the Ctrl+X, shows that the
+        console has left safe mode.  Without that evidence the session is left
+        open and an error is returned: the changes are then still pending, and
+        commit_safe_mode can be retried or rollback_safe_mode called.
+        """
         with self._lock:
             if not self._active:
                 return "Safe mode is not active. Nothing to commit."
 
-            self._channel.send('\x18')
-            response = self._read_until_prompt(timeout=15)
-            self._cleanup()
+            # Make sure the console is idle and really still in safe mode, so
+            # the Ctrl+X below cannot toggle safe mode back *on*.
+            in_safe_mode, before = self._probe_safe_mode()
+            if in_safe_mode is None:
+                return (
+                    "Error: Could not read the safe-mode console state, so nothing "
+                    "was committed. The session is still open and the changes are "
+                    "still pending (NOT persisted). Retry commit_safe_mode, or call "
+                    f"rollback_safe_mode. Console: {before[-300:]!r}"
+                )
+            if not in_safe_mode:
+                # Safe mode ended before this commit (an earlier commit that
+                # could not confirm, or another session taking it over).
+                self._cleanup()
+                return (
+                    "Error: The console was no longer in safe mode when the commit "
+                    "started, so this call did not commit anything. The changes may "
+                    "already be persisted or may have been reverted — check the "
+                    "configuration before relying on them."
+                )
 
-            # After exiting safe mode the prompt should no longer contain <SAFE>
-            if '<SAFE>' not in response:
-                return "Changes committed successfully. Safe mode DISABLED."
-            return f"Commit attempted. Response: {response[:200]}"
+            self._drain()
+            self._channel.send('\x18')
+            response = self._read_until_release(timeout=15)
+            released_msg = next(
+                (line.strip() for line in response.split('\n') if _RELEASE_RE.search(line)),
+                None,
+            )
+
+            in_safe_mode, after = self._probe_safe_mode()
+            if in_safe_mode is not False:
+                return (
+                    "Error: RouterOS did not confirm that safe mode was released, so "
+                    "the session was left open: the changes are still pending and "
+                    "NOT persisted. Retry commit_safe_mode, or call rollback_safe_mode. "
+                    f"Console after Ctrl+X: {(response + after)[-300:]!r}"
+                )
+
+            # Released.  Let the console settle before hanging up.
+            self._drain(idle=1.0, timeout=5.0)
+            self._cleanup()
+            evidence = (
+                f'RouterOS said "{released_msg}" and the prompt'
+                if released_msg else "The prompt"
+            )
+            return (
+                "Changes committed successfully. Safe mode DISABLED. "
+                f"{evidence} no longer shows <SAFE>."
+            )
 
     def rollback(self) -> str:
         """Close the session to trigger MikroTik's automatic safe-mode revert."""
@@ -291,65 +379,143 @@ class SafeModeManager:
             time.sleep(0.05)
         return _strip_ansi(buf)
 
-    def _read_until_marker(self, timeout: float = 30.0) -> str:
-        """Read until the end-of-command sentinel appears on its own line."""
+    def _read(self, done, timeout: float) -> str:
+        """Read the channel until ``done(text, idle_for)`` holds, or timeout.
+
+        ``text`` is everything read so far, ANSI-stripped with newlines
+        normalised; ``idle_for`` is how long the channel has been quiet.
+        Terminal probes are answered on the way.
+        """
         buf = ""
         answered: Dict[str, int] = {}
-        deadline = time.monotonic() + timeout
+        last_data = time.monotonic()
+        deadline = last_data + timeout
         while time.monotonic() < deadline:
             try:
                 if self._channel.recv_ready():
-                    chunk = self._channel.recv(4096).decode('utf-8', errors='replace')
-                    buf += chunk
+                    buf += self._channel.recv(4096).decode('utf-8', errors='replace')
                     self._answer_terminal_queries(buf, answered)
-                    cleaned = _strip_ansi(buf).replace('\r\n', '\n').replace('\r', '\n')
-                    if _EOC_LINE_RE.search(cleaned):
-                        return cleaned
+                    last_data = time.monotonic()
             except Exception:
                 break
-            time.sleep(0.05)
-        return _strip_ansi(buf)
-
-    def _read_until_prompt(self, timeout: float = 15.0) -> str:
-        """Read from the channel until a RouterOS prompt is detected."""
-        buf = ""
-        answered: Dict[str, int] = {}
-        deadline = time.monotonic() + timeout
-        while time.monotonic() < deadline:
-            try:
-                if self._channel.recv_ready():
-                    chunk = self._channel.recv(4096).decode('utf-8', errors='replace')
-                    buf += chunk
-                    self._answer_terminal_queries(buf, answered)
-                    cleaned = _strip_ansi(buf)
-                    if _PROMPT_RE.search(cleaned):
-                        return cleaned
-            except Exception:
+            if done(_normalise(buf), time.monotonic() - last_data):
                 break
             time.sleep(0.05)
-        return _strip_ansi(buf)
+        return _normalise(buf)
 
-    def _extract_output(self, raw: str, command: str) -> str:
-        """Return the lines between the command's echo and the sentinel."""
-        text = _strip_ansi(raw).replace('\r\n', '\n').replace('\r', '\n')
+    def _drain(self, idle: float = 0.3, timeout: float = 3.0) -> str:
+        """Consume output until the console has been quiet for ``idle`` seconds."""
+        return self._read(lambda _text, idle_for: idle_for >= idle, timeout)
+
+    def _read_until_marker(
+        self, begin: str, end: str, timeout: float = 30.0, then_prompt: bool = False
+    ) -> str:
+        """Read until the END marker is printed on its own line.
+
+        A command that fails never prints END: a parse error stops the whole
+        line (so BEGIN is missing too) and a runtime error ends the script.
+        In both cases the console prints the error and a fresh prompt, which
+        ends the read early instead of sitting out the timeout.  With
+        ``then_prompt`` the read also waits (briefly) for the prompt that
+        follows END, which shows the console state after the command.
+        """
+        begin_re, end_re = _standalone(begin), _standalone(end)
+        end_seen: Dict[str, float] = {}
+
+        def done(text: str, _idle_for: float) -> bool:
+            end_m = end_re.search(text)
+            if end_m:
+                if not then_prompt:
+                    return True
+                if _PROMPT_HEAD_RE.search(text, end_m.end()):
+                    return True
+                first = end_seen.setdefault("at", time.monotonic())
+                return time.monotonic() - first > 5.0
+            begin_m = begin_re.search(text)
+            error = _CONSOLE_ERROR_RE.search(text, begin_m.end() if begin_m else 0)
+            return bool(error) and bool(_PROMPT_HEAD_RE.search(text, error.end()))
+
+        return self._read(done, timeout)
+
+    def _read_until_release(self, timeout: float = 15.0) -> str:
+        """Read after Ctrl+X until RouterOS reports the release, or settles.
+
+        This only paces the commit; whether safe mode really ended is decided
+        afterwards by _probe_safe_mode, never by what arrives here.
+        """
+        def done(text: str, idle_for: float) -> bool:
+            if _RELEASE_RE.search(text):
+                return True
+            return bool(_PROMPT_HEAD_RE.search(text)) and idle_for >= 2.0
+
+        return self._read(done, timeout)
+
+    def _probe_safe_mode(self, timeout: float = 15.0) -> Tuple[Optional[bool], str]:
+        """Ask the console whether it is in safe mode right now.
+
+        Sends a line that only prints two markers and looks at the prompt the
+        console renders around it.  The console handles input in order, so
+        that prompt reflects every keystroke sent before it (a Ctrl+X
+        included) and cannot be a stale redraw.  Returns (True, text) in safe
+        mode, (False, text) out of it, and (None, text) when the console did
+        not answer in a recognisable way.
+        """
+        _, begin, end = _markers()
+        self._drain()
+        self._channel.send(f':put "{begin}"; :put "{end}"\n')
+        text = self._read_until_marker(begin, end, timeout=timeout, then_prompt=True)
+
+        end_matches = list(_standalone(end).finditer(text))
+        if not end_matches:
+            return None, text
+        last_end = end_matches[-1]
+        # The prompt printed after END is the newest; fall back to the echo
+        # line, which carries the prompt in front of the typed command.
+        prompts = [
+            line for line in text[last_end.end():].split('\n')
+            if _PROMPT_HEAD_RE.search(line)
+        ] or [
+            line for line in text[:last_end.start()].split('\n')
+            if end in line and _PROMPT_HEAD_RE.search(line)
+        ]
+        if not prompts:
+            return None, text
+        return '<SAFE>' in prompts[-1], text
+
+    def _extract_output(self, raw: str, begin: str, end: str) -> str:
+        """Return what the command printed between the BEGIN and END markers.
+
+        Without an END marker the command failed at runtime: the output is
+        what it printed before the next prompt (the RouterOS error message).
+        Without a BEGIN marker nothing ran (a parse error): the output is the
+        console's error line.  No marker and no error means no answer at all.
+        """
+        text = _normalise(raw)
+        begin_m = _standalone(begin).search(text)
+        if begin_m is None:
+            errors = [
+                line.strip() for line in text.split('\n')
+                if _CONSOLE_ERROR_RE.search(line) and begin not in line
+            ]
+            if errors:
+                return '\n'.join(errors)
+            raise RuntimeError(
+                "No response from the safe-mode console within the timeout. "
+                f"Got: {text[-300:]!r}"
+            )
+
+        end_m = _standalone(end).search(text, begin_m.end())
+        body = text[begin_m.end():end_m.start() if end_m else len(text)]
 
         result_lines: list[str] = []
-        past_echo = False
-        for line in text.split('\n'):
+        for line in body.split('\n'):
             stripped = line.strip()
-            if stripped == _EOC:
-                # The ':put' output — everything after it is the next prompt.
-                break
-            if _EOC in stripped or (not past_echo and command.strip() in stripped):
-                # An echo of the sent line.  The console can replay it more
-                # than once (typing echo, then a history reprint), and every
-                # replay carries the chained ':put' suffix — skip them all.
-                past_echo = True
-                continue
-            if not past_echo:
-                continue
             if _PROMPT_RE.match(stripped) or _PROMPT_NOISE_RE.match(stripped):
-                continue
+                if end_m is None:
+                    break           # the prompt after a failed command
+                continue            # a redraw in the middle of the output
+            if end_m is None and _PROMPT_HEAD_RE.search(stripped) and end in stripped:
+                break
             result_lines.append(line)
 
         return '\n'.join(result_lines).strip()

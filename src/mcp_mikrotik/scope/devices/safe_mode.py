@@ -2,10 +2,18 @@ import asyncio
 from typing import Optional
 
 from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
 
 from ...app import mcp, DESTRUCTIVE, READ, WRITE, annotate
 from ...inventory import DeviceNotFoundError
 from ...safe_mode import get_safe_mode_manager
+
+
+def _raise_on_error(result: str) -> str:
+    """Report a manager failure as a tool error, never as a successful answer."""
+    if result.startswith("Error"):
+        raise ToolError(result)
+    return result
 
 
 @mcp.tool(name="safe_mode_status", annotations=annotate(READ, "Safe Mode Status"))
@@ -27,7 +35,7 @@ async def mikrotik_enable_safe_mode(ctx: Context, device: Optional[str] = None) 
         manager = get_safe_mode_manager(device)
     except DeviceNotFoundError as exc:
         return f"Error: {exc}"
-    return await asyncio.to_thread(manager.enable)
+    return _raise_on_error(await asyncio.to_thread(manager.enable))
 
 
 @mcp.tool(name="commit_safe_mode", annotations=annotate(WRITE, "Commit Safe Mode"))
@@ -38,7 +46,7 @@ async def mikrotik_commit_safe_mode(ctx: Context, device: Optional[str] = None) 
         manager = get_safe_mode_manager(device)
     except DeviceNotFoundError as exc:
         return f"Error: {exc}"
-    return await asyncio.to_thread(manager.commit)
+    return _raise_on_error(await asyncio.to_thread(manager.commit))
 
 
 @mcp.tool(name="rollback_safe_mode", annotations=annotate(DESTRUCTIVE, "Rollback Safe Mode"))
