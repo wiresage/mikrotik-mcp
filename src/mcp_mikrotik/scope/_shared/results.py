@@ -9,6 +9,38 @@ the answer reports success for a name that does not exist. Hence the two questio
 """
 
 
+import re
+
+from mcp.server.mcpserver.exceptions import ToolError
+
+# How the RouterOS console reports a command it would not run. A read tool that
+# looks for a data marker (`address=`, `uptime`, ...) must not mistake one of
+# these for "nothing configured".
+_ROUTEROS_ERROR = re.compile(
+    r"^\s*(?:bad command name|syntax error|expected |input does not match|"
+    r"invalid value|ambiguous value|not enough permissions|no such command|"
+    r"failure:|error:)"
+    r"|\(line \d+ column \d+\)",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def routeros_error(result: str) -> bool:
+    """True when ``result`` is RouterOS refusing the command rather than data."""
+    return bool(result and _ROUTEROS_ERROR.search(result))
+
+
+def raise_if_routeros_error(result: str, what: str = "run the command") -> None:
+    """Raise ToolError carrying RouterOS's own words when a read was refused.
+
+    Read tools call this before their "No ... found" fallback, so a refused
+    command (missing package, lack of permission, syntax) is reported as an
+    error with its text instead of looking like an empty table.
+    """
+    if routeros_error(result):
+        raise ToolError(f"RouterOS refused to {what}: {result.strip()}")
+
+
 def refused(result: str) -> bool:
     """True when RouterOS printed anything in answer to a write: a write that worked is silent."""
     return bool(result.strip())

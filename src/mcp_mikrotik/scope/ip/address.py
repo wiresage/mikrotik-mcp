@@ -5,7 +5,7 @@ from .._shared.quoting import ros_quoted
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE, DESTRUCTIVE, annotate
 from .._shared.selectors import has_item_rows, resolve_item_id, item_count
-from .._shared.results import refused
+from .._shared.results import refused, raise_if_routeros_error
 
 @mcp.tool(name="add_ip_address", annotations=annotate(WRITE, "Add IP Address"))
 async def mikrotik_add_ip_address(
@@ -97,11 +97,13 @@ async def mikrotik_get_ip_address(ctx: Context, address_id: str, device: Optiona
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         # Try finding by address value
         cmd = f'/ip address print detail where address="{address_id}"'
         result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"IP address '{address_id}' not found."
 
     return f"IP ADDRESS DETAILS:\n\n{result}"
