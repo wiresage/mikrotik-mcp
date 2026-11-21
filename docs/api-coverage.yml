@@ -2601,6 +2601,18 @@ server_tools:
     kind: command
     note: Runs /tool profile for a few seconds.
 
+  list_discovered_neighbors:
+    kind: command
+    note: Lists /ip/neighbor discovered entries.
+  get_discovered_neighbor:
+    kind: command
+    note: Gets a single /ip/neighbor entry.
+  get_neighbor_discovery_settings:
+    kind: command
+    note: Reads /ip/neighbor/discovery-settings.
+  update_neighbor_discovery_settings:
+    kind: command
+    note: Configures /ip/neighbor/discovery-settings.
 excluded:
   - menu: /container
     reason: Container management is out of scope.
