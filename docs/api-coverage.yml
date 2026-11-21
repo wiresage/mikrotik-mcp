@@ -2601,6 +2601,51 @@ server_tools:
     kind: command
     note: Runs /tool profile for a few seconds.
 
+  create_scheduler:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  create_script:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  disable_scheduler:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  enable_scheduler:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  get_scheduler:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  get_script:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  list_script_environment:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  list_script_jobs:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  remove_scheduler:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  remove_script:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  remove_script_environment:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  remove_script_job:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  run_script:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  update_scheduler:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
+  update_script:
+    kind: command
+    note: Manages /system/script and /system/scheduler.
 excluded:
   - menu: /container
     reason: Container management is out of scope.
