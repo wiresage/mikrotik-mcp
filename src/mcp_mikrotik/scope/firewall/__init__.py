@@ -8,3 +8,4 @@ from . import (  # noqa: F401
     nat,
     raw,
 )
+from . import connection as connection
