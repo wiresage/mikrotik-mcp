@@ -2601,6 +2601,33 @@ server_tools:
     kind: command
     note: Runs /tool profile for a few seconds.
 
+  get_ntp_status:
+    kind: command
+    note: Reads /system/ntp/client status and /system/clock.
+  get_ntp_client_settings:
+    kind: command
+    note: Reads /system/ntp/client settings.
+  update_ntp_client:
+    kind: command
+    note: Configures /system/ntp/client settings.
+  add_ntp_server:
+    kind: command
+    note: Adds an NTP server to /system/ntp/client/servers.
+  remove_ntp_server:
+    kind: command
+    note: Removes an NTP server from /system/ntp/client/servers.
+  get_ntp_server_settings:
+    kind: command
+    note: Reads /system/ntp/server settings.
+  update_ntp_server:
+    kind: command
+    note: Configures /system/ntp/server settings.
+  update_system_clock:
+    kind: command
+    note: Configures /system/clock.
+  check_clock_sync:
+    kind: command
+    note: Triggers NTP/clock synchronization.
 excluded:
   - menu: /container
     reason: Container management is out of scope.

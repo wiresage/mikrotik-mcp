@@ -8,3 +8,4 @@ Source: [`src/mcp_mikrotik/scope/system/`](../../../src/mcp_mikrotik/scope/syste
 | `info` | Resource usage, health, clock, RouterBOARD and package information | [System](info.md) |
 | `scheduler` | Scheduler entries and scripts (read-only) | [Scheduler](scheduler.md) |
 | `backup` | Backups, exports, import and file transfer | [Backup](backup.md) |
+- [NTP & Clock](ntp.md)
