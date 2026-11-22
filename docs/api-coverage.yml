@@ -2600,9 +2600,9 @@ server_tools:
   profile_cpu:
     kind: command
     note: Runs /tool profile for a few seconds.
-  frequency_monitor:
+  monitor_wireless_frequency:
     kind: command
-    note: Runs /interface wireless frequency-monitor traffic and noise floor monitoring.
+    note: Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 
   monitor_wireless_interface:
     kind: command
