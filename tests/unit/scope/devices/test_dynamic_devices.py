@@ -27,7 +27,7 @@ from mcp_mikrotik.scope.devices import inventory as scope_inventory
 from tests.conftest import FakeExecutor
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 STATE_FILE = "dynamic-inventory.yaml"
 
 

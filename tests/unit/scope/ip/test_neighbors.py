@@ -8,7 +8,7 @@ ARP/IPv6 tools keep their `address=` default.
 
 import asyncio
 
-from mcp_mikrotik.scope import neighbors
+from mcp_mikrotik.scope.ip import neighbors
 
 
 def _call(ctx, monkeypatch, reply, **kwargs):
