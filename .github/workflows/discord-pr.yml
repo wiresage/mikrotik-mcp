@@ -1,0 +1,78 @@
+name: Discord PR notifications
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: discord-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      BOT: ${{ secrets.DISCORD_BOT_TOKEN }}
+      CHANNEL: ${{ vars.DISCORD_CHANNEL_ID }}
+      GUILD: ${{ vars.DISCORD_GUILD_ID }}
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      ACTION: ${{ github.event.action }}
+      MERGED: ${{ github.event.pull_request.merged }}
+      PR: ${{ github.event.pull_request.number }}
+      TITLE: ${{ github.event.pull_request.title }}
+      URL: ${{ github.event.pull_request.html_url }}
+      AUTHOR: ${{ github.event.pull_request.user.login }}
+      BEFORE: ${{ github.event.before }}
+      AFTER: ${{ github.event.after }}
+    steps:
+      - name: Post to Discord
+        shell: bash
+        run: |
+          set -euo pipefail
+          D=https://discord.com/api/v10
+          api()  { curl -fsS -H "Authorization: Bot $BOT" -H "Content-Type: application/json" "$@"; }
+          send() { api -X POST "$D/channels/$1/messages" -d "$2"; }
+          text() { jq -n --arg c "$1" '{content:$c, flags:4, allowed_mentions:{parse:[]}}'; }
+          fmt='.[] | "[`\(.sha[0:7])`](https://github.com/\($r)/commit/\(.sha)) \(.commit.message | split("\n")[0] | .[0:60])"'
+          list() { jq -r --arg r "$REPO" "$1 | $fmt" | head -n 10; }
+
+          # Find this PR's thread (active threads first, then recently archived ones).
+          THREAD=$({ api "$D/guilds/$GUILD/threads/active"; api "$D/channels/$CHANNEL/threads/archived/public?limit=100"; } |
+            jq -rs --arg c "$CHANNEL" --arg p "PR #$PR " \
+              '[.[].threads[]? | select(.parent_id==$c and (.name|startswith($p)))][0].id // empty')
+
+          CREATED=0
+          if [ -z "$THREAD" ]; then
+            # A thread's id equals the id of the message it starts from.
+            THREAD=$(send "$CHANNEL" "$(jq -n --arg t "PR #$PR: $TITLE" --arg u "$URL" --arg a "$AUTHOR" \
+              '{embeds:[{title:($t|.[0:250]), url:$u, description:("by "+$a), color:5025616}], allowed_mentions:{parse:[]}}')" | jq -r .id)
+            api -X POST "$D/channels/$CHANNEL/messages/$THREAD/threads" \
+              -d "$(jq -n --arg n "PR #$PR $TITLE" '{name:($n|.[0:100]), auto_archive_duration:10080}')" >/dev/null
+            CREATED=1
+          fi
+
+          if [ "$CREATED" = 1 ]; then
+            L=$(gh api "repos/$REPO/pulls/$PR/commits?per_page=50" | list . || true)
+            if [ -n "$L" ]; then send "$THREAD" "$(text "Commits:"$'\n'"$L")" >/dev/null; fi
+          elif [ "$ACTION" = synchronize ]; then
+            L=$(gh api "repos/$REPO/compare/$BEFORE...$AFTER" | list .commits || true)
+            if [ -n "$L" ]; then send "$THREAD" "$(text "New commits:"$'\n'"$L")" >/dev/null; fi
+          elif [ "$ACTION" = reopened ]; then
+            send "$THREAD" "$(text "Reopened")" >/dev/null
+          fi
+
+          if [ "$ACTION" = closed ]; then
+            if [ "$MERGED" = true ]; then
+              send "$CHANNEL" "$(jq -n --arg t "✅ PR #$PR merged: $TITLE" --arg u "$URL" --arg r "$THREAD" \
+                '{embeds:[{title:($t|.[0:250]), url:$u, color:8311585}], message_reference:{message_id:$r, fail_if_not_exists:false}, allowed_mentions:{parse:[]}}')" >/dev/null
+              send "$THREAD" "$(text "Merged ✅")" >/dev/null
+            else
+              send "$THREAD" "$(text "Closed without merging")" >/dev/null
+            fi
+          fi
+          exit 0
