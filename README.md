@@ -68,7 +68,7 @@ review and idea.
      so the contributors API does not return them either. mkranjcic is here for
      the pull requests #206 to #221, also still open. tdabasinskas is here for
      pull request #225, since merged, and WatchDogsDev for pull request #239,
-     still open. -->
+     still open. DmitryBondarenko is here for pull request #249, which fixes safe mode. -->
 <p>
 <a href="https://github.com/jeff-nasseri" title="jeff-nasseri"><img src="https://avatars.githubusercontent.com/u/57312476?s=72" width="72" height="72" alt="jeff-nasseri" /></a>
 <a href="https://github.com/goto1134" title="goto1134"><img src="https://avatars.githubusercontent.com/u/9569795?s=72" width="72" height="72" alt="goto1134" /></a>
@@ -89,6 +89,7 @@ review and idea.
 <a href="https://github.com/mkranjcic" title="mkranjcic"><img src="https://avatars.githubusercontent.com/u/9868887?s=72" width="72" height="72" alt="mkranjcic" /></a>
 <a href="https://github.com/tdabasinskas" title="tdabasinskas"><img src="https://avatars.githubusercontent.com/u/7723360?s=72" width="72" height="72" alt="tdabasinskas" /></a>
 <a href="https://github.com/WatchDogsDev" title="WatchDogsDev"><img src="https://avatars.githubusercontent.com/u/29868640?s=72" width="72" height="72" alt="WatchDogsDev" /></a>
+<a href="https://github.com/DmitryBondarenko" title="DmitryBondarenko"><img src="https://avatars.githubusercontent.com/u/9249846?s=72" width="72" height="72" alt="DmitryBondarenko" /></a>
 </p>
 
 Contributions of every kind are welcome: code, bug reports, documentation and
