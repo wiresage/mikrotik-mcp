@@ -615,7 +615,7 @@ These tools do not map to a single RouterOS menu command.
 - [x] `torch` — command — Runs /tool torch for a few seconds; needs the sniff policy.
 - [x] `sniff_packets` — command — Runs /tool sniffer quick for a few seconds, headers only and nothing saved; needs the sniff policy.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
-- [x] `frequency_monitor` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring.
+- [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
 
 ## Excluded / out of scope

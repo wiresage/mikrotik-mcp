@@ -190,7 +190,7 @@ async def mikrotik_list_wireless_interfaces(
             # Add filters
             filters = []
             if name_filter:
-                filters.append(f'name~"{name_filter}"')
+                filters.append(f'name~"{ros_quoted(name_filter)}"')
             if disabled_only:
                 filters.append("disabled=yes")
             if running_only:
@@ -214,7 +214,7 @@ async def mikrotik_list_wireless_interfaces(
                     try:
                         auto_check_cmd = f'{interface_type} print proplist=name where frequency=auto and running=yes'
                         if name_filter:
-                            auto_check_cmd += f' and name~"{name_filter}"'
+                            auto_check_cmd += f' and name~"{ros_quoted(name_filter)}"'
                         if disabled_only:
                             auto_check_cmd += " and disabled=yes"
                         auto_res = await execute_mikrotik_command(auto_check_cmd, ctx, device=device)
@@ -448,14 +448,17 @@ async def mikrotik_monitor_wireless_interface(
     return f"WIRELESS MONITOR ({interface}):\n\n{result.strip()}"
 
 
-@mcp.tool(name="frequency_monitor", annotations=annotate(READ, "Frequency Monitor"))
-async def mikrotik_frequency_monitor(
+@mcp.tool(name="monitor_wireless_frequency", annotations=annotate(READ, "Monitor Wireless Frequency"))
+async def mikrotik_monitor_wireless_frequency(
         ctx: Context,
         interface: str,
         duration: Annotated[int, Field(ge=1, le=30)] = 5,
         device: Optional[str] = None,
 ) -> str:
-    """Monitors wireless frequency usage and noise floor across channels on legacy wireless interfaces."""
+    """Monitors wireless frequency usage and noise floor across channels on legacy wireless interfaces.
+
+    Note: Running frequency-monitor briefly interrupts connected clients on the monitored radio during the scan.
+    """
     await ctx.info(f"Monitoring frequencies on interface {interface} for {duration}s")
 
     interface = interface.strip()
@@ -468,7 +471,7 @@ async def mikrotik_frequency_monitor(
         return "Error: No wireless interface support detected on this device."
 
     if interface_type in ("/interface wifi", "/interface wifiwave2"):
-        return f"frequency_monitor is only supported on legacy wireless interfaces (/interface wireless), but this device uses {interface_type}."
+        return f"monitor_wireless_frequency is only supported on legacy wireless interfaces (/interface wireless), but this device uses {interface_type}."
 
     cmd = f'{interface_type} frequency-monitor "{interface}" duration={duration}'
     result = await execute_mikrotik_command(cmd, ctx, device=device)

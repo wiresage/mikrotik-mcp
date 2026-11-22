@@ -130,6 +130,37 @@ Gets the wireless registration table (connected clients).
   get_wireless_registration_table(interface="wlan1")
   ```
 
+## `monitor_wireless_interface`
+
+Monitors real-time wireless status, frequency, CCQ, noise floor, and client
+counts for an interface (single snapshot via `once`).
+
+- Parameters:
+  - `interface` (required): wireless interface name
+  - `device` (optional): target device
+
+- Example:
+  ```
+  monitor_wireless_interface(interface="wlan1")
+  ```
+
+## `monitor_wireless_frequency`
+
+Monitors wireless frequency usage and noise floor across channels on legacy
+wireless interfaces (`/interface wireless frequency-monitor`). Running
+`frequency-monitor` briefly interrupts connected wireless clients on the
+monitored radio during the scan.
+
+- Parameters:
+  - `interface` (required): wireless interface name
+  - `duration` (optional, 1–30s, default 5)
+  - `device` (optional): target device
+
+- Example:
+  ```
+  monitor_wireless_frequency(interface="wlan1", duration=5)
+  ```
+
 ## Legacy tools
 
 `create_wireless_security_profile`, `list_wireless_security_profiles`,
