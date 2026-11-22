@@ -327,6 +327,12 @@ The **Check API coverage** workflow does not update the lockfile (`docs/manual.l
 
 Every pull request that targets `master` gets one comment from the **PR demo** workflow: a short GIF that illustrates the change, a title, a one-line description and a `#demonstration_<pr-title>` tag (spaces become `-`). The comment is updated on every push. The GIF is drawn by AI from the diff, so it is an illustration, not a recording; check it against the code. The workflow runs from `master` and never executes code from the pull request: the model gets no tools, `scripts/pr_demo.py` validates its storyboard and draws the GIF, and GIFs are stored on the orphan `pr-demos` branch. Re-run it for a pull request from the Actions tab (**PR demo**, *Run workflow*, with the number).
 
+### Discord notifications
+
+The **Discord PR notifications** workflow announces every pull request in the maintainers' Discord channel, including the ones that are never merged. When a pull request is opened it posts an embed and starts a thread from it. The thread gets the commits of the pull request (each commit once, also after a force push) and a line when the pull request is reopened, merged or closed. The workflow runs from `master` with `pull_request_target`, so pull requests from forks are announced too; it never checks out or runs anything from the pull request, and every message turns mentions off.
+
+It needs the secret `DISCORD_BOT_TOKEN` and the variables `DISCORD_GUILD_ID` and `DISCORD_CHANNEL_ID`. The bot needs these permissions in the channel, as an overwrite for its role when `@everyone` is denied: View Channel, Send Messages, Embed Links, Create Public Threads, Send Messages in Threads and Read Message History. When a run fails, its log shows what Discord answered (`Missing Permissions` means one of the permissions above is missing), and **Re-run failed jobs** repeats the run without a new event. Do not rename a thread: the workflow finds the thread of a pull request by `PR #<number> ` at the start of its name. Discord archives a thread that was quiet for 7 days and the next event opens it again; a thread older than the 100 most recently archived ones is not found, and that pull request gets a new thread.
+
 ## Commit Message Format and Versioning
 
 This project uses [GitVersion](https://gitversion.net/) for automatic semantic versioning based on commit messages. We follow [Conventional Commits](https://www.conventionalcommits.org/) specification.
