@@ -30,6 +30,7 @@ NOT_APPLICABLE = {
     "enable_safe_mode", "commit_safe_mode", "rollback_safe_mode",
     "upload_file", "download_file", "create_backup", "create_export", "export_section", "export_logs", "export_dns_config",
     "export_user_config", "remove_file", "clear_logs", "flush_dns_cache", "flush_route_cache", "monitor_logs",
+    "add_device", "remove_device",  # they manage this server's inventory, not a router item
 }
 
 SUCCESS = re.compile(r"(?i)\b(successfully|created|added|updated|removed|deleted|enabled|disabled|moved|applied|expanded|cleared|flushed|imported|committed)\b")
