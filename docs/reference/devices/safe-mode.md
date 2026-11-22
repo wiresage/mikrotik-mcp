@@ -41,10 +41,10 @@ Opens a persistent SSH shell session and activates MikroTik Safe Mode.
 
 - **Annotation:** `WRITE`
 - **Parameters:** none
-- **Returns:** Confirmation or error message
+- **Returns:** Confirmation, or a tool error (`isError`) when safe mode could not be activated
 
 **Behaviour while active:**
-- All subsequent tool calls run inside the same shell session
+- All subsequent tool calls run inside the same shell session; a command that fails answers at once with RouterOS's error text
 - Changes are NOT written to flash/NVRAM
 - Rebooting the router or dropping the connection reverts everything
 
@@ -55,9 +55,9 @@ automatically if the connection drops or you call rollback_safe_mode.
 Call commit_safe_mode to make changes permanent.
 ```
 
-**Error cases:**
-- SSH connection failure → returns an `Error: ...` string
-- Router does not confirm `<SAFE>` prompt → returns an `Error: ...` string
+**Error cases** (tool errors, never a successful answer, so nobody believes a safety net exists that does not):
+- SSH connection failure → `Error: ...`
+- Router does not confirm the safe-mode session → `Error: ...`
 
 ---
 
@@ -67,17 +67,19 @@ Persists all pending Safe Mode changes and exits Safe Mode.
 
 - **Annotation:** `WRITE`
 - **Parameters:** none
-- **Returns:** Confirmation or error message
+- **Returns:** Confirmation, or a tool error (`isError`) when the release of safe mode could not be confirmed
 
-Sends a second Ctrl+X to the router, which exits Safe Mode and writes all in-memory changes to persistent storage (flash/NVRAM). The persistent SSH session is then closed.
+Sends a second Ctrl+X to the router, which exits Safe Mode and writes all in-memory changes to persistent storage (flash/NVRAM). RouterOS keeps the changes only if the session is released *before* the connection closes, so the tool checks the console state first (a Ctrl+X while safe mode is already off would switch it back on), waits for the release, asks the console for a fresh prompt and closes the SSH session only when that prompt no longer shows `<SAFE>`. A commit takes a few seconds for that reason.
 
 **Example response:**
 ```
-Changes committed successfully. Safe mode DISABLED.
+Changes committed successfully. Safe mode DISABLED. RouterOS said "Releasing Safe Mode... Success!" and the prompt no longer shows <SAFE>.
 ```
 
 **Error cases:**
-- Safe mode not active → returns "Safe mode is not active. Nothing to commit."
+- Safe mode not active → "Safe mode is not active. Nothing to commit." (a normal answer)
+- The release could not be confirmed, or the console state could not be read → a tool error. The session is **left open**: the changes are still pending and **not** persisted. Call `commit_safe_mode` again, or `rollback_safe_mode`.
+- The console was no longer in safe mode when the commit started (an earlier commit that could not confirm, or another session took safe mode over) → a tool error, nothing was sent. Check the configuration before relying on the changes: they may be persisted or reverted.
 
 ---
 
@@ -85,7 +87,7 @@ Changes committed successfully. Safe mode DISABLED.
 
 Discards all pending Safe Mode changes by dropping the SSH session.
 
-- **Annotation:** `WRITE`
+- **Annotation:** `DESTRUCTIVE`
 - **Parameters:** none
 - **Returns:** Confirmation message
 
