@@ -35,6 +35,13 @@ jobs:
       TITLE: ${{ github.event.pull_request.title }}
       URL: ${{ github.event.pull_request.html_url }}
       AUTHOR: ${{ github.event.pull_request.user.login }}
+      SENDER: ${{ github.event.sender.login }}
+      MERGER: ${{ github.event.pull_request.merged_by.login }}
+      HEAD: ${{ github.event.pull_request.head.label }}
+      BASE: ${{ github.event.pull_request.base.ref }}
+      ADDS: ${{ github.event.pull_request.additions }}
+      DELS: ${{ github.event.pull_request.deletions }}
+      FILES: ${{ github.event.pull_request.changed_files }}
     steps:
       - name: Post to Discord
         shell: bash
@@ -57,7 +64,13 @@ jobs:
           }
           send() { api -X POST "$D/channels/$1/messages" -d "$2"; }
           text() { jq -n --arg c "$1" '{content:$c, flags:4, allowed_mentions:{parse:[]}}'; }
-          fmt='.[] | "[`\(.sha[0:7])`](https://github.com/\($r)/commit/\(.sha)) \(.commit.message | split("\n")[0] | .[0:60])"'
+          # One commit per message: `sha` link, **subject**, then who wrote it (_author_) and, only when somebody else committed it
+          # (not GitHub's own web-merge identity), who committed it. Names and subjects are user text, so Markdown characters are escaped.
+          # The `/commit/<sha>` link must stay: `announce` reads it back to know which commits the thread already shows.
+          fmt='def esc: gsub("(?<c>[*_`~|<>])"; "\\" + .c);
+            .[] | "[`\(.sha[0:7])`](https://github.com/\($r)/commit/\(.sha)) **\(.commit.message | split("\n")[0] | esc | .[0:72])**\n└ by _\((.commit.author.name // .author.login // "unknown") | esc | .[0:40])_"
+              + (if (.commit.committer.name // "") != (.commit.author.name // "") and .commit.committer.name != "GitHub"
+                 then " · committed by _\(.commit.committer.name | esc | .[0:40])_" else "" end)'
 
           # Post the commits of the pull request that the thread does not show yet, all of them, in as many messages as it takes.
           # Looking at what the thread shows (instead of comparing with the previous push) means that a force push, a push that came
@@ -85,8 +98,13 @@ jobs:
           CREATED=0
           if [ -z "$THREAD" ]; then
             # A thread's id equals the id of the message it starts from.
-            THREAD=$(send "$CHANNEL" "$(jq -n --arg t "PR #$PR: $TITLE" --arg u "$URL" --arg a "$AUTHOR" \
-              '{embeds:[{title:($t|.[0:250]), url:$u, description:("by "+$a), color:5025616}], allowed_mentions:{parse:[]}}')" | jq -r .id)
+            THREAD=$(send "$CHANNEL" "$(jq -n --arg t "PR #$PR: $TITLE" --arg u "$URL" --arg a "$AUTHOR" --arg h "$HEAD" --arg b "$BASE" \
+              --arg c "+$ADDS −$DELS · $FILES files" --arg r "$REPO" \
+              '{embeds:[{title:($t|.[0:250]), url:$u, color:5025616,
+                fields:[{name:"Author", value:("**"+$a+"**"), inline:true},
+                        {name:"Branch", value:("`"+$h+"` → `"+$b+"`"), inline:true},
+                        {name:"Changes", value:$c, inline:true}],
+                footer:{text:$r}}], allowed_mentions:{parse:[]}}')" | jq -r .id)
             api -X POST "$D/channels/$CHANNEL/messages/$THREAD/threads" \
               -d "$(jq -n --arg n "PR #$PR $TITLE" '{name:($n|.[0:100]), auto_archive_duration:10080}')" >/dev/null
             CREATED=1
@@ -103,11 +121,12 @@ jobs:
 
           if [ "$ACTION" = closed ]; then
             if [ "$MERGED" = true ]; then
-              send "$CHANNEL" "$(jq -n --arg t "✅ PR #$PR merged: $TITLE" --arg u "$URL" --arg r "$THREAD" \
-                '{embeds:[{title:($t|.[0:250]), url:$u, color:8311585}], message_reference:{message_id:$r, fail_if_not_exists:false}, allowed_mentions:{parse:[]}}')" >/dev/null
-              send "$THREAD" "$(text "Merged ✅")" >/dev/null
+              send "$CHANNEL" "$(jq -n --arg t "✅ PR #$PR merged: $TITLE" --arg u "$URL" --arg r "$THREAD" --arg a "$AUTHOR" --arg m "$MERGER" \
+                '{embeds:[{title:($t|.[0:250]), url:$u, color:8311585,
+                  description:("Author **"+$a+"** · merged by **"+$m+"**")}], message_reference:{message_id:$r, fail_if_not_exists:false}, allowed_mentions:{parse:[]}}')" >/dev/null
+              send "$THREAD" "$(text "Merged ✅ by **$MERGER**")" >/dev/null
             else
-              send "$THREAD" "$(text "Closed without merging")" >/dev/null
+              send "$THREAD" "$(text "Closed without merging by **$SENDER**")" >/dev/null
             fi
           fi
           exit 0
