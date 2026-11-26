@@ -617,6 +617,11 @@ These tools do not map to a single RouterOS menu command.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 - [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
+- [x] `get_connection_tracking_count` — command — Manages /ip/firewall/connection.
+- [x] `get_connection_tracking_settings` — command — Manages /ip/firewall/connection.
+- [x] `list_firewall_connections` — command — Manages /ip/firewall/connection.
+- [x] `remove_firewall_connections` — command — Manages /ip/firewall/connection.
+- [x] `update_connection_tracking_settings` — command — Manages /ip/firewall/connection.
 
 ## Excluded / out of scope
 
