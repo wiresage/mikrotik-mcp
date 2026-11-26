@@ -1,6 +1,6 @@
 # Context Length Optimization
 
-MikroTik MCP ships **239 tools**. The `tools/list` answer a client receives is about
+MikroTik MCP ships **241 tools**. The `tools/list` answer a client receives is about
 230 KB of JSON, which is roughly 57 000 tokens (an estimate at four characters per
 token; tokenizers differ). That is more than the entire context window of many local
 LLMs (LM Studio, Ollama, etc.).
@@ -41,7 +41,7 @@ keeps a `Notes:` block only when something is not obvious from its signature.
 | `generate_wireguard_client_config` | 120 chars |
 | `create_queue_type` | 429 chars |
 | `create_filter_rule` | 517 chars |
-| _all 239 tools (avg)_ | **155 chars** |
+| _all 241 tools (avg)_ | **155 chars** |
 
 The longest are the read tools that explain a legend or a redaction rule, for example
 `get_ipsec_installed_sa` (about 1 750 chars) and `list_netwatch` (about 1 240 chars).
@@ -59,8 +59,8 @@ are building an integration, prefer displaying the title in compact views.
 ### Local LLMs with small context windows
 
 Start the server with `--read-only` (or `MIKROTIK_READ_ONLY=true`). It exposes only the
-107 tools that change nothing on the router, and their `tools/list` answer is about
-91 KB, roughly 23 000 tokens, against about 57 000 for all 239 tools. See the
+109 tools that change nothing on the router, and their `tools/list` answer is about
+91 KB, roughly 23 000 tokens, against about 57 000 for all 241 tools. See the
 [CLI options](installation.md#cli-options).
 
 > `--read-only` limits the MCP tool catalogue only. Use a restricted RouterOS
