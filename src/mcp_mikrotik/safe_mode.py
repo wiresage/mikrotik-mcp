@@ -577,3 +577,15 @@ def get_safe_mode_manager(device: Optional[str] = None) -> SafeModeManager:
                 _managers[key] = manager
     return manager
 
+
+def forget_safe_mode_manager(title: str) -> None:
+    """Drop the cached manager after a device leaves the inventory.
+
+    Re-enrolling the same title must not inherit the old router's session;
+    the caller refuses removal while that session is active, so nothing here
+    still holds an open shell.
+    """
+    key = str(title).strip().casefold()
+    with _manager_lock:
+        _managers.pop(key, None)
+

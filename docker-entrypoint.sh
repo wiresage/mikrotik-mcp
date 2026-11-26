@@ -16,6 +16,10 @@ usage() {
     echo "  --inventory YAML      Inventory as a YAML (or JSON) list of devices"
     echo "  --inventory-file PATH Path to a YAML file holding the inventory"
     echo ""
+    echo "Runtime device management (on by default):"
+    echo "  --dynamic-inventory-file PATH  State file for devices the agent enrolls"
+    echo "  --no-dynamic-devices  Hide add_device/remove_device (static inventory only)"
+    echo ""
     echo "Other:"
     echo "  --read-only           Expose only read-only tools"
     echo "  --sensitive-hiding    Hide credentials and private key material"
@@ -31,6 +35,8 @@ usage() {
     echo "  MIKROTIK_PORT            SSH port (default: 22)"
     echo "  MIKROTIK_INVENTORY       Inventory as a YAML (or JSON) list of devices"
     echo "  MIKROTIK_INVENTORY_FILE  Path to a YAML file holding the inventory"
+    echo "  MIKROTIK_ALLOW_DYNAMIC_DEVICES   Let the agent enroll/remove devices (default: true)"
+    echo "  MIKROTIK_DYNAMIC_INVENTORY_FILE  State file for runtime enrollments (default: /config/dynamic-inventory.yaml)"
     echo "  MIKROTIK_READ_ONLY       Expose only read-only tools (default: false)"
     echo "  MIKROTIK_SENSITIVE_HIDING Hide credentials and private key material (default: false)"
     echo "  MIKROTIK_MCP__TRANSPORT  Transport type (default: stdio)"
@@ -80,6 +86,14 @@ while [ $# -gt 0 ]; do
             MIKROTIK_INVENTORY_FILE="$2"
             shift 2
             ;;
+        --dynamic-inventory-file)
+            MIKROTIK_DYNAMIC_INVENTORY_FILE="$2"
+            shift 2
+            ;;
+        --no-dynamic-devices)
+            MIKROTIK_ALLOW_DYNAMIC_DEVICES=false
+            shift
+            ;;
         --read-only)
             MIKROTIK_READ_ONLY=true
             shift
@@ -102,6 +116,11 @@ while [ $# -gt 0 ]; do
 done
 
 export MIKROTIK_MCP__TRANSPORT
+# /config is the image's mount point, so one volume keeps both the static
+# inventory and the agent's enrolments across a container replacement.
+MIKROTIK_DYNAMIC_INVENTORY_FILE="${MIKROTIK_DYNAMIC_INVENTORY_FILE:-/config/dynamic-inventory.yaml}"
+export MIKROTIK_DYNAMIC_INVENTORY_FILE
+[ -n "${MIKROTIK_ALLOW_DYNAMIC_DEVICES:-}" ] && export MIKROTIK_ALLOW_DYNAMIC_DEVICES
 [ -n "${MIKROTIK_ALLOW_SSH_AGENT:-}" ] && export MIKROTIK_ALLOW_SSH_AGENT
 [ -n "${MIKROTIK_SSH_AGENT_KEY:-}" ] && export MIKROTIK_SSH_AGENT_KEY
 [ -n "${MIKROTIK_READ_ONLY:-}" ] && export MIKROTIK_READ_ONLY

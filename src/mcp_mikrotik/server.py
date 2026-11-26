@@ -140,7 +140,14 @@ def main():
     except ValueError as e:
         logger.error(f"Invalid MikroTik inventory: {e}")
         sys.exit(1)
-    logger.info(f"Managing {len(inventory)} device(s): {', '.join(inventory.titles)}")
+    if inventory:
+        logger.info(
+            f"Managing {len(inventory)} device(s): {', '.join(inventory.titles)}"
+        )
+    else:
+        logger.info(
+            "No MikroTik devices are configured yet; use add_device to enroll one."
+        )
 
     _warn_if_plaintext_password_in_container(config.mikrotik_config, logger)
 

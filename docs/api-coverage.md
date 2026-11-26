@@ -6,7 +6,7 @@ Built: 2026-10-22
 Source ETag: `"6ad9bd36-641a92"`
 SHA-256: `8d4302c69ff669f18a7313a42a3091dd11c061b266aa95ac3846be47fadfeda8`
 
-**Progress:** 165/344 in-scope commands implemented (48%) · **Partial:** 3 · **Planned:** 161 · **Legacy:** 15 · **Not applicable:** 3
+**Progress:** 166/345 in-scope commands implemented (48%) · **Partial:** 3 · **Planned:** 161 · **Legacy:** 15 · **Not applicable:** 3
 
 Scope: the counts cover only the menus declared in `docs/api-coverage.yml`. A RouterOS menu that is neither declared nor listed under `excluded` is not counted, and the manual check only reports new direct submenus of menus that already have an implemented or partial command.
 
@@ -337,6 +337,9 @@ it does not prove runtime correctness on every RouterOS version.
 - [x] **ARP table** (`/ip/arp`)
   - Read-only view.
   - [x] `print` — `list_arp_entries`
+- [x] **MNDP neighbors** (`/ip/neighbor`)
+  - Read-only view of the neighbors this router discovers through MNDP.
+  - [x] `print` — `list_mikrotik_neighbors`
 - [x] **IP services** (`/ip/service`)
   - Read-only view of the management services.
   - [x] `print` — `list_ip_services`
@@ -596,6 +599,8 @@ it does not prove runtime correctness on every RouterOS version.
 These tools do not map to a single RouterOS menu command.
 
 - [x] `list_devices` — server — Inventory discovery; no RouterOS command.
+- [x] `add_device` — server — Enrolls a device at runtime and persists it; default-on, hidden by --read-only.
+- [x] `remove_device` — server — Removes a runtime-enrolled device from the state file.
 - [x] `safe_mode_status` — interactive — Reads the persistent safe-mode shell state.
 - [x] `enable_safe_mode` — interactive — Opens a persistent shell and sends Ctrl-X.
 - [x] `commit_safe_mode` — interactive — Sends Ctrl-X again and closes the safe-mode shell.

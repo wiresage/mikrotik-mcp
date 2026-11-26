@@ -45,13 +45,21 @@ def test_the_discovery_finds_the_tool_modules():
 
 
 @pytest.mark.parametrize("module_name", tool_modules(), ids=lambda name: name.removeprefix(SCOPE))
-def test_scope_module_functions_return_string(module_name, ctx, monkeypatch):
+def test_scope_module_functions_return_string(module_name, ctx, monkeypatch, tmp_path):
     module = importlib.import_module(module_name)
 
     if module_name == LISTS_DEVICES:
         # The real get_inventory() reads the environment and caches the inventory for every test that follows.
         inventory = Inventory([DeviceConfig(title="R1", host="192.0.2.1", username="mcp")])
         monkeypatch.setattr(module, "get_inventory", lambda: inventory, raising=True)
+        # add_device and remove_device persist to the runtime state file; keep it out of the real config directory.
+        monkeypatch.setattr(
+            module.config, "mikrotik_config",
+            module.config.mikrotik_config.model_copy(
+                update={"dynamic_inventory_file": str(tmp_path / "dynamic-inventory.yaml")}
+            ),
+            raising=True,
+        )
     else:
         # Each tool module imports the executor by name; raising=True fails the test when one does not.
         monkeypatch.setattr(module, "execute_mikrotik_command", FakeExecutor(), raising=True)

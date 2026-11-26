@@ -11,7 +11,8 @@ INSTRUCTIONS = (
     "optional `device` argument: the title of the target device, as listed by "
     "`list_devices`. Omit it when a single device is configured; when several "
     "are, it is required. Titles match case-insensitively, and an omitted or "
-    "unknown device returns an error naming the valid titles."
+    "unknown device returns an error naming the valid titles. Use "
+    "`list_devices` first: when it is empty, it explains how to add a device."
 )
 
 mcp = ConfiguredMCPServer("mcp-mikrotik", instructions=INSTRUCTIONS)

@@ -338,3 +338,8 @@ mcp-config.json
 inventory.yml
 inventory.yaml
 !inventory.example.yml
+
+# Runtime enrollments (device_add) hold credentials too
+dynamic-inventory.yml
+dynamic-inventory.yaml
+.dynamic-inventory.*
