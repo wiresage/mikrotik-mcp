@@ -40,6 +40,11 @@ Creates a wireless interface.
 
 Lists wireless interfaces.
 
+On legacy wireless (`/interface wireless`), a running interface set to
+`frequency=auto` is shown with the channel it is on right now, for example
+`frequency=auto (active: 5180/20-Ceee/ac/P(23dBm))`. That costs one extra
+command per such interface.
+
 - Parameters:
   - `name_filter` (optional): substring match
   - `disabled_only`, `running_only` (optional, default `False`)

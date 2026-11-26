@@ -2603,10 +2603,10 @@ server_tools:
   monitor_wireless_frequency:
     kind: command
     note: Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
-
   monitor_wireless_interface:
     kind: command
     note: Monitors real-time wireless interface status.
+
 excluded:
   - menu: /container
     reason: Container management is out of scope.
