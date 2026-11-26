@@ -224,14 +224,19 @@ async def mikrotik_list_wireless_interfaces(
                                 chan_cmd = f':put ([{interface_type} monitor "{ros_quoted(iface_name)}" once as-value]->"channel")'
                                 chan_out = await execute_mikrotik_command(chan_cmd, ctx, device=device)
                                 active_chan = chan_out.strip() if chan_out else ""
-                                if active_chan and not active_chan.lower().startswith(("bad", "failure", "no such", "syntax")):
+                                # A channel starts with its frequency (5180/20-Ceee/ac/P(23dBm)); anything else is an
+                                # error from the router or the connection, not a channel.
+                                if active_chan[:1].isdigit():
+                                    # Only this interface's own record: from its name to the first frequency=auto
+                                    # before the next record. RouterOS prints name first, so a match that starts at
+                                    # frequency=auto would belong to the record above.
                                     pattern = re.compile(
-                                        rf'(name="{re.escape(iface_name)}"(?:(?!name=).)*?\bfrequency=auto\b|\bfrequency=auto\b(?:(?!name=).)*?name="{re.escape(iface_name)}")',
+                                        rf'name="{re.escape(iface_name)}"(?:(?!name=).)*?\bfrequency=auto\b',
                                         re.DOTALL,
                                     )
                                     def _replace_auto(m):
                                         return m.group(0).replace("frequency=auto", f"frequency=auto (active: {active_chan})")
-                                    result = pattern.sub(_replace_auto, result)
+                                    result = pattern.sub(_replace_auto, result, count=1)
                             except Exception as chan_err:
                                 await ctx.debug(f"Failed to query active channel for {iface_name}: {chan_err}")
                     except Exception as auto_err:

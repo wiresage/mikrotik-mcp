@@ -184,6 +184,84 @@ def test_list_wireless_interfaces_auto_frequency_unchanged_when_no_active_channe
     assert "(active:" not in out
 
 
+def _dual_band_listing(wlan1_flag):
+    """Two legacy radios on frequency=auto, laid out the way RouterOS 7 prints /interface wireless (name first)."""
+    record = (
+        ' {n}  {flag} name="{name}" mtu=1500 l2mtu=1600 mac-address=48:8F:5A:00:00:0{n} arp=enabled\n'
+        '       interface-type=Atheros AR9888 mode=ap-bridge ssid="home" frequency=auto\n'
+        '       band={band} channel-width=20/40mhz-XX secondary-frequency=""\n\n'
+    )
+    return (
+        "Flags: X - DISABLED; R - RUNNING\n"
+        + record.format(n=0, flag=wlan1_flag, name="wlan1", band="2ghz-b/g/n")
+        + record.format(n=1, flag="R", name="wlan2", band="5ghz-a/n/ac")
+    )
+
+
+def _dual_band_executor(listing, running, channels):
+    commands = []
+
+    async def fake(command, _ctx, device=None, redact=None):
+        commands.append(command)
+        if command.startswith("/interface wireless print proplist=name"):
+            return "".join(f' {i}  R name="{name}"\n' for i, name in enumerate(running))
+        if command.startswith("/interface wireless print"):
+            return listing
+        for name, channel in channels.items():
+            if f'monitor "{name}" once as-value' in command:
+                return channel
+        return ""
+
+    fake.commands = commands
+    return fake
+
+
+def _frequency_of(out, name):
+    """The frequency=... text of one record of the listing."""
+    record = out.split(f'name="{name}"', 1)[1].split("name=", 1)[0]
+    return record.split("frequency=", 1)[1].split("\n", 1)[0].strip()
+
+
+def test_list_wireless_interfaces_annotates_each_radio_with_its_own_channel(ctx, monkeypatch):
+    """Dual-band default config: both radios on frequency=auto. Each one gets its own channel, once."""
+    channels = {"wlan1": "2437/20-Ce/gn(20dBm)", "wlan2": "5180/20-Ceee/ac/P(23dBm)"}
+    fake = _dual_band_executor(_dual_band_listing("R"), ["wlan1", "wlan2"], channels)
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    out = _run(m.mikrotik_list_wireless_interfaces(ctx))
+
+    assert _frequency_of(out, "wlan1") == "auto (active: 2437/20-Ce/gn(20dBm))"
+    assert _frequency_of(out, "wlan2") == "auto (active: 5180/20-Ceee/ac/P(23dBm))"
+
+
+def test_list_wireless_interfaces_leaves_a_radio_that_is_not_running_alone(ctx, monkeypatch):
+    """A disabled radio above a running one keeps plain frequency=auto; the running one's channel stays on it."""
+    channels = {"wlan2": "5180/20-Ceee/ac/P(23dBm)"}
+    fake = _dual_band_executor(_dual_band_listing("X"), ["wlan2"], channels)
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    out = _run(m.mikrotik_list_wireless_interfaces(ctx))
+
+    assert _frequency_of(out, "wlan1") == "auto"
+    assert _frequency_of(out, "wlan2") == "auto (active: 5180/20-Ceee/ac/P(23dBm))"
+
+
+@pytest.mark.parametrize("reply", [
+    "Error executing command: timed out",
+    "Error: connection refused",
+    "expected end of command (line 1 column 40)",
+    "input does not match any value of interface",
+])
+def test_list_wireless_interfaces_does_not_show_an_error_as_the_channel(ctx, monkeypatch, reply):
+    """When the channel lookup fails, the listing keeps frequency=auto instead of showing the error as a channel."""
+    fake = _dual_band_executor(_dual_band_listing("R"), ["wlan1", "wlan2"], {"wlan1": reply, "wlan2": reply})
+    monkeypatch.setattr(m, "execute_mikrotik_command", fake, raising=True)
+
+    out = _run(m.mikrotik_list_wireless_interfaces(ctx))
+
+    assert "(active:" not in out
+
+
 def test_list_wireless_interfaces_name_filter_quoted(ctx, monkeypatch):
     """name_filter is safely quoted via ros_quoted in both print and auto-check commands."""
     responses = {
