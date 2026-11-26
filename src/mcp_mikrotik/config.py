@@ -124,6 +124,13 @@ class MikrotikConfig(BaseSettings):
     # Seconds a command may wait for the device before the call fails. Idle time on the SSH
     # channel, not a total: output that keeps arriving resets it. See mikrotik_ssh_client.
     command_timeout: float = 180.0
+    # Device used when a call names none (MIKROTIK_DEFAULT_DEVICE). Without it, a
+    # multi-device inventory requires the `device_name` argument on every call.
+    default_device: Optional[str] = None
+    # Diagnostics (MIKROTIK_ARG_LOG): a file to which every tool call appends one
+    # JSON line with the tool name, the argument *names* it arrived with and the
+    # device_name/device values. No other argument value is written.
+    arg_log: Optional[str] = None
     mcp: McpServerSettings = McpServerSettings()
 
     @field_validator("command_timeout")

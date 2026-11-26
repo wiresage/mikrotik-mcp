@@ -12,6 +12,7 @@ from mcp.server.mcpserver import Context
 
 from ...app import mcp, READ, annotate
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 
 
 async def _print(
@@ -29,6 +30,7 @@ async def _print(
     """
     result = await execute_mikrotik_command(command, ctx, device=device)
     if not result or data_marker not in result:
+        raise_if_routeros_error(result, f"run `{command}`")
         return empty_message
     return f"{heading}:\n\n{result}"
 
@@ -108,6 +110,7 @@ async def mikrotik_list_system_packages(ctx: Context, device: Optional[str] = No
     await ctx.info("Listing system packages")
     result = await execute_mikrotik_command("/system package print", ctx, device=device)
     if not result or "name" not in result.lower():
+        raise_if_routeros_error(result, "list packages")
         return "No packages returned."
     return f"SYSTEM PACKAGES:\n\n{result}"
 

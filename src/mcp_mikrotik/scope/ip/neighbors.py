@@ -4,6 +4,7 @@ from mcp.server.mcpserver import Context
 
 from ...app import mcp, READ, annotate
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 
 
 async def _list_neighbors(
@@ -33,6 +34,7 @@ async def _list_neighbors(
     # `print detail` returns the Flags legend (non-empty) even when no row
     # matches, so we check for real entry data instead of non-emptiness.
     if not result or "address=" not in result:
+        raise_if_routeros_error(result)
         return empty_message
     return f"{heading}:\n\n{result}"
 

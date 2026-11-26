@@ -9,9 +9,9 @@ async def mikrotik_list_devices(ctx: Context) -> str:
     """Lists the MikroTik devices this server manages.
 
     Use this to discover which devices are available and what their titles are.
-    Every other tool takes an optional `device` argument that must be one of the
-    titles returned here. When only one device is configured, `device` may be
-    omitted and that device is used automatically.
+    Every other tool takes an optional `device_name` argument that must be one of the
+    titles returned here. When only one device is configured (or the server sets
+    MIKROTIK_DEFAULT_DEVICE), `device_name` may be omitted.
 
     Credentials are never returned.
     """
@@ -35,13 +35,13 @@ async def mikrotik_list_devices(ctx: Context) -> str:
     if len(devices) == 1:
         lines.append("")
         lines.append(
-            "Only one device is configured, so the `device` argument can be omitted."
+            "Only one device is configured, so the `device_name` argument can be omitted."
         )
     else:
         lines.append("")
         lines.append(
             "Multiple devices are configured — pass the chosen title as the "
-            "`device` argument of each tool."
+            "`device_name` argument of each tool."
         )
 
     return "\n".join(lines)

@@ -97,10 +97,15 @@ class Inventory:
         if title is None or not str(title).strip():
             if len(self._devices) == 1:
                 return next(iter(self._devices.values()))
-            raise DeviceNotFoundError(
-                "This server manages multiple MikroTik devices, so a device "
-                f"must be specified. Available devices: {', '.join(self.titles)}."
-            )
+            default = (getattr(config.mikrotik_config, "default_device", None) or "").strip()
+            if default:
+                title = default
+            else:
+                raise DeviceNotFoundError(
+                    "This server manages multiple MikroTik devices, so the "
+                    "`device_name` argument is required (or set MIKROTIK_DEFAULT_DEVICE). "
+                    f"Available devices: {', '.join(self.titles)}."
+                )
 
         device = self._devices.get(str(title).strip().casefold())
         if device is None:

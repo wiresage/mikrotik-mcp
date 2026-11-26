@@ -3,7 +3,7 @@ from ...connector import execute_mikrotik_command
 from mcp.server.mcpserver import Context
 from ...app import mcp, READ, WRITE_IDEMPOTENT, annotate
 from .._shared.selectors import has_item_rows
-from .._shared.results import refused, is_missing
+from .._shared.results import refused, is_missing, raise_if_routeros_error
 
 
 @mcp.tool(name="list_interfaces", annotations=annotate(READ, "List Interfaces"))
@@ -64,6 +64,7 @@ async def mikrotik_get_interface(ctx: Context, name: str, device: Optional[str] 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"Interface '{name}' not found."
 
     return f"INTERFACE DETAILS:\n\n{result}"

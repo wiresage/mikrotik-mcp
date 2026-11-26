@@ -7,7 +7,7 @@ from ...app import mcp, READ, WRITE, WRITE_IDEMPOTENT, DESTRUCTIVE, annotate
 from ...connector import execute_mikrotik_command
 from .._shared.quoting import ros_quoted
 from .._shared.selectors import has_item_rows
-from .._shared.results import refused
+from .._shared.results import refused, raise_if_routeros_error
 
 _DURATION_RE = re.compile(r"(?:\d+[wdhms])+")
 
@@ -152,6 +152,7 @@ async def mikrotik_list_dhcp_leases(
     # `print detail` returns the Flags legend (non-empty) even when no row
     # matches, so we check for real entry data instead of non-emptiness.
     if not result or "address=" not in result:
+        raise_if_routeros_error(result)
         return "No DHCP leases found matching the criteria."
     return f"DHCP LEASES:\n\n{result}"
 
@@ -200,6 +201,7 @@ async def mikrotik_list_dhcpv6_bindings(
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
     if not result or "address=" not in result:
+        raise_if_routeros_error(result)
         return "No DHCPv6 bindings found matching the criteria."
     return f"DHCPV6 BINDINGS:\n\n{result}"
 
@@ -212,6 +214,7 @@ async def mikrotik_get_dhcp_server(ctx: Context, name: str, device: Optional[str
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
     if not has_item_rows(result):
+        raise_if_routeros_error(result)
         return f"DHCP server '{name}' not found."
 
     return f"DHCP SERVER DETAILS:\n\n{result}"

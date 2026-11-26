@@ -16,6 +16,7 @@ from mcp.server.mcpserver import Context
 
 from ...app import mcp, READ, annotate
 from ...connector import execute_mikrotik_command
+from .._shared.results import raise_if_routeros_error
 from .._shared.quoting import ros_quoted
 from ...sensitive import redact_sensitive_text
 
@@ -65,6 +66,7 @@ async def mikrotik_list_schedulers(
 
     result = await execute_mikrotik_command(command, ctx, device=device)
     if not result or "name=" not in result:
+        raise_if_routeros_error(result)
         return "No schedulers found matching the criteria."
 
     heading = "SCHEDULERS (with on-event)" if include_source else "SCHEDULERS (metadata only)"
@@ -100,6 +102,7 @@ async def mikrotik_list_scripts(
 
     result = await execute_mikrotik_command(command, ctx, device=device)
     if not result or "name=" not in result:
+        raise_if_routeros_error(result)
         return "No scripts found matching the criteria."
 
     heading = "SCRIPTS (with source)" if include_source else "SCRIPTS (metadata only)"

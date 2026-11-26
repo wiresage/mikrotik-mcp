@@ -135,7 +135,11 @@ def test_safe_mode_tools_surface_resolution_errors(monkeypatch):
         scope_safe_mode.mikrotik_rollback_safe_mode,
         scope_safe_mode.mikrotik_enable_safe_mode,
     ):
-        result = asyncio.run(tool(ctx, device="Ghost"))
+        from mcp.server.mcpserver.exceptions import ToolError
+
+        with pytest.raises(ToolError) as excinfo:
+            asyncio.run(tool(ctx, device="Ghost"))
+        result = str(excinfo.value)
         assert result.startswith("Error:"), result
         assert "RouterA" in result          # the choices are listed
 

@@ -5,7 +5,7 @@ declared in an **inventory**; each entry has a unique `title`, which is the
 identifier tools use to target that device.
 
 With no inventory configured the server behaves exactly as before: a single
-device built from `MIKROTIK_HOST` / `MIKROTIK_USERNAME` / … , and the `device`
+device built from `MIKROTIK_HOST` / `MIKROTIK_USERNAME` / … , and the `device_name`
 argument can be omitted everywhere.
 
 ## Configuring the inventory
@@ -97,7 +97,7 @@ here too — existing configs keep working unchanged.
 
 | Field | Required | Notes |
 |---|---|---|
-| `title` | yes | Unique identifier the LLM passes as `device`. Matching is case-insensitive. |
+| `title` | yes | Unique identifier the LLM passes as `device_name`. Matching is case-insensitive. |
 | `host` | yes | IP or hostname |
 | `port` | no | SSH port, default `22` |
 | `username` | no | default `admin` |
@@ -110,17 +110,36 @@ here too — existing configs keep working unchanged.
 
 ## Selecting a device
 
-Every device-scoped tool accepts an optional `device` argument:
+Every device-scoped tool accepts an optional `device_name` argument:
 
-- **One device configured** — omit `device`; that device is used.
+- **One device configured** — omit `device_name`; that device is used.
 - **More than one** — pass the `title`. Omitting it returns an error that lists
   the available devices, as does an unknown title, so the caller can correct
   itself immediately.
+- **Default device** — set `MIKROTIK_DEFAULT_DEVICE` (or `--default-device`) to a
+  title to use it whenever `device_name` is omitted. The server refuses to start if
+  the title is not in the inventory.
+
+> **Why `device_name` and not `device`?** Some MCP hosts reserve a top-level `device`
+> argument for their own routing — the Claude desktop app's remote-device bridge
+> uses it to pick which computer a cloud session's call goes to, and strips it
+> before forwarding. A parameter by that name never reached the server, so every
+> call on a multi-device inventory failed. The tools now advertise `device_name`;
+> `device` is still accepted as a deprecated alias (an error if both are given
+> and differ).
+>
+> Failures to select or reach a device, and RouterOS refusing a read command,
+> are returned as MCP errors carrying the underlying message — never as an empty
+> "No … found" answer.
+>
+> To see exactly which arguments a host forwards, set `MIKROTIK_ARG_LOG` to a
+> file path: each call appends one JSON line with the tool name, the argument
+> names and the device_name/device values (no other values are written).
 
 ```
 list_devices()                                  # discover the fleet
-list_interfaces(device="TitleA")                # target one device
-create_vlan_interface(device="TitleB", name="vlan100", vlan_id=100, interface="ether1")
+list_interfaces(device_name="TitleA")           # target one device
+create_vlan_interface(device_name="TitleB", name="vlan100", vlan_id=100, interface="ether1")
 ```
 
 ## `list_devices`
@@ -202,9 +221,9 @@ Safe mode holds a persistent session, and each device has its own. Enabling it
 on one device does not affect any other:
 
 ```
-enable_safe_mode(device="TitleA")
-create_filter_rule(device="TitleA", chain="forward", action="drop", ...)
-commit_safe_mode(device="TitleA")     # or rollback_safe_mode(device="TitleA")
+enable_safe_mode(device_name="TitleA")
+create_filter_rule(device_name="TitleA", chain="forward", action="drop", ...)
+commit_safe_mode(device_name="TitleA")     # or rollback_safe_mode(device_name="TitleA")
 ```
 
 ## Two-device test environment
