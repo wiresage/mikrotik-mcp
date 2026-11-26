@@ -2,6 +2,7 @@ from mcp.types import ToolAnnotations
 from starlette.requests import Request
 from starlette.responses import Response
 
+from . import __version__
 from .configured_mcp_server import ConfiguredMCPServer
 
 # Sent once, in the initialize response, instead of being repeated in all 192
@@ -14,7 +15,8 @@ INSTRUCTIONS = (
     "unknown device returns an error naming the valid titles."
 )
 
-mcp = ConfiguredMCPServer("mcp-mikrotik", instructions=INSTRUCTIONS)
+# `version` is what clients show next to the server name; left out it is an empty string.
+mcp = ConfiguredMCPServer("mcp-mikrotik", instructions=INSTRUCTIONS, version=__version__)
 
 # ── Behaviour presets ──────────────────────────────────────────────────────
 # These capture the *risk profile* of a tool (MCP spec §Tool Annotations).
