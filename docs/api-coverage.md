@@ -617,6 +617,21 @@ These tools do not map to a single RouterOS menu command.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 - [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
+- [x] `create_scheduler` — command — Manages /system/script and /system/scheduler.
+- [x] `create_script` — command — Manages /system/script and /system/scheduler.
+- [x] `disable_scheduler` — command — Manages /system/script and /system/scheduler.
+- [x] `enable_scheduler` — command — Manages /system/script and /system/scheduler.
+- [x] `get_scheduler` — command — Manages /system/script and /system/scheduler.
+- [x] `get_script` — command — Manages /system/script and /system/scheduler.
+- [x] `list_script_environment` — command — Manages /system/script and /system/scheduler.
+- [x] `list_script_jobs` — command — Manages /system/script and /system/scheduler.
+- [x] `remove_scheduler` — command — Manages /system/script and /system/scheduler.
+- [x] `remove_script` — command — Manages /system/script and /system/scheduler.
+- [x] `remove_script_environment` — command — Manages /system/script and /system/scheduler.
+- [x] `remove_script_job` — command — Manages /system/script and /system/scheduler.
+- [x] `run_script` — command — Manages /system/script and /system/scheduler.
+- [x] `update_scheduler` — command — Manages /system/script and /system/scheduler.
+- [x] `update_script` — command — Manages /system/script and /system/scheduler.
 
 ## Excluded / out of scope
 
