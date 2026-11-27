@@ -37,6 +37,7 @@ def test_scheduler_crud(ctx, monkeypatch):
 
     fake = FakeExecutor({
         "/system scheduler print detail where name=\"backup-task\"": " 0   name=\"backup-task\" interval=1d next-run=nov/05/2026 on-event=\"do-backup\"\n",
+        "/system scheduler print where name=\"daily-backup\"": " 0   name=\"daily-backup\" interval=1d\n",
         "/system scheduler add": "",
         "/system scheduler set": "",
         "/system scheduler enable": "",
@@ -108,6 +109,7 @@ def test_script_crud_and_execution(ctx, monkeypatch):
 
     fake = FakeExecutor({
         "/system script print detail where name=\"my-script\"": " 0   name=\"my-script\" owner=\"admin\" run-count=5 source=\":put hello\"\n",
+        "/system script print where name=\"new-task\"": " 0   name=\"new-task\" owner=\"admin\"\n",
         "/system script run": "hello world\n",
         "/system script add": "",
         "/system script set": "",
@@ -176,6 +178,7 @@ def test_script_jobs_and_environment(ctx, monkeypatch):
         "/system script job print detail": " 0   owner=\"admin\" started=2026-11-04 20:00:00\n",
         "/system script job remove": "",
         "/system script environment print detail": " 0   name=\"myVar\" value=\"123\"\n",
+        "/system script environment print where name=\"myVar\"": " 0   name=\"myVar\" value=\"123\"\n",
         "/system script environment remove": "",
     })
     monkeypatch.setattr(scheduler, "execute_mikrotik_command", fake, raising=True)

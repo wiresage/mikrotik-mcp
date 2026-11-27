@@ -114,8 +114,8 @@ async def mikrotik_create_scheduler(
         cmd += " disabled=yes"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create scheduler: {result}"
+    if result.strip():
+        return f"Failed to create scheduler: {result.strip()}"
 
     return f"Scheduler '{name}' created successfully."
 
@@ -157,11 +157,17 @@ async def mikrotik_update_scheduler(
         return "No updates specified."
 
     await ctx.info(f"Updating scheduler: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system scheduler print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Scheduler '{name}' not found."
+
     cmd = f'/system scheduler set [find name="{ros_quoted(name)}"] ' + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to update scheduler: {result}"
+    if result.strip():
+        return f"Failed to update scheduler: {result.strip()}"
 
     return f"Scheduler '{name}' updated successfully."
 
@@ -177,11 +183,17 @@ async def mikrotik_enable_scheduler(
         return f"Invalid scheduler name: '{name}'"
 
     await ctx.info(f"Enabling scheduler: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system scheduler print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Scheduler '{name}' not found."
+
     cmd = f'/system scheduler enable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to enable scheduler: {result}"
+    if result.strip():
+        return f"Failed to enable scheduler: {result.strip()}"
 
     return f"Scheduler '{name}' enabled successfully."
 
@@ -197,11 +209,17 @@ async def mikrotik_disable_scheduler(
         return f"Invalid scheduler name: '{name}'"
 
     await ctx.info(f"Disabling scheduler: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system scheduler print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Scheduler '{name}' not found."
+
     cmd = f'/system scheduler disable [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disable scheduler: {result}"
+    if result.strip():
+        return f"Failed to disable scheduler: {result.strip()}"
 
     return f"Scheduler '{name}' disabled successfully."
 
@@ -217,11 +235,17 @@ async def mikrotik_remove_scheduler(
         return f"Invalid scheduler name: '{name}'"
 
     await ctx.info(f"Removing scheduler: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system scheduler print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Scheduler '{name}' not found."
+
     cmd = f'/system scheduler remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove scheduler: {result}"
+    if result.strip():
+        return f"Failed to remove scheduler: {result.strip()}"
 
     return f"Scheduler '{name}' removed successfully."
 
@@ -323,8 +347,8 @@ async def mikrotik_create_script(
         cmd += f' comment="{ros_quoted(comment)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create script: {result}"
+    if result.strip():
+        return f"Failed to create script: {result.strip()}"
 
     return f"Script '{name}' created successfully."
 
@@ -357,11 +381,17 @@ async def mikrotik_update_script(
         return "No updates specified."
 
     await ctx.info(f"Updating script: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system script print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Script '{name}' not found."
+
     cmd = f'/system script set [find name="{ros_quoted(name)}"] ' + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to update script: {result}"
+    if result.strip():
+        return f"Failed to update script: {result.strip()}"
 
     return f"Script '{name}' updated successfully."
 
@@ -377,11 +407,17 @@ async def mikrotik_remove_script(
         return f"Invalid script name: '{name}'"
 
     await ctx.info(f"Removing script: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system script print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Script '{name}' not found."
+
     cmd = f'/system script remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove script: {result}"
+    if result.strip():
+        return f"Failed to remove script: {result.strip()}"
 
     return f"Script '{name}' removed successfully."
 
@@ -421,8 +457,8 @@ async def mikrotik_remove_script_job(
     cmd = f"/system script job remove {job_id_clean}"
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to remove script job: {result}"
+    if result.strip():
+        return f"Failed to remove script job: {result.strip()}"
 
     return f"Script job '{job_id_clean}' stopped and removed successfully."
 
@@ -458,10 +494,16 @@ async def mikrotik_remove_script_environment(
         return f"Invalid variable name: '{name}'"
 
     await ctx.info(f"Removing script environment variable: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/system script environment print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Script environment variable '{name}' not found."
+
     cmd = f'/system script environment remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove script environment variable: {result}"
+    if result.strip():
+        return f"Failed to remove script environment variable: {result.strip()}"
 
     return f"Script environment variable '{name}' removed successfully."
