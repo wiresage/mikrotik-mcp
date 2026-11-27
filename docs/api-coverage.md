@@ -617,6 +617,22 @@ These tools do not map to a single RouterOS menu command.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 - [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
+- [x] `create_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `create_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `disconnect_ppp_session` — command — Manages /ppp and VPN entries.
+- [x] `get_ppp_active` — command — Manages /ppp and VPN entries.
+- [x] `get_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `get_vpn_server_settings` — command — Manages /ppp and VPN entries.
+- [x] `list_ppp_active` — command — Manages /ppp and VPN entries.
+- [x] `list_ppp_profiles` — command — Manages /ppp and VPN entries.
+- [x] `list_ppp_secrets` — command — Manages /ppp and VPN entries.
+- [x] `list_vpn_clients` — command — Manages /ppp and VPN entries.
+- [x] `monitor_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `remove_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `remove_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `update_ppp_secret` — command — Manages /ppp and VPN entries.
+- [x] `update_vpn_client` — command — Manages /ppp and VPN entries.
+- [x] `update_vpn_server_settings` — command — Manages /ppp and VPN entries.
 
 ## Excluded / out of scope
 
