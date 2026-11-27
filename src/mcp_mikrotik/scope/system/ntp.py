@@ -203,6 +203,11 @@ async def mikrotik_remove_ntp_server(
     if not _DOMAIN_OR_IP_RE.fullmatch(address):
         return f"Invalid NTP server address or hostname: '{address}'"
 
+    check_cmd = f'/system ntp client servers print where address="{ros_quoted(address)}"'
+    check_res = await execute_mikrotik_command(check_cmd, ctx, device=device)
+    if not has_item_rows(check_res):
+        return f"NTP server '{address}' not found."
+
     cmd = f'/system ntp client servers remove [find address="{ros_quoted(address)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
     if result.strip():

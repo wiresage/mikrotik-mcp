@@ -167,6 +167,10 @@ def test_add_and_remove_ntp_server(ctx, monkeypatch):
     assert "NTP server '161.53.123.5' removed successfully." in rem_res
     assert 'remove [find address="161.53.123.5"]' in executor.commands[-1]
 
+    # Remove non-existent server
+    rem_missing = _run(ntp.mikrotik_remove_ntp_server(ctx, address="time.cloudflare.com"))
+    assert "not found" in rem_missing
+
     # Invalid address format
     err_addr = _run(ntp.mikrotik_add_ntp_server(ctx, address="bad;address!"))
     assert "Invalid NTP server address" in err_addr
