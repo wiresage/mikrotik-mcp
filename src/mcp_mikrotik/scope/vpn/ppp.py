@@ -93,11 +93,17 @@ async def mikrotik_disconnect_ppp_session(
         return f"Invalid username: '{name}'"
 
     await ctx.info(f"Disconnecting PPP session: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/ppp active print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"Active session for user '{name}' not found."
+
     cmd = f'/ppp active remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to disconnect PPP session: {result}"
+    if result.strip():
+        return f"Failed to disconnect PPP session: {result.strip()}"
 
     return f"PPP session '{name}' disconnected successfully."
 
@@ -184,8 +190,8 @@ async def mikrotik_create_ppp_secret(
     result = await execute_mikrotik_command(
         cmd, ctx, device=device, redact=[password] if password else None
     )
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create PPP secret: {result}"
+    if result.strip():
+        return f"Failed to create PPP secret: {result.strip()}"
 
     return f"PPP secret '{name}' created successfully."
 
@@ -231,13 +237,19 @@ async def mikrotik_update_ppp_secret(
         return "No updates specified."
 
     await ctx.info(f"Updating PPP secret: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/ppp secret print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"PPP secret for user '{name}' not found."
+
     cmd = f'/ppp secret set [find name="{ros_quoted(name)}"] ' + " ".join(updates)
     result = await execute_mikrotik_command(
         cmd, ctx, device=device, redact=[password] if password else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to update PPP secret: {result}"
+    if result.strip():
+        return f"Failed to update PPP secret: {result.strip()}"
 
     return f"PPP secret '{name}' updated successfully."
 
@@ -253,11 +265,17 @@ async def mikrotik_remove_ppp_secret(
         return f"Invalid username: '{name}'"
 
     await ctx.info(f"Removing PPP secret: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/ppp secret print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"PPP secret for user '{name}' not found."
+
     cmd = f'/ppp secret remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove PPP secret: {result}"
+    if result.strip():
+        return f"Failed to remove PPP secret: {result.strip()}"
 
     return f"PPP secret '{name}' removed successfully."
 
@@ -360,8 +378,8 @@ async def mikrotik_create_vpn_client(
     result = await execute_mikrotik_command(
         cmd, ctx, device=device, redact=[password] if password else None
     )
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create {vpn_type.upper()} client: {result}"
+    if result.strip():
+        return f"Failed to create {vpn_type.upper()} client: {result.strip()}"
 
     return f"{vpn_type.upper()} client '{name}' created successfully."
 
@@ -406,13 +424,19 @@ async def mikrotik_update_vpn_client(
         return "No updates specified."
 
     await ctx.info(f"Updating {vpn_type.upper()} client: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/interface {vpn_type}-client print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"{vpn_type.upper()} client '{name}' not found."
+
     cmd = f'/interface {vpn_type}-client set [find name="{ros_quoted(name)}"] ' + " ".join(updates)
     result = await execute_mikrotik_command(
         cmd, ctx, device=device, redact=[password] if password else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to update {vpn_type.upper()} client: {result}"
+    if result.strip():
+        return f"Failed to update {vpn_type.upper()} client: {result.strip()}"
 
     return f"{vpn_type.upper()} client '{name}' updated successfully."
 
@@ -429,11 +453,17 @@ async def mikrotik_remove_vpn_client(
         return f"Invalid interface name: '{name}'"
 
     await ctx.info(f"Removing {vpn_type.upper()} client: {name}")
+    check_res = await execute_mikrotik_command(
+        f'/interface {vpn_type}-client print where name="{ros_quoted(name)}"', ctx, device=device
+    )
+    if not has_item_rows(check_res):
+        return f"{vpn_type.upper()} client '{name}' not found."
+
     cmd = f'/interface {vpn_type}-client remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove {vpn_type.upper()} client: {result}"
+    if result.strip():
+        return f"Failed to remove {vpn_type.upper()} client: {result.strip()}"
 
     return f"{vpn_type.upper()} client '{name}' removed successfully."
 
@@ -485,10 +515,16 @@ async def mikrotik_update_vpn_server_settings(
         return "No updates specified."
 
     await ctx.info(f"Updating {vpn_type.upper()} server settings")
+    check_res = await execute_mikrotik_command(
+        f"/interface {vpn_type}-server server print", ctx, device=device
+    )
+    if not check_res.strip():
+        return f"No {vpn_type.upper()} server configuration found."
+
     cmd = f"/interface {vpn_type}-server server set " + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update {vpn_type.upper()} server settings: {result}"
+    if result.strip():
+        return f"Failed to update {vpn_type.upper()} server settings: {result.strip()}"
 
     return f"{vpn_type.upper()} server settings updated successfully."

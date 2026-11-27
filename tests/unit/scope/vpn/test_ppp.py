@@ -42,6 +42,7 @@ def test_ppp_active(ctx, monkeypatch):
         "/ppp active print detail where service=sstp": " 0   name=\"medulin\" service=sstp caller-id=\"93.136.90.189\" address=172.12.3.2 uptime=10h\n",
         "/ppp active print detail where service=ovpn": "Flags: R - RADIUS\n",
         "/ppp active print detail where name=\"medulin\"": " 0   name=\"medulin\" service=sstp caller-id=\"93.136.90.189\" address=172.12.3.2 uptime=10h\n",
+        "/ppp active print where name=\"medulin\"": " 0   name=\"medulin\" service=sstp\n",
         "/ppp active print detail where name=\"unknown-user\"": "",
         "/ppp active print detail": " 0   name=\"medulin\" service=sstp caller-id=\"93.136.90.189\" address=172.12.3.2 uptime=10h\n 1   name=\"cjeplak1\" service=sstp caller-id=\"78.0.37.167\" address=172.12.2.2 uptime=10h\n",
         "/ppp active remove": "",
@@ -84,6 +85,7 @@ def test_ppp_secrets(ctx, monkeypatch):
 
     fake = FakeExecutor({
         "/ppp secret print detail where name=\"medulin\"": " 0   name=\"medulin\" service=sstp profile=default-encryption local-address=172.12.3.1 remote-address=172.12.3.2\n",
+        "/ppp secret print where name=\"newvpn\"": " 0   name=\"newvpn\" service=sstp\n",
         "/ppp secret print detail where name=\"unknown\"": "",
         "/ppp secret print detail": " 0   name=\"medulin\" service=sstp profile=default-encryption local-address=172.12.3.1 remote-address=172.12.3.2\n",
         "/ppp secret add": "",
@@ -171,6 +173,7 @@ def test_vpn_clients(ctx, monkeypatch):
 
     fake = FakeExecutor({
         "/interface sstp-client print detail": " 0  R name=\"sstp-zagreb\" connect-to=vpn.example.com user=\"client1\"\n",
+        "/interface sstp-client print where name=\"sstp-backup\"": " 0  R name=\"sstp-backup\" connect-to=backup.example.com\n",
         "/interface sstp-client monitor [find name=\"sstp-zagreb\"] once": "               status: connected\n               uptime: 10h\n             encoding: AES256-CBC\n        local-address: 172.12.3.2\n       remote-address: 172.12.3.1\n",
         "/interface sstp-client add": "",
         "/interface sstp-client set": "",
