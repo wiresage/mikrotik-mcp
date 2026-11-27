@@ -617,6 +617,15 @@ These tools do not map to a single RouterOS menu command.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 - [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
+- [x] `get_ntp_status` — command — Reads /system/ntp/client status and /system/clock.
+- [x] `get_ntp_client_settings` — command — Reads /system/ntp/client settings.
+- [x] `update_ntp_client` — command — Configures /system/ntp/client settings.
+- [x] `add_ntp_server` — command — Adds an NTP server to /system/ntp/client/servers.
+- [x] `remove_ntp_server` — command — Removes an NTP server from /system/ntp/client/servers.
+- [x] `get_ntp_server_settings` — command — Reads /system/ntp/server settings.
+- [x] `update_ntp_server` — command — Configures /system/ntp/server settings.
+- [x] `update_system_clock` — command — Configures /system/clock.
+- [x] `check_clock_sync` — command — Triggers NTP/clock synchronization.
 
 ## Excluded / out of scope
 

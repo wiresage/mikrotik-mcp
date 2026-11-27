@@ -5,3 +5,4 @@ from . import (  # noqa: F401
     info,
     scheduler,
 )
+from . import ntp as ntp
