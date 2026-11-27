@@ -617,6 +617,19 @@ These tools do not map to a single RouterOS menu command.
 - [x] `profile_cpu` — command — Runs /tool profile for a few seconds.
 - [x] `monitor_wireless_frequency` — command — Runs /interface wireless frequency-monitor traffic and noise floor monitoring (briefly interrupts connected clients).
 - [x] `monitor_wireless_interface` — command — Monitors real-time wireless interface status.
+- [x] `check_certificate_expiry` — command — Manages /certificate entries.
+- [x] `create_certificate` — command — Manages /certificate entries.
+- [x] `export_certificate` — command — Manages /certificate entries.
+- [x] `get_certificate` — command — Manages /certificate entries.
+- [x] `get_certificate_settings` — command — Manages /certificate entries.
+- [x] `import_certificate` — command — Manages /certificate entries.
+- [x] `list_certificates` — command — Manages /certificate entries.
+- [x] `list_crl` — command — Manages /certificate entries.
+- [x] `remove_certificate` — command — Manages /certificate entries.
+- [x] `request_acme_certificate` — command — Manages /certificate entries.
+- [x] `sign_certificate` — command — Manages /certificate entries.
+- [x] `update_certificate` — command — Manages /certificate entries.
+- [x] `update_certificate_settings` — command — Manages /certificate entries.
 
 ## Excluded / out of scope
 
