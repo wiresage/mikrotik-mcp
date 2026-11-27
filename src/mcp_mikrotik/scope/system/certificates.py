@@ -172,8 +172,8 @@ async def mikrotik_create_certificate(
         cmd += " trusted=yes"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to create certificate: {result}"
+    if result.strip():
+        return f"Failed to create certificate: {result.strip()}"
 
     return f"Certificate template '{name}' created successfully."
 
@@ -197,8 +197,8 @@ async def mikrotik_sign_certificate(
         cmd += f' ca="{ros_quoted(ca)}"'
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to sign certificate: {result}"
+    if result.strip() and not result.strip().lower().startswith("progress:"):
+        return f"Failed to sign certificate: {result.strip()}"
 
     return f"Certificate '{name}' signed successfully."
 
@@ -227,11 +227,16 @@ async def mikrotik_update_certificate(
         return "No updates specified."
 
     await ctx.info(f"Updating certificate: {name}")
+    check_cmd = f'/certificate print where name="{ros_quoted(name)}"'
+    check_res = await execute_mikrotik_command(check_cmd, ctx, device=device)
+    if not has_item_rows(check_res):
+        return f"Certificate '{name}' not found."
+
     cmd = f'/certificate set [find name="{ros_quoted(name)}"] ' + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower() or "no such item" in result.lower():
-        return f"Failed to update certificate: {result}"
+    if result.strip():
+        return f"Failed to update certificate: {result.strip()}"
 
     return f"Certificate '{name}' updated successfully."
 
@@ -247,11 +252,16 @@ async def mikrotik_remove_certificate(
         return f"Invalid certificate name: '{name}'"
 
     await ctx.info(f"Removing certificate: {name}")
+    check_cmd = f'/certificate print where name="{ros_quoted(name)}"'
+    check_res = await execute_mikrotik_command(check_cmd, ctx, device=device)
+    if not has_item_rows(check_res):
+        return f"Certificate '{name}' not found."
+
     cmd = f'/certificate remove [find name="{ros_quoted(name)}"]'
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to remove certificate: {result}"
+    if result.strip():
+        return f"Failed to remove certificate: {result.strip()}"
 
     return f"Certificate '{name}' removed successfully."
 
@@ -335,8 +345,8 @@ async def mikrotik_export_certificate(
         cmd, ctx, device=device, redact=[export_passphrase] if export_passphrase else None
     )
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to export certificate: {result}"
+    if result.strip():
+        return f"Failed to export certificate: {result.strip()}"
 
     return f"Certificate '{name}' exported successfully to '{file_name}'."
 
@@ -401,10 +411,14 @@ async def mikrotik_update_certificate_settings(
         return "No updates specified."
 
     await ctx.info("Updating certificate settings")
+    check_res = await execute_mikrotik_command("/certificate settings print", ctx, device=device)
+    if not check_res.strip():
+        return "Certificate settings not found."
+
     cmd = "/certificate settings set " + " ".join(updates)
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-    if "failure:" in result.lower() or "error" in result.lower():
-        return f"Failed to update certificate settings: {result}"
+    if result.strip():
+        return f"Failed to update certificate settings: {result.strip()}"
 
     return "Certificate settings updated successfully."

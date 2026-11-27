@@ -111,6 +111,7 @@ def test_certificate_lifecycle(ctx, monkeypatch):
     from mcp_mikrotik.scope.system import certificates
 
     fake = FakeExecutor({
+        '/certificate print where name="web-cert"': ' 0  K  name="web-cert"\n',
         "/certificate add": "",
         "/certificate sign": "progress: done\n",
         "/certificate set": "",
