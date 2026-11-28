@@ -22,6 +22,32 @@ CONNECT_TIMEOUT = 10.0
 DEFAULT_COMMAND_TIMEOUT = 180.0
 
 
+class _TransportErrorsAtDebug(logging.Filter):
+    """Log the errors of paramiko's transport thread at DEBUG.
+
+    When a connection fails (a device that accepts TCP but never sends an SSH
+    banner, for example), paramiko's transport thread logs the error at ERROR,
+    one record per traceback line, and then hands the same exception to the
+    caller. connect() and execute_command() log that exception in one line,
+    so in the server log these records only repeat it as a traceback that
+    looks like a crash. They are shown when DEBUG logging is on.
+
+    Lowering ``levelno`` alone is not enough: the handlers basicConfig sets up
+    have no level of their own, so the record has to be dropped here unless
+    DEBUG is enabled.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno < logging.ERROR:
+            return True
+        record.levelno, record.levelname = logging.DEBUG, logging.getLevelName(logging.DEBUG)
+        return logging.getLogger(record.name).isEnabledFor(logging.DEBUG)
+
+
+# paramiko logs from its transport thread, and from its channels, under this name.
+logging.getLogger("paramiko.transport").addFilter(_TransportErrorsAtDebug())
+
+
 class MikroTikSSHClient:
     """SSH client for MikroTik devices."""
 
