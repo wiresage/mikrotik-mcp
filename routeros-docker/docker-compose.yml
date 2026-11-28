@@ -13,7 +13,8 @@ services:
     privileged: true
     restart: ${RESTART_POLICY:-unless-stopped}
 
-    # Healthcheck: with eth1 present, QEMU enables hostfwd so 127.0.0.1:8728 is valid
+    # Healthcheck: QEMU's user-mode NIC forwards 127.0.0.1:22 in the container
+    # to the router
     healthcheck:
       # QEMU accepts TCP the instant it starts, long before the guest boots —
       # only the SSH banner proves RouterOS itself is up.
@@ -37,13 +38,17 @@ services:
       - "${OPENVPN_PORT_A:-1194}:1194"
 
     networks:
-      # Primary network: eth0 — Docker port mappings use this IP
+      # One network on purpose, so the router has one NIC: QEMU's user-mode NIC,
+      # which carries the published ports (and 127.0.0.1:22 for the health
+      # check). A second network adds a second NIC, a tap bridged to it, that
+      # nothing here uses, and RouterOS 7.25 names the two NICs of a fresh disk
+      # in whichever order it finds them: on 6 of 11 fresh 7.25.2 disks the tap
+      # became ether1, took the default DHCP client, and SSH never answered.
+      # docker-routeros images built before November 2026 bridge the only
+      # network to the router instead of adding the user-mode NIC (the health
+      # check then cannot see SSH); use a current image.
       routeros-net:
         ipv4_address: ${ROUTEROS_IP_A:-172.20.0.2}
-      # Secondary network: eth1 — entrypoint uses this for the bridge so eth0
-      # keeps its IP and QEMU enables user-mode hostfwd for the health check
-      routeros-wan-net:
-        ipv4_address: ${ROUTEROS_WAN_IP_A:-172.21.0.2}
 
     volumes:
       - ${VOLUME_NAME_A:-routeros-data-a}:/routeros
@@ -85,10 +90,9 @@ services:
       - "${OPENVPN_PORT_B:-1195}:1194"
 
     networks:
+      # One network, see routeros-a.
       routeros-net:
         ipv4_address: ${ROUTEROS_IP_B:-172.20.0.3}
-      routeros-wan-net:
-        ipv4_address: ${ROUTEROS_WAN_IP_B:-172.21.0.3}
 
     volumes:
       - ${VOLUME_NAME_B:-routeros-data-b}:/routeros
@@ -107,12 +111,6 @@ networks:
       config:
         - subnet: ${NETWORK_SUBNET:-172.20.0.0/24}
           gateway: ${NETWORK_GATEWAY:-172.20.0.1}
-  routeros-wan-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${WAN_NETWORK_SUBNET:-172.21.0.0/24}
-          gateway: ${WAN_NETWORK_GATEWAY:-172.21.0.1}
 
 volumes:
   routeros-data-a:
