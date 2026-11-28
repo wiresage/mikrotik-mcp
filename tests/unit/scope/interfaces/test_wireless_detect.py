@@ -45,3 +45,29 @@ def test_unsupported_menus_are_skipped(ctx, monkeypatch):
 
 def test_nothing_supported_returns_none(ctx, monkeypatch):
     assert _run(ctx, monkeypatch, {}) is None
+
+
+async def _router_without_radios(command, _ctx, device=None, redact=None):
+    """What a CHR on RouterOS 7.24/7.25 answers: the wifi and wifiwave2 menus exist but hold no
+    interface, the legacy menus do not exist."""
+    if command.startswith(("/interface wifi ", "/interface wifiwave2 ")):
+        return "0" if "count-only" in command else ""
+    for menu in ("wireless", "wlan"):
+        if command.startswith(f"/interface {menu} "):
+            return f"bad command name {menu} (line 1 column 12)\n"
+    if command == "/interface print":
+        return "Flags: R - RUNNING\nColumns: NAME, TYPE\n#   NAME    TYPE \n0 R ether1  ether\n"
+    return ""
+
+
+def test_list_and_detection_agree_on_a_router_without_radios(ctx, monkeypatch):
+    """The health check of 0.30.0 saw list_wireless_interfaces say 'None detected' while
+    check_wireless_support and the monitor tools named /interface wifi on the same CHR."""
+    monkeypatch.setattr(m, "execute_mikrotik_command", _router_without_radios, raising=True)
+
+    detected = asyncio.run(m.mikrotik_detect_wireless_interface_type(ctx))
+    listed = asyncio.run(m.mikrotik_list_wireless_interfaces(ctx))
+
+    assert detected == "/interface wifi"
+    assert listed.startswith("No wireless interfaces found matching the criteria.")
+    assert "Working interface types: /interface wifi, /interface wifiwave2\n" in listed

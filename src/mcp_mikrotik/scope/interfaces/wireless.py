@@ -201,14 +201,18 @@ async def mikrotik_list_wireless_interfaces(
 
             result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-            # Check if command worked and has results
-            if (result and
-                    result.strip() != "" and
-                    "bad command name" not in result.lower() and
-                    "failure:" not in result.lower() and
-                    "no such command prefix" not in result.lower()):
+            lowered = (result or "").lower()
+            answered = not ("bad command name" in lowered or
+                            "failure:" in lowered or
+                            "no such command prefix" in lowered)
+            # A menu that answers without an error exists on this router. It counts as working even
+            # with no interfaces (or none that match the filters), as in the type detection (#226),
+            # so a router without radios is not told that no wireless menu works.
+            if answered:
                 working_types.append(interface_type)
 
+            # Show the menus that have interfaces
+            if answered and (result or "").strip() != "":
                 # Annotate auto frequency with the active channel when running
                 if interface_type in ("/interface wireless", "/interface wlan") and "frequency=auto" in result:
                     try:
